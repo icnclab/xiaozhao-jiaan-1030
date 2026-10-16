@@ -276,17 +276,46 @@ class MockLlm:
 
 
 def warmup() -> None:
-    """預先載入本機模型，避免第一位使用者碰到冷啟動逾時（失敗不影響服務）。"""
-    settings = get_settings()
-    if settings.llm_provider != "ollama":
-        return
+    """Best-effort model preload; report outcomes without exposing request data."""
+    logger = logging.getLogger(__name__)
     try:
-        # num_ctx 與正式呼叫一致，否則 Ollama 會在第一題時以不同 context 重載模型（多花 20–30 秒）
-        httpx.post(f"{settings.ollama_base_url.rstrip('/')}/api/generate",
-                   json={"model": settings.llm_model, "prompt": "", "keep_alive": "30m",
-                         "options": {"num_ctx": 6144}}, timeout=180)
+        settings = get_settings()
+        if settings.llm_provider != "ollama":
+            return
+        response = httpx.post(f"{settings.ollama_base_url.rstrip('/')}/api/generate",
+                              json={"model": settings.llm_model, "prompt": "", "keep_alive": "30m",
+                                    "options": {"num_ctx": 6144}}, timeout=180)
+        response.raise_for_status()
+        if not 200 <= response.status_code < 300:
+            logger.warning("ollama_warmup status=http_error")
+            return
+        try:
+            payload = response.json()
+        except ValueError:
+            logger.warning("ollama_warmup status=invalid_response")
+            return
+        # An empty generated response is expected for a preload request.
+        if (not isinstance(payload, dict)
+                or "error" in payload
+                or payload.get("done") is not True
+                or not isinstance(payload.get("model"), str)
+                or not payload["model"].strip()
+                or not isinstance(payload.get("response"), str)):
+            logger.warning("ollama_warmup status=invalid_response")
+            return
+    except httpx.TimeoutException:
+        logger.warning("ollama_warmup status=timeout")
+    except httpx.ConnectError:
+        logger.warning("ollama_warmup status=connection_error")
+    except httpx.HTTPStatusError:
+        logger.warning("ollama_warmup status=http_error")
     except httpx.HTTPError:
-        pass
+        logger.warning("ollama_warmup status=transport_error")
+    except Exception:
+        # Keep background startup best-effort; never log exception/request data.
+        logger.warning("ollama_warmup status=unexpected_error")
+    else:
+        logger.info("ollama_warmup status=success")
 
 
 def get_llm_provider() -> LlmProvider:
