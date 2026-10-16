@@ -1,0 +1,2 @@
+﻿ltc_care 20260912 commit=eeddccc
+built=2026-09-12T20:58:08 on ROG-HOME

@@ -1,0 +1,72 @@
+# 長照 AI 照護小幫手 — 開發與展示環境
+#
+# 開發（只起資料庫，API/worker 跑在主機以使用 GPU、SAPI、Ollama）：
+#   docker compose up -d db
+# 展示（全部容器化；推論預設 extractive/hash/mock，可用 .env 指向外部 Ollama 或 STT sidecar）：
+#   docker compose --profile app up -d --build
+name: ltc_care
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ltc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?請在 .env 設定 POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-ltc}
+    ports:
+      - "${DB_PORT:-55432}:5432"
+    volumes:
+      - ltc_pgdata:/var/lib/postgresql/data
+      - ./deploy/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    profiles: ["app"]
+    build:
+      context: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ltc}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ltc}
+      DATA_DIR: /data
+    command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8140"]
+    volumes:
+      - ltc_appdata:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    profiles: ["app"]
+    build:
+      context: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ltc}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ltc}
+      DATA_DIR: /data
+    command: ["python", "-m", "app.worker"]
+    volumes:
+      - ltc_appdata:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    profiles: ["app"]
+    build:
+      context: ./frontend
+    ports:
+      - "${WEB_PORT:-8141}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  ltc_pgdata:
+  ltc_appdata:

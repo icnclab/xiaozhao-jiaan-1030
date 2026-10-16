@@ -1,0 +1,37 @@
+[project]
+name = "ltc-care-backend"
+version = "0.1.0"
+description = "長照 AI 照護小幫手：FastAPI 後端、LangGraph 問答流程、背景工作"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy>=2.0.30",
+  "psycopg[binary]>=3.2",
+  "pgvector>=0.3",
+  "alembic>=1.13",
+  "pydantic>=2.8",
+  "pydantic-settings>=2.4",
+  "httpx>=0.27",
+  "python-multipart>=0.0.9",
+  "langgraph>=0.2.40",
+  "cryptography>=43",
+  "pypdf>=5.0",
+  "python-docx>=1.1",
+  "numpy>=1.26",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3",
+  "reportlab>=5.0.1",
+  "ruff>=0.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
