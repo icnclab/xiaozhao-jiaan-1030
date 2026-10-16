@@ -19,11 +19,13 @@ import uuid
 from datetime import date
 from typing import Any, TypedDict
 
+import httpx
+
 from langgraph.graph import END, START, StateGraph
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.providers.llm import CandidateAnswer, EvidenceItem, get_llm_provider
+from app.providers.llm import CandidateAnswer, EvidenceItem, OllamaResponseError, get_llm_provider
 from app.services.deid import deidentify
 from app.services.evidence_sufficiency import (
     answers_supported_penalty_amount,
@@ -396,10 +398,28 @@ def node_generate(state: QaState) -> QaState:
             candidate = get_llm_provider().answer(state["question_masked"], state["evidence"])
     except Exception as exc:  # 任何 provider 錯誤都走轉人工，不硬答
         timings = dict(state.get("timings_ms", {}), generate=_ms(start))
-        checks = dict(state.get("checks", {}), llm_error=type(exc).__name__)
+        if isinstance(exc, httpx.TimeoutException):
+            error_type = "timeout"
+        elif isinstance(exc, httpx.ConnectError):
+            error_type = "connection_error"
+        elif isinstance(exc, httpx.HTTPStatusError):
+            error_type = "http_error"
+        elif isinstance(exc, OllamaResponseError):
+            error_type = "invalid_response"
+        else:
+            error_type = "unexpected_error"
+        checks = dict(state.get("checks", {}), llm_error=error_type)
+        if isinstance(exc, httpx.HTTPStatusError):
+            checks["llm_http_status"] = exc.response.status_code
+        elif isinstance(exc, OllamaResponseError):
+            checks["llm_http_status"] = exc.http_status
         return {"timings_ms": timings, "checks": checks, "outcome": "escalate", "reason": "llm_error"}
     timings = dict(state.get("timings_ms", {}), generate=_ms(start))
     checks = dict(state.get("checks", {}), llm_metrics=candidate.metrics)
+    if "http_status_code" in candidate.metrics:
+        checks["llm_http_status"] = candidate.metrics["http_status_code"]
+    if not candidate.raw_ok:
+        checks["llm_error"] = "invalid_response"
     from app.services.answer_presentation import include_ba16_fact
     candidate = include_ba16_fact(state['question_masked'], state['evidence_map'], candidate)
     if not candidate.raw_ok:

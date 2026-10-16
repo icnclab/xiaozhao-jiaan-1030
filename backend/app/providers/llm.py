@@ -172,6 +172,14 @@ def _ollama_client(base_url: str, timeout: float) -> httpx.Client:
     return client
 
 
+class OllamaResponseError(ValueError):
+    """Sanitized response failure; never retain response bodies or URLs."""
+
+    def __init__(self, http_status: int) -> None:
+        super().__init__("Invalid Ollama response")
+        self.http_status = http_status
+
+
 class OllamaLlm:
     """本機 Ollama 生成。"""
 
@@ -203,21 +211,34 @@ class OllamaLlm:
             timeout=self.timeout,
         )
         response.raise_for_status()
-        payload = response.json()
-        content = payload.get("message", {}).get("content", "")
+        try:
+            payload = response.json()
+            # Preserve original defaults and llm_format routing for missing fields.
+            content = payload.get("message", {}).get("content", "")
+        except (ValueError, TypeError, AttributeError):
+            raise OllamaResponseError(response.status_code) from None
         try:
             data = json.loads(content)
         except json.JSONDecodeError:
-            return CandidateAnswer(raw_ok=False, needs_human=True, reason="LLM 輸出不是合法 JSON")
-        if not isinstance(data, dict):
-            return CandidateAnswer(raw_ok=False, needs_human=True, reason="LLM 輸出格式不符")
-        candidate = _parse_candidate(data)
+            candidate = CandidateAnswer(raw_ok=False, needs_human=True, reason="LLM 輸出不是合法 JSON")
+        except (TypeError, ValueError):
+            # Original parsing raised here; retain llm_error routing, but sanitize.
+            raise OllamaResponseError(response.status_code) from None
+        else:
+            if not isinstance(data, dict):
+                candidate = CandidateAnswer(raw_ok=False, needs_human=True, reason="LLM 輸出格式不符")
+            else:
+                try:
+                    candidate = _parse_candidate(data)
+                except (ValueError, TypeError, AttributeError):
+                    raise OllamaResponseError(response.status_code) from None
         candidate.metrics = {
             key: payload[key]
             for key in ("load_duration", "prompt_eval_duration", "eval_duration",
                         "total_duration", "prompt_eval_count", "eval_count")
             if isinstance(payload.get(key), int)
         }
+        candidate.metrics["http_status_code"] = response.status_code
         return candidate
 
 
