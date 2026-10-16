@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import atexit
 import json
+import logging
 import re
 from dataclasses import dataclass, field
 from functools import lru_cache
