@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import uuid
 import hashlib
+import uuid
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -33,10 +33,10 @@ from app.models import (
     User,
 )
 from app.security import verify_media_token
-from app.services import audit, cases, qa_service, transcripts, tts_service
-from app.services import source_downloads
+from app.services import audit, cases, qa_service, source_downloads, transcripts, tts_service
 from app.services.deid import deidentify
 from app.services.documents import current_versions
+from app.services.source_access import visible_version
 
 router = APIRouter()
 ANY_ROLE = ("caregiver", "supervisor", "admin")
@@ -445,13 +445,7 @@ def coverage(user: User = Depends(require_roles(*ANY_ROLE)), db: Session = Depen
 
 
 def _visible_version(db: Session, user: User, version_id: uuid.UUID) -> tuple[DocumentVersion, Document]:
-    version = db.get(DocumentVersion, version_id)
-    document = db.get(Document, version.document_id) if version else None
-    if version is None or document is None:
-        raise _err(404, "not_found", "找不到資料")
-    if document.org_id is not None and document.org_id != user.org_id:
-        raise deny_not_found(db, user, "document_version", version_id)
-    return version, document
+    return visible_version(db, user, version_id)
 
 
 @router.get("/sources/chunks/{chunk_id}")
@@ -479,30 +473,14 @@ def source_chunk(chunk_id: str, user: User = Depends(require_roles(*ANY_ROLE)), 
 
 
 def _download_version(db: Session, user: User, version_id: str) -> DocumentVersion:
-    """Keep the existing visibility check and PDF selection."""
-    version, document = _visible_version(db, user, _parse_uuid(version_id))
-
-    download_version = version
-
-    if version.mime != "application/pdf":
-        pdf_version = db.scalar(
-            select(DocumentVersion)
-            .where(
-                DocumentVersion.document_id == document.id,
-                DocumentVersion.mime == "application/pdf",
-            )
-            .order_by(DocumentVersion.uploaded_at.desc())
-        )
-
-        if pdf_version is not None:
-            download_version = pdf_version
-
-    path = Path(download_version.file_path)
+    """Authorize and return the exact cited version, including non-PDF originals."""
+    version, _document = _visible_version(db, user, _parse_uuid(version_id))
+    path = Path(version.file_path)
 
     if not path.is_file():
         raise _err(404, "not_found", "原始檔不存在")
 
-    return download_version
+    return version
 
 
 @router.post("/sources/versions/{version_id}/download-url")

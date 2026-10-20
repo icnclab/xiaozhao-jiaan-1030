@@ -1,0 +1,693 @@
+{
+  "schema_version": 1,
+  "purpose": "pending_human_evidence_review_only",
+  "source_documents": {
+    "D1": {
+      "title_in_manifest": "附表四 照顧組合表",
+      "local_path": "data_clean\\documents\\cc0de563-442a-4dde-8877-f9a332e54955\\附表四_照顧組合表.pdf",
+      "sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+      "manifest_match": true,
+      "manifest_source": "長期照顧服務申請及給付辦法附表四",
+      "manifest_effective_from_unverified": "2026-07-01",
+      "file_version_review_status": "待人工確認",
+      "formal_effective_date_confirmed": false,
+      "pdf_page_count": 51,
+      "full_name_in_file": "附表四 照顧組合表修正規定",
+      "version_note": "PDF本身未見修正發布日；以SHA256辨識本機內容。歷史系統標籤STUST_clean_20261010_v1不是法規版次。",
+      "effective_date_note": "清單記2026-07-01；本文第22條分項施行，不能直接把此日當BA16生效日。需核對附表與發布令是否同版。",
+      "applicability_note": "BA16案家服務；搭配本文第2、8、9條核對居家給付範圍，非全日住宿式規範。"
+    },
+    "D2": {
+      "title_in_manifest": "居家服務督導員工作手冊",
+      "local_path": "data_clean\\documents\\c3304a51-2e5e-42be-b332-cee7aaacf2cb\\居家服務督導員工作手冊.pdf",
+      "sha256": "8a4ac8a2a8a2721356388207c3fb204d503f14aa4eb4cc8738bddb9c17545ca0",
+      "manifest_match": true,
+      "manifest_source": "衛生福利部 長照專區－居家服務督導員工作手冊",
+      "manifest_effective_from_unverified": "2026-05-29",
+      "file_version_review_status": "待人工確認",
+      "formal_effective_date_confirmed": false,
+      "pdf_page_count": 176,
+      "full_name_in_file": "居家服務督導員工作手冊",
+      "edition_in_file": "中華民國114年12月初版（2025年12月），PDF第176頁",
+      "version_note": "歷史系統標籤或檔案建立日期不等於出版版次。",
+      "effective_date_note": "清單記2026-05-29，但手冊無法規式生效日；初版日期不能代替生效日。",
+      "applicability_note": "前言第4頁明示居家式長照機構使用；仍以最新法令、所在地主管機關與機構流程為準。"
+    },
+    "D3": {
+      "title_in_manifest": "長期照顧服務申請及給付辦法",
+      "local_path": "data_clean\\documents\\1e054ebe-0846-495a-a0ff-e842bf0d4f19\\長期照顧服務申請及給付辦法.txt",
+      "sha256": "c69c6901fb6b707c2dbfd842e70c66693bd0b4e7bd650947f305a0456470bf76",
+      "manifest_match": true,
+      "manifest_source": "全國法規資料庫",
+      "manifest_effective_from_unverified": "2026-07-01",
+      "file_version_review_status": "待人工確認",
+      "formal_effective_date_confirmed": false,
+      "full_name_in_file": "長期照顧服務申請及給付辦法",
+      "version_note": "匯入用文字版；檔首記民國114年06月19日修正，不是官方發布令影本。",
+      "effective_date_note": "第22條載分項施行；BA16附表是否對應同一修正版仍待確認。",
+      "applicability_note": "第2條排除全日住宿式及團體家屋；第8條含居家照顧服務，第9條連結附表。"
+    }
+  },
+  "evidence_catalog": {
+    "E01": {
+      "document_id": "D1",
+      "pdf_page": 14,
+      "locator": "BA16第一點",
+      "quote": "一、目的物品或事項包括：餐食、食材、生活用品、藥品、郵寄、補助品、衣物床單送洗（或取回）及必要之辦理事項（如洽政府機關或繳費）。",
+      "whitespace_only_normalized": true,
+      "scope_note": "",
+      "review_status": "待人工確認"
+    },
+    "E02": {
+      "document_id": "D1",
+      "pdf_page": 14,
+      "locator": "BA16第二點",
+      "quote": "二、以上服務均含購物清單規劃與確認、購物、購買物品之清理與歸位及記帳之相關事前準備至善後之完整服務。",
+      "whitespace_only_normalized": true,
+      "scope_note": "可供督導判斷服務完整範圍；不自動加入每題必要事實。",
+      "review_status": "待人工確認"
+    },
+    "E03": {
+      "document_id": "D1",
+      "pdf_page": 14,
+      "locator": "BA16第三點",
+      "quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+      "whitespace_only_normalized": true,
+      "scope_note": "",
+      "review_status": "待人工確認"
+    },
+    "E04": {
+      "document_id": "D1",
+      "pdf_page": 14,
+      "locator": "BA16第四點",
+      "quote": "四、本組合以代購或代領或代送長照給付對象物品或事項為主，距離自案家出門起算五公里內，適用本組合。超過五公里所需費用由長照給付對象自行負擔。",
+      "whitespace_only_normalized": true,
+      "scope_note": "",
+      "review_status": "待人工確認"
+    },
+    "E05": {
+      "document_id": "D2",
+      "pdf_page": 111,
+      "locator": "第四章第二節／肆、二、事件嚴重度與通報時效，表格前正文",
+      "quote": "事件發生後，發現異常事件的第一線服務人員應立即報告單位主管，說明事情發生經過，現場對服務使用者及其家屬即時解說並取得諒解，不得無故延遲回報。",
+      "whitespace_only_normalized": true,
+      "scope_note": "",
+      "review_status": "待人工確認"
+    },
+    "E06": {
+      "document_id": "D2",
+      "pdf_page": 111,
+      "locator": "同節（一）初報／中度傷害列附註",
+      "quote": "第一線服務人員應立即報告單位主管，說明事情發生或發現經過，依指示完成初步處理，視服務使用者實際狀況撥打救護車或協助就醫，並完整記錄事發經過，對服務使用者及其家屬即時解說並取得諒解，不得無故延遲回報。",
+      "whitespace_only_normalized": true,
+      "scope_note": "表格附註位於中度傷害列；不可據未知症狀自行套用事件分級或期限。",
+      "review_status": "待人工確認"
+    },
+    "E07": {
+      "document_id": "D2",
+      "pdf_page": 112,
+      "locator": "同節初報表續頁／重度、極重度及死亡列附註",
+      "quote": "第一線服務人員應立即報告單位主管，說明事情發生經過，依指示完成現場緊急處理，並撥打救護車，完整記錄事發經過。",
+      "whitespace_only_normalized": true,
+      "scope_note": "與111頁處置文字不同，須保留嚴重度條件。",
+      "review_status": "待人工確認"
+    },
+    "E08": {
+      "document_id": "D2",
+      "pdf_page": 112,
+      "locator": "初報表後／各縣市主管機關要求",
+      "quote": "若因以上事件，導致居家服務無法如服務契約執行，例如因事件發生導致服務的頻次、項目、時間或執行內涵有所變化，或導致服務使用者住院或需結案等狀態改變等情況，則須依各縣市主管機關所訂定之要求，進入照管平台進行異動通報。",
+      "whitespace_only_normalized": true,
+      "scope_note": "通報者、對象及地方流程須由督導確認；不設通用期限。",
+      "review_status": "待人工確認"
+    },
+    "E09": {
+      "document_id": "D2",
+      "pdf_page": 75,
+      "locator": "第二章／二、服務紀律與時間問題（六）",
+      "quote": "（六）違規操作或越權行為，如私自給藥、做醫療性質處置（如打針）等。",
+      "whitespace_only_normalized": true,
+      "scope_note": "僅直接支持私自給藥／越權處置界線，不能擴寫成所有選藥、劑量及服法的完整法規。",
+      "review_status": "待人工確認"
+    },
+    "E10": {
+      "document_id": "D3",
+      "pdf_page": null,
+      "locator": "第2條末段",
+      "quote": "全日住宿式服務及團體家屋服務之服務使用者，由中央主管機關另依法令規定提供照顧，不適用本辦法。",
+      "whitespace_only_normalized": true,
+      "scope_note": "",
+      "review_status": "待人工確認"
+    },
+    "E11": {
+      "document_id": "D3",
+      "pdf_page": null,
+      "locator": "第8條第一項",
+      "quote": "前條第二項第一款第一目照顧及專業服務，其內容如下：一、居家照顧服務。二、日間照顧服務。三、家庭托顧服務。四、專業服務。",
+      "whitespace_only_normalized": true,
+      "scope_note": "",
+      "review_status": "待人工確認"
+    },
+    "E12": {
+      "document_id": "D3",
+      "pdf_page": null,
+      "locator": "第9條第一項",
+      "quote": "長照服務給付細項之照顧組合名稱、內容與說明及支付價格，規定如附表四及附表四之一。",
+      "whitespace_only_normalized": true,
+      "scope_note": "",
+      "review_status": "待人工確認"
+    },
+    "E13": {
+      "document_id": "D3",
+      "pdf_page": null,
+      "locator": "第16條末段",
+      "quote": "長照特約單位應就其提供之長照服務有關事項製作紀錄，供地方主管機關查核。",
+      "whitespace_only_normalized": true,
+      "scope_note": "義務主體為長照特約單位；照服員實際填表及分工仍需機構流程。",
+      "review_status": "待人工確認"
+    },
+    "E14": {
+      "document_id": "D3",
+      "pdf_page": null,
+      "locator": "第22條第二項",
+      "quote": "本辦法中華民國一百十四年六月十九日修正發布之條文，除第二條第一項第三款及第四款、第十條第一項及附表四碼別BA08、BA09、BA09a自一百十五年一月一日施行，附表二輔具及居家無障礙環境改善服務第二組給付額度、附表四輔具及居家無障礙環境改善服務項目、附表四之一自一百十五年七月一日施行外，自一百十四年九月一日施行。",
+      "whitespace_only_normalized": true,
+      "scope_note": "分項施行原文；不自動將清單日期轉成BA16的有效日期。",
+      "review_status": "待人工確認"
+    },
+    "E15": {
+      "document_id": "D2",
+      "pdf_page": 4,
+      "locator": "前言末段",
+      "quote": "本手冊內容係依編撰時之最新法規編定，僅供居督員依工作所需參酌運用。實務執行時，仍應以當前最新公告之法令規定為準。",
+      "whitespace_only_normalized": true,
+      "scope_note": "",
+      "review_status": "待人工確認"
+    }
+  },
+  "cases": [
+    {
+      "display_id": "Q1",
+      "case_id": "R-05b44283-c723-4721-b13f-9f370eb1e692",
+      "question": "可以幫忙買藥嗎？",
+      "origin": {
+        "file": "quality_tests/v1/gold_dataset_v1.json",
+        "record_id": "05b44283-c723-4721-b13f-9f370eb1e692",
+        "sha256": "ffe2477000f48fa357dd44b2f462058a5b424636a45c7662cd4df1649eea08de",
+        "kind": "existing_reviewed_feedback; no_new_question_wording"
+      },
+      "draft_facts": [
+        {
+          "id": "Q1-F1",
+          "draft_fact": "藥品列在BA16目的物品內。",
+          "evidence_id": "E01",
+          "original_quote": "一、目的物品或事項包括：餐食、食材、生活用品、藥品、郵寄、補助品、衣物床單送洗（或取回）及必要之辦理事項（如洽政府機關或繳費）。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第一點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q1-F2",
+          "draft_fact": "目的物品原則為給付對象本身所需。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q1-F3",
+          "draft_fact": "包含其他家人物品時，組合金額僅支付百分之五十。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q1-F4",
+          "draft_fact": "包含給付對象以外家人物品時，另外百分之五十由給付對象自行負擔。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q1-F5",
+          "draft_fact": "自案家出門起算五公里內適用本組合。",
+          "evidence_id": "E04",
+          "original_quote": "四、本組合以代購或代領或代送長照給付對象物品或事項為主，距離自案家出門起算五公里內，適用本組合。超過五公里所需費用由長照給付對象自行負擔。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第四點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q1-F6",
+          "draft_fact": "超過五公里所需費用由給付對象自行負擔。",
+          "evidence_id": "E04",
+          "original_quote": "四、本組合以代購或代領或代送長照給付對象物品或事項為主，距離自案家出門起算五公里內，適用本組合。超過五公里所需費用由長照給付對象自行負擔。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第四點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        }
+      ],
+      "supplementary_evidence": [
+        "E09"
+      ],
+      "home_care_applicability": "原文支持居家主題；有效版本與個案給付／地方條件仍待人工確認",
+      "core_original_available": true,
+      "ready_for_final_approval": false,
+      "review_status": "待人工確認",
+      "reviewer": null,
+      "reviewed_at": null,
+      "reviewer_notes": "",
+      "unresolved": [
+        "確認附表／手冊版本及問題所適用日期。",
+        "確認所在地主管機關與機構現行流程。",
+        "舊標準答案的自行選藥、決定劑量／服法及醫療專業確認，不能只用BA16證明；E09僅支持私自給藥界線，完整依據尚未確認。"
+      ]
+    },
+    {
+      "display_id": "Q2",
+      "case_id": "R-c01c328b-9ea0-45d8-8baf-43025772d8c9",
+      "question": "照服員可以幫長輩代領藥嗎？",
+      "origin": {
+        "file": "quality_tests/v1/gold_dataset_v1.json",
+        "record_id": "c01c328b-9ea0-45d8-8baf-43025772d8c9",
+        "sha256": "ffe2477000f48fa357dd44b2f462058a5b424636a45c7662cd4df1649eea08de",
+        "kind": "existing_reviewed_feedback; no_new_question_wording"
+      },
+      "draft_facts": [
+        {
+          "id": "Q2-F1",
+          "draft_fact": "BA16代購／代領／代送服務的目的物品包含藥品。",
+          "evidence_id": "E01",
+          "original_quote": "一、目的物品或事項包括：餐食、食材、生活用品、藥品、郵寄、補助品、衣物床單送洗（或取回）及必要之辦理事項（如洽政府機關或繳費）。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第一點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q2-F2",
+          "draft_fact": "目的物品原則為給付對象本身所需。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q2-F3",
+          "draft_fact": "包含其他家人物品時，組合金額僅支付百分之五十。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q2-F4",
+          "draft_fact": "包含給付對象以外家人物品時，另外百分之五十由給付對象自行負擔。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        }
+      ],
+      "supplementary_evidence": [
+        "E09"
+      ],
+      "home_care_applicability": "原文支持居家主題；有效版本與個案給付／地方條件仍待人工確認",
+      "core_original_available": true,
+      "ready_for_final_approval": false,
+      "review_status": "待人工確認",
+      "reviewer": null,
+      "reviewed_at": null,
+      "reviewer_notes": "",
+      "unresolved": [
+        "確認附表／手冊版本及問題所適用日期。",
+        "確認所在地主管機關與機構現行流程。",
+        "舊標準答案的自行選藥、決定劑量／服法及醫療專業確認，不能只用BA16證明；E09僅支持私自給藥界線，完整依據尚未確認。"
+      ]
+    },
+    {
+      "display_id": "Q3",
+      "case_id": "R-8d9000d2-00a2-4f59-a2a8-5c1aa39497c1",
+      "question": "代購服務最遠可以到幾公里？",
+      "origin": {
+        "file": "quality_tests/v1/gold_dataset_v1.json",
+        "record_id": "8d9000d2-00a2-4f59-a2a8-5c1aa39497c1",
+        "sha256": "ffe2477000f48fa357dd44b2f462058a5b424636a45c7662cd4df1649eea08de",
+        "kind": "existing_reviewed_feedback; no_new_question_wording"
+      },
+      "draft_facts": [
+        {
+          "id": "Q3-F1",
+          "draft_fact": "距離自案家出門起算五公里內適用本組合。",
+          "evidence_id": "E04",
+          "original_quote": "四、本組合以代購或代領或代送長照給付對象物品或事項為主，距離自案家出門起算五公里內，適用本組合。超過五公里所需費用由長照給付對象自行負擔。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第四點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q3-F2",
+          "draft_fact": "超過五公里所需費用由給付對象自行負擔；不能改寫成絕對禁止超過五公里。",
+          "evidence_id": "E04",
+          "original_quote": "四、本組合以代購或代領或代送長照給付對象物品或事項為主，距離自案家出門起算五公里內，適用本組合。超過五公里所需費用由長照給付對象自行負擔。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第四點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        }
+      ],
+      "supplementary_evidence": [],
+      "home_care_applicability": "原文支持居家主題；有效版本與個案給付／地方條件仍待人工確認",
+      "core_original_available": true,
+      "ready_for_final_approval": false,
+      "review_status": "待人工確認",
+      "reviewer": null,
+      "reviewed_at": null,
+      "reviewer_notes": "",
+      "unresolved": [
+        "確認附表／手冊版本及問題所適用日期。",
+        "確認所在地主管機關與機構現行流程。"
+      ]
+    },
+    {
+      "display_id": "Q4",
+      "case_id": "R-663f3622-b666-460f-9d8e-773626b85bad",
+      "question": "代購的東西一定只能是長輩自己要用的嗎？",
+      "origin": {
+        "file": "quality_tests/v1/gold_dataset_v1.json",
+        "record_id": "663f3622-b666-460f-9d8e-773626b85bad",
+        "sha256": "ffe2477000f48fa357dd44b2f462058a5b424636a45c7662cd4df1649eea08de",
+        "kind": "existing_reviewed_feedback; no_new_question_wording"
+      },
+      "draft_facts": [
+        {
+          "id": "Q4-F1",
+          "draft_fact": "原則為長照給付對象本身所需。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q4-F2",
+          "draft_fact": "包含給付對象以外家人物品時，組合金額僅支付百分之五十。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q4-F3",
+          "draft_fact": "包含給付對象以外家人物品時，另外百分之五十由長照給付對象自行負擔支付。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        }
+      ],
+      "supplementary_evidence": [],
+      "home_care_applicability": "原文支持居家主題；有效版本與個案給付／地方條件仍待人工確認",
+      "core_original_available": true,
+      "ready_for_final_approval": false,
+      "review_status": "待人工確認",
+      "reviewer": null,
+      "reviewed_at": null,
+      "reviewer_notes": "",
+      "unresolved": [
+        "確認附表／手冊版本及問題所適用日期。",
+        "確認所在地主管機關與機構現行流程。"
+      ]
+    },
+    {
+      "display_id": "Q5",
+      "case_id": "R-C003",
+      "question": "當服務使用者出現異常生理狀況時，照服員之通報與紀錄責任為何？",
+      "origin": {
+        "file": "quality_tests/v1/calibration_set.json",
+        "record_id": "C003",
+        "sha256": "556087b7f3f681c52ce3f633269b0b5dfc9cd98b5298272b3655977d58b1383e",
+        "kind": "existing_calibration_case_with_saved_result; not_claimed_real_staff_interview"
+      },
+      "draft_facts": [
+        {
+          "id": "Q5-F1",
+          "draft_fact": "第一線服務人員發現異常事件，應立即報告單位主管。",
+          "evidence_id": "E05",
+          "original_quote": "事件發生後，發現異常事件的第一線服務人員應立即報告單位主管，說明事情發生經過，現場對服務使用者及其家屬即時解說並取得諒解，不得無故延遲回報。",
+          "document": "居家服務督導員工作手冊",
+          "file_sha256": "8a4ac8a2a8a2721356388207c3fb204d503f14aa4eb4cc8738bddb9c17545ca0",
+          "locator": "第四章第二節／肆、二、事件嚴重度與通報時效，表格前正文",
+          "pdf_page": 111,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q5-F2",
+          "draft_fact": "向主管說明事情發生經過。",
+          "evidence_id": "E05",
+          "original_quote": "事件發生後，發現異常事件的第一線服務人員應立即報告單位主管，說明事情發生經過，現場對服務使用者及其家屬即時解說並取得諒解，不得無故延遲回報。",
+          "document": "居家服務督導員工作手冊",
+          "file_sha256": "8a4ac8a2a8a2721356388207c3fb204d503f14aa4eb4cc8738bddb9c17545ca0",
+          "locator": "第四章第二節／肆、二、事件嚴重度與通報時效，表格前正文",
+          "pdf_page": 111,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q5-F3",
+          "draft_fact": "現場對服務使用者及家屬即時解說並取得諒解。",
+          "evidence_id": "E05",
+          "original_quote": "事件發生後，發現異常事件的第一線服務人員應立即報告單位主管，說明事情發生經過，現場對服務使用者及其家屬即時解說並取得諒解，不得無故延遲回報。",
+          "document": "居家服務督導員工作手冊",
+          "file_sha256": "8a4ac8a2a8a2721356388207c3fb204d503f14aa4eb4cc8738bddb9c17545ca0",
+          "locator": "第四章第二節／肆、二、事件嚴重度與通報時效，表格前正文",
+          "pdf_page": 111,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q5-F4",
+          "draft_fact": "不得無故延遲回報。",
+          "evidence_id": "E05",
+          "original_quote": "事件發生後，發現異常事件的第一線服務人員應立即報告單位主管，說明事情發生經過，現場對服務使用者及其家屬即時解說並取得諒解，不得無故延遲回報。",
+          "document": "居家服務督導員工作手冊",
+          "file_sha256": "8a4ac8a2a8a2721356388207c3fb204d503f14aa4eb4cc8738bddb9c17545ca0",
+          "locator": "第四章第二節／肆、二、事件嚴重度與通報時效，表格前正文",
+          "pdf_page": 111,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q5-F5",
+          "draft_fact": "長照特約單位應製作服務紀錄；照服員紀錄分工需機構確認。",
+          "evidence_id": "E13",
+          "original_quote": "長照特約單位應就其提供之長照服務有關事項製作紀錄，供地方主管機關查核。",
+          "document": "長期照顧服務申請及給付辦法",
+          "file_sha256": "c69c6901fb6b707c2dbfd842e70c66693bd0b4e7bd650947f305a0456470bf76",
+          "locator": "第16條末段",
+          "pdf_page": null,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        }
+      ],
+      "supplementary_evidence": [
+        "E06",
+        "E07",
+        "E08",
+        "E15"
+      ],
+      "home_care_applicability": "原文支持居家主題；有效版本與個案給付／地方條件仍待人工確認",
+      "core_original_available": true,
+      "ready_for_final_approval": false,
+      "review_status": "待人工確認",
+      "reviewer": null,
+      "reviewed_at": null,
+      "reviewer_notes": "",
+      "unresolved": [
+        "確認附表／手冊版本及問題所適用日期。",
+        "確認所在地主管機關與機構現行流程。",
+        "問題沒有提供嚴重度，不得套用表內特定時限或把中度傷害處理當成所有異常生理狀況；診斷界線的完整依據尚未確認。"
+      ]
+    },
+    {
+      "display_id": "Q6",
+      "case_id": "R-C014",
+      "question": "我今天到個案家提供服務，家屬說外出時順便幫長輩買成藥。我想確認照服員代購或代領或代送服務中，藥品是否屬於 BA16 的目的物品，以及距離和購買對象有哪些條件？",
+      "origin": {
+        "file": "quality_tests/v1/calibration_set.json",
+        "record_id": "C014",
+        "sha256": "556087b7f3f681c52ce3f633269b0b5dfc9cd98b5298272b3655977d58b1383e",
+        "kind": "existing_calibration_case_with_saved_result; not_claimed_real_staff_interview"
+      },
+      "draft_facts": [
+        {
+          "id": "Q6-F1",
+          "draft_fact": "BA16目的物品包含藥品。",
+          "evidence_id": "E01",
+          "original_quote": "一、目的物品或事項包括：餐食、食材、生活用品、藥品、郵寄、補助品、衣物床單送洗（或取回）及必要之辦理事項（如洽政府機關或繳費）。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第一點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q6-F2",
+          "draft_fact": "目的物品原則應為給付對象本身所需。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q6-F3",
+          "draft_fact": "包含其他家人物品時，組合金額僅支付百分之五十。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q6-F4",
+          "draft_fact": "包含給付對象以外家人物品時，另外百分之五十由給付對象自行負擔。",
+          "evidence_id": "E03",
+          "original_quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第三點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q6-F5",
+          "draft_fact": "自案家出門起算五公里內適用本組合。",
+          "evidence_id": "E04",
+          "original_quote": "四、本組合以代購或代領或代送長照給付對象物品或事項為主，距離自案家出門起算五公里內，適用本組合。超過五公里所需費用由長照給付對象自行負擔。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第四點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        },
+        {
+          "id": "Q6-F6",
+          "draft_fact": "超過五公里所需費用由給付對象自行負擔。",
+          "evidence_id": "E04",
+          "original_quote": "四、本組合以代購或代領或代送長照給付對象物品或事項為主，距離自案家出門起算五公里內，適用本組合。超過五公里所需費用由長照給付對象自行負擔。",
+          "document": "附表四 照顧組合表修正規定",
+          "file_sha256": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+          "locator": "BA16第四點",
+          "pdf_page": 14,
+          "necessity": "待人工確認；未核准、未加入正式分母",
+          "review_status": "待人工確認"
+        }
+      ],
+      "supplementary_evidence": [
+        "E09"
+      ],
+      "home_care_applicability": "原文支持居家主題；有效版本與個案給付／地方條件仍待人工確認",
+      "core_original_available": true,
+      "ready_for_final_approval": false,
+      "review_status": "待人工確認",
+      "reviewer": null,
+      "reviewed_at": null,
+      "reviewer_notes": "",
+      "unresolved": [
+        "確認附表／手冊版本及問題所適用日期。",
+        "確認所在地主管機關與機構現行流程。",
+        "舊標準答案的自行選藥、決定劑量／服法及醫療專業確認，不能只用BA16證明；E09僅支持私自給藥界線，完整依據尚未確認。"
+      ]
+    }
+  ],
+  "summary": {
+    "cases": 6,
+    "core_local_original_available": 6,
+    "missing_core_original": 0,
+    "approved": 0,
+    "pending_version_or_effective_date": 6,
+    "old_answer_boundary_claims_need_further_basis": 4
+  },
+  "findings": [
+    "No confirmed residential-only rule was used as home-care evidence in these six drafts.",
+    "Historical chunk paragraph 98 includes the end of BA15 and the BA16 heading; do not treat it as BA16 operative terms.",
+    "Importer effective dates and internal labels are not official publication/effective dates.",
+    "Manual page111 note is in the moderate-injury row; page112 has different severe-injury wording."
+  ],
+  "database_connections": 0,
+  "searches": 0,
+  "model_calls": 0,
+  "protected_before_sha256": {
+    "quality_tests\\recall_round1\\dataset.json": "078cbc8c5e46482b907e86110b95bb98bb4a511ec03e976b695f957e8056c281",
+    "quality_tests\\recall_round1\\annotations.json": "ea046ffe78039086e96d21670b125cc8c30459844303e4f178eaa7621f9ef3bf",
+    "quality_tests\\recall_round1\\observations.json": "05e248c9e7014309da783e1701c68d5d90b858470f2a19391a6cd89c4b8f2b47",
+    "quality_tests\\recall_round1\\baseline_report.json": "9a13c329865d4da2b13c3df7ddf467cf6ad8a5f8fe43133cac1d33b3e5649c18",
+    "quality_tests\\v1\\gold_dataset_v1.json": "ffe2477000f48fa357dd44b2f462058a5b424636a45c7662cd4df1649eea08de",
+    "quality_tests\\v1\\manifest.json": "ea38002a4bb21c8e799a8f8aae5e25571997fb81e12407fe5f31202eeeade063",
+    "docs\\clean-db-manifest.json": "2a5e81e3fab15abe444c5dfab6432608b44db63bd4a63c73a58ffb86cf3fa9a0"
+  }
+}

@@ -86,3 +86,24 @@ htmlcov/
 /docs/regression_local_fixes_20261008*.json
 /quality_tests/systematic_20261012/variants_report.json
 /quality_tests/systematic_20261012/feedback_report.json
+
+# VS Code
+.vscode/
+
+# Python
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Frontend
+node_modules/
+frontend/dist/
+frontend/dist-*/
+
+# Sensitive files
+.env
+.env.*
+!.env.example
+
+# Temporary files
+*.log

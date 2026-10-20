@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "phase": "design_only",
+  "production_mutation_allowed": false,
+  "enabled": false,
+  "dataset": {
+    "eligible_status": "verified",
+    "development_regression_v1_excluded": true,
+    "split_now": null,
+    "grouping": [
+      "original_qa",
+      "near_duplicate_question_family",
+      "source_or_incident_group"
+    ],
+    "freeze_required": [
+      "dataset_manifest_sha256",
+      "kb_snapshot_sha256",
+      "code_fingerprint",
+      "model",
+      "seed",
+      "date"
+    ]
+  },
+  "stages": {
+    "training": "parameter search / fitting in isolated experiment store",
+    "validation": "choose configuration under safety constraints",
+    "test": "one final unbiased evaluation; no parameter feedback"
+  },
+  "proposed_parameter_sets": {
+    "A": {
+      "description": "source baseline",
+      "overrides": {
+        "policy.candidate_k": 50,
+        "policy.top_k": 5,
+        "policy.lexical_weight": 0.55
+      }
+    },
+    "B": {
+      "description": "future candidate recall comparison; not applied",
+      "overrides": {
+        "policy.candidate_k": 75
+      }
+    },
+    "C": {
+      "description": "future evidence capacity comparison; not applied",
+      "overrides": {
+        "policy.top_k": 7
+      }
+    }
+  },
+  "metrics": [
+    "answer correctness",
+    "false refusal rate",
+    "unsafe answer rate",
+    "risk recall",
+    "risk false positive rate",
+    "retrieval recall@k",
+    "evidence precision",
+    "citation correctness",
+    "escalation accuracy"
+  ],
+  "selection": {
+    "primary": "safety constrained Pareto comparison",
+    "not_an_objective": "raw answer rate",
+    "missing_ground_truth": "N/A; never infer clinical correctness from source keywords",
+    "confidence": "report numerator/denominator plus grouped uncertainty"
+  },
+  "artifacts": [
+    "manifest.json",
+    "config.json",
+    "traces.jsonl",
+    "per_case_results.json",
+    "metrics.json",
+    "comparison.md"
+  ],
+  "parameter_constraints": {
+    "classification_D": "locked; never automatically tuned",
+    "vector_weight": "derived as 1-lexical_weight",
+    "embedding": "locked",
+    "chunk_rebuild": "isolated index only",
+    "test_set": "sealed until final evaluation"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "local_annex_pages": 51,
+  "official_annex_pages": 53,
+  "whole_annex_sha256_equal": false,
+  "ba16_point_matches": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "local_ba16_page": 14,
+  "official_ba16_pages": [
+    14,
+    15
+  ],
+  "manual_whole_sha256_equal": true,
+  "manual_checked_pages": [
+    75,
+    111,
+    112
+  ],
+  "amendment_comparison_ba16_pages": [
+    39,
+    40
+  ],
+  "correction_pdf_pages": 7,
+  "correction_annex4_pages": [
+    4,
+    5,
+    6
+  ],
+  "correction_contains_ba16": false,
+  "legal_regime_general_effective_date": "2025-09-01",
+  "ba16_changed_in_20250619_comparison": false,
+  "not_asserted": [
+    "first ever BA16 effective date",
+    "all historical dates applicable",
+    "all local annex pages current",
+    "no later unpublished changes"
+  ]
+}

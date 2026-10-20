@@ -1,0 +1,25 @@
+{
+  "question_verbatim_matches": 6,
+  "pending_without_reviewer": 6,
+  "quotes_present_in_original": 15,
+  "local_source_manifest_hash_matches": 3,
+  "protected_input_hashes_unchanged": {
+    "quality_tests\\recall_round1\\dataset.json": "078cbc8c5e46482b907e86110b95bb98bb4a511ec03e976b695f957e8056c281",
+    "quality_tests\\recall_round1\\annotations.json": "ea046ffe78039086e96d21670b125cc8c30459844303e4f178eaa7621f9ef3bf",
+    "quality_tests\\recall_round1\\observations.json": "05e248c9e7014309da783e1701c68d5d90b858470f2a19391a6cd89c4b8f2b47",
+    "quality_tests\\recall_round1\\baseline_report.json": "9a13c329865d4da2b13c3df7ddf467cf6ad8a5f8fe43133cac1d33b3e5649c18",
+    "quality_tests\\v1\\gold_dataset_v1.json": "ffe2477000f48fa357dd44b2f462058a5b424636a45c7662cd4df1649eea08de",
+    "quality_tests\\v1\\manifest.json": "ea38002a4bb21c8e799a8f8aae5e25571997fb81e12407fe5f31202eeeade063",
+    "docs\\clean-db-manifest.json": "2a5e81e3fab15abe444c5dfab6432608b44db63bd4a63c73a58ffb86cf3fa9a0"
+  },
+  "source_hashes_after": {
+    "D1": "b991c5254941c1177938494c266241f0945da7aa9eaf287a8decf1cbe3a20204",
+    "D2": "8a4ac8a2a8a2721356388207c3fb204d503f14aa4eb4cc8738bddb9c17545ca0",
+    "D3": "c69c6901fb6b707c2dbfd842e70c66693bd0b4e7bd650947f305a0456470bf76"
+  },
+  "approved": 0,
+  "database_connections": 0,
+  "searches": 0,
+  "model_calls": 0,
+  "limitations": "Mechanical checks and PDF visual inspection only; human approval remains pending."
+}

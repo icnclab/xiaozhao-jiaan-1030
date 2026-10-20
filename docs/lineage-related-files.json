@@ -1,0 +1,419 @@
+[
+  {
+    "path": ".pytest_cache/README.md",
+    "matching_lines": [
+      4
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "README.md",
+    "matching_lines": [
+      31
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "README_安裝.md",
+    "matching_lines": [
+      31
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "backend/.pytest_cache/README.md",
+    "matching_lines": [
+      4
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "backend/checks/test_source_downloads.py",
+    "matching_lines": [
+      1
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "backend/scripts/eval_run.py",
+    "matching_lines": [
+      96,
+      104,
+      114,
+      115
+    ],
+    "purpose": "Seeds and runs persistent evaluation in separate ltc_eval DB"
+  },
+  {
+    "path": "backend/scripts/make_demo_docs.py",
+    "matching_lines": [
+      7
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "backend/scripts/seed_demo.py",
+    "matching_lines": [
+      6,
+      7,
+      70,
+      168
+    ],
+    "purpose": "Create synthetic organizations/accounts/categories/LINE mock bindings/knowledge; reset capability"
+  },
+  {
+    "path": "backend/tests/__init__.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/conftest.py",
+    "matching_lines": [
+      78,
+      123,
+      182
+    ],
+    "purpose": "Independent TEST_DATABASE_URL fixture; resets test DB and creates synthetic world"
+  },
+  {
+    "path": "backend/tests/test_authz.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_cases.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_colloquial_rag.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_deid.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_documents.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_injection.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_line_webhook.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_local_rag_fixes.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_meal_intent.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_qa_flow.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_retention.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_retrieval_gate.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_swallowing_risk.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_transcripts.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_tts.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "backend/tests/test_wake.py",
+    "matching_lines": [],
+    "purpose": "Test scenarios using fixtures; not evidence that main ltc DB was populated"
+  },
+  {
+    "path": "demo/DEMO_SCRIPT.md",
+    "matching_lines": [
+      8
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "demo/documents/README.md",
+    "matching_lines": [
+      19
+    ],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/documents/happy_handover_notes.md",
+    "matching_lines": [],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/documents/happy_incident_sop.pdf",
+    "matching_lines": [],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/documents/happy_incident_sop.src.md",
+    "matching_lines": [],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/documents/happy_scope_rules.md",
+    "matching_lines": [],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/documents/happy_transfer_sop.docx",
+    "matching_lines": [],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/documents/happy_transfer_sop.src.md",
+    "matching_lines": [],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/documents/home_service_rules.md",
+    "matching_lines": [],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/documents/pine_scope_rules.md",
+    "matching_lines": [],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/documents/reg_operation_v1.md",
+    "matching_lines": [],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/documents/reg_operation_v2.md",
+    "matching_lines": [],
+    "purpose": "Synthetic seed/test input documents"
+  },
+  {
+    "path": "demo/eval/questions.jsonl",
+    "matching_lines": [],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "demo/eval/runs/20260911-190803_extractive.json",
+    "matching_lines": [],
+    "purpose": "Historical evaluation JSON output; not a PostgreSQL dump"
+  },
+  {
+    "path": "demo/eval/runs/20260911-191505_extractive.json",
+    "matching_lines": [],
+    "purpose": "Historical evaluation JSON output; not a PostgreSQL dump"
+  },
+  {
+    "path": "demo/eval/runs/20260911-191719_extractive.json",
+    "matching_lines": [],
+    "purpose": "Historical evaluation JSON output; not a PostgreSQL dump"
+  },
+  {
+    "path": "demo/eval/runs/20260911-191833_ollama.json",
+    "matching_lines": [],
+    "purpose": "Historical evaluation JSON output; not a PostgreSQL dump"
+  },
+  {
+    "path": "demo/eval/runs/20260911-192426_ollama.json",
+    "matching_lines": [],
+    "purpose": "Historical evaluation JSON output; not a PostgreSQL dump"
+  },
+  {
+    "path": "demo/eval/runs/20260911-193517_ollama.json",
+    "matching_lines": [],
+    "purpose": "Historical evaluation JSON output; not a PostgreSQL dump"
+  },
+  {
+    "path": "demo/eval/runs/20260911-194112_ollama.json",
+    "matching_lines": [],
+    "purpose": "Historical evaluation JSON output; not a PostgreSQL dump"
+  },
+  {
+    "path": "demo/eval/runs/20260911-201218_extractive.json",
+    "matching_lines": [],
+    "purpose": "Historical evaluation JSON output; not a PostgreSQL dump"
+  },
+  {
+    "path": "demo/eval/runs/20260911-201542_extractive.json",
+    "matching_lines": [],
+    "purpose": "Historical evaluation JSON output; not a PostgreSQL dump"
+  },
+  {
+    "path": "demo/eval/runs/20260911-201849_ollama.json",
+    "matching_lines": [],
+    "purpose": "Historical evaluation JSON output; not a PostgreSQL dump"
+  },
+  {
+    "path": "deploy/deploy24h_setup.ps1",
+    "matching_lines": [
+      3
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "deploy/install/README_安裝.md",
+    "matching_lines": [
+      31
+    ],
+    "purpose": "Installation/bootstrap/package scripts; installer may seed empty DB"
+  },
+  {
+    "path": "deploy/install/install.ps1",
+    "matching_lines": [
+      122,
+      123,
+      124,
+      125
+    ],
+    "purpose": "Installation/bootstrap/package scripts; installer may seed empty DB"
+  },
+  {
+    "path": "docs/deployment.md",
+    "matching_lines": [
+      4
+    ],
+    "purpose": "Historical notes/diagnostics; restore descriptions are not proof of local execution"
+  },
+  {
+    "path": "docs/healthcheck_jiaan_20261017_20261008.md",
+    "matching_lines": [
+      116,
+      125,
+      141,
+      160
+    ],
+    "purpose": "Historical notes/diagnostics; restore descriptions are not proof of local execution"
+  },
+  {
+    "path": "docs/progress.md",
+    "matching_lines": [
+      32,
+      81
+    ],
+    "purpose": "Historical notes/diagnostics; restore descriptions are not proof of local execution"
+  },
+  {
+    "path": "docs/retrieval_evidence_gate_20261008.md",
+    "matching_lines": [
+      96
+    ],
+    "purpose": "Historical notes/diagnostics; restore descriptions are not proof of local execution"
+  },
+  {
+    "path": "frontend/dist/assets/index-CIydgls1.js",
+    "matching_lines": [
+      49,
+      68
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "frontend/src/admin/pages/AdminLoginPage.tsx",
+    "matching_lines": [
+      36
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "tools/batch_import_core_law_txt.py",
+    "matching_lines": [],
+    "purpose": "Upload formal files through LOCAL API; version creation and doc_ingest jobs"
+  },
+  {
+    "path": "tools/batch_import_formal_law.py",
+    "matching_lines": [],
+    "purpose": "Upload formal files through LOCAL API; version creation and doc_ingest jobs"
+  },
+  {
+    "path": "tools/batch_import_kb_2.py",
+    "matching_lines": [],
+    "purpose": "Upload formal files through LOCAL API; version creation and doc_ingest jobs"
+  },
+  {
+    "path": "tools/batch_import_ltc_service_act_v3.py",
+    "matching_lines": [],
+    "purpose": "Upload formal files through LOCAL API; version creation and doc_ingest jobs"
+  },
+  {
+    "path": "tools/batch_import_ltc_service_act_v4.py",
+    "matching_lines": [],
+    "purpose": "Upload formal files through LOCAL API; version creation and doc_ingest jobs"
+  },
+  {
+    "path": "tools/batch_import_md_32.py",
+    "matching_lines": [],
+    "purpose": "Upload formal files through LOCAL API; version creation and doc_ingest jobs"
+  },
+  {
+    "path": "tools/batch_import_phase1.py",
+    "matching_lines": [],
+    "purpose": "Upload formal files through LOCAL API; version creation and doc_ingest jobs"
+  },
+  {
+    "path": "tools/batch_import_phase1_kb_20261006.py",
+    "matching_lines": [],
+    "purpose": "Upload formal files through LOCAL API; version creation and doc_ingest jobs"
+  },
+  {
+    "path": "tools/gen_installer_files.py",
+    "matching_lines": [
+      138,
+      139,
+      140,
+      141,
+      323
+    ],
+    "purpose": "Related utility/reference; inspect linked lines before use"
+  },
+  {
+    "path": "tools/publish_formal_law.py",
+    "matching_lines": [],
+    "purpose": "Update and publish imported knowledge versions via LOCAL API"
+  },
+  {
+    "path": "tools/publish_ltc_service_act_v4.py",
+    "matching_lines": [],
+    "purpose": "Update and publish imported knowledge versions via LOCAL API"
+  },
+  {
+    "path": "tools/publish_phase1_kb.py",
+    "matching_lines": [],
+    "purpose": "Update and publish imported knowledge versions via LOCAL API"
+  },
+  {
+    "path": "tools/publish_phase1_kb_14.py",
+    "matching_lines": [],
+    "purpose": "Update and publish imported knowledge versions via LOCAL API"
+  }
+]

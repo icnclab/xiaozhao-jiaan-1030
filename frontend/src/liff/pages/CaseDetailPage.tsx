@@ -30,7 +30,7 @@ export function CaseDetailPage() {
         {detail.qa_item_id && <Link to={`/liff/answers/${detail.qa_item_id}`}>查看相關 AI 回答</Link>}
       </div>
       <h2>回覆與說明</h2>
-      {detail.messages.length === 0 && <p className="muted">督導尚未回覆。</p>}
+      {!detail.first_replied_at && !detail.messages.some((m) => m.author_role === "supervisor" || m.author_role === "admin") && <p className="muted">督導尚未回覆，請等待處理。</p>}
       {detail.messages.map((m) => (
         <div key={m.id} className={`card ${m.author_role === "caregiver" ? "" : "notice ok"}`}>
           <p className="small muted">{m.author_role === "caregiver" ? "我" : `督導 ${m.author_name}`}｜{formatTime(m.created_at)}</p>

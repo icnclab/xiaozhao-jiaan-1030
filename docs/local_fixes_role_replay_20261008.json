@@ -1,0 +1,93 @@
+{
+  "original_run": {
+    "id": "Q09",
+    "round": 2,
+    "claims": [
+      {
+        "text": "照服員應委婉拒絕，並建議家屬向居家式長照機構反應額外需求，另購服務項目，同時應詳實記錄發生時間與溝通過程。",
+        "refs": [
+          "E1"
+        ],
+        "support": 0.889
+      },
+      {
+        "text": "照服員應維持清楚的角色界線，回歸服務契約書之規定項目。",
+        "refs": [
+          "E1"
+        ],
+        "support": 0.87
+      },
+      {
+        "text": "居家服務是購買性服務，應依據契約與工作範圍提供服務，此應向家屬具體說明。",
+        "refs": [
+          "E1"
+        ],
+        "support": 0.857
+      }
+    ],
+    "checks": [
+      {
+        "refs": [
+          "E1"
+        ],
+        "unknown_refs": [],
+        "support": 0.889,
+        "accepted": true
+      },
+      {
+        "refs": [
+          "E1"
+        ],
+        "unknown_refs": [],
+        "support": 0.87,
+        "accepted": true
+      },
+      {
+        "refs": [
+          "E1"
+        ],
+        "unknown_refs": [],
+        "support": 0.857,
+        "accepted": true
+      }
+    ]
+  },
+  "new_verification": {
+    "checks": {
+      "llm_flags": {
+        "needs_human": false,
+        "conflict": false,
+        "reason": ""
+      },
+      "claims": [
+        {
+          "refs": [
+            "E1"
+          ],
+          "unknown_refs": [],
+          "support": 0.889,
+          "roles": {
+            "passed": false,
+            "mismatches": [
+              {
+                "claim_actor": "照服員",
+                "predicate": "紀錄發生時間與溝通過程",
+                "source_actors": [
+                  "督導"
+                ],
+                "source_predicates": [
+                  "紀錄發生時間與溝通過程"
+                ]
+              }
+            ]
+          },
+          "accepted": false,
+          "reject_reason": "role_mismatch"
+        }
+      ]
+    },
+    "outcome": "escalate",
+    "reason": "unsupported_claim",
+    "reason_detail": "引用正文的規範主體與回答角色不一致"
+  }
+}

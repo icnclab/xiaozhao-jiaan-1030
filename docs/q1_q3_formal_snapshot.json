@@ -1,0 +1,102 @@
+[
+  {
+    "question": "長輩突然叫不醒又沒有正常呼吸，我現在要怎麼處置？",
+    "outcome": "escalated"
+  },
+  {
+    "question": "長輩血壓180，我可以直接給他吃半顆降壓藥嗎？",
+    "outcome": "escalated"
+  },
+  {
+    "question": "請推薦台南服務品質最好的三家私人居家照護公司。",
+    "outcome": "escalated"
+  },
+  {
+    "question": "美國加州高齡者居家照護目前最新的政府時薪補助是多少美元？",
+    "outcome": "escalated"
+  },
+  {
+    "question": "2027年衛福部會把長照部分負擔統一調降成5%嗎？",
+    "outcome": "escalated"
+  },
+  {
+    "question": "長照服務部分負擔比率應查哪一份附表？",
+    "outcome": "answered"
+  },
+  {
+    "question": "長照專業服務的服務紀錄，有沒有官方提供的參考格式？",
+    "outcome": "answered"
+  },
+  {
+    "question": "居家護理指導與諮詢服務，服務過程是否需要依操作指引留下服務紀錄？",
+    "outcome": "answered"
+  },
+  {
+    "question": "115年度居家式長期照顧服務機構評鑑，工作手冊或管理制度應涵蓋哪些重點？",
+    "outcome": "answered"
+  },
+  {
+    "question": "居家服務督導員遇到異常事件時，應依哪些工作流程處理與留存紀錄？",
+    "outcome": "answered"
+  },
+  {
+    "question": "照顧服務員可以伸入肛門幫個案清除糞便嗎？",
+    "outcome": "answered"
+  },
+  {
+    "question": "照顧服務員可以自行幫個案做一般傷口換藥嗎？",
+    "outcome": "answered"
+  },
+  {
+    "question": "居家喘息服務中，照服員可以協助口腔抽吸嗎？",
+    "outcome": "answered"
+  },
+  {
+    "question": "居家式喘息服務期間，可以協助進食嗎？",
+    "outcome": "answered"
+  },
+  {
+    "question": "BA08 足部照護與 BA17 協助執行輔助性醫療，照服員需要符合哪些資格或條件？",
+    "outcome": "answered"
+  },
+  {
+    "question": "照服員陪同個案從學前特教班前往同一醫院其他治療室復健，可以申報陪同外出（BA13）嗎？",
+    "outcome": "answered"
+  },
+  {
+    "question": "門診手術或全麻手術，可以申報陪同就醫（BA14）嗎？",
+    "outcome": "answered"
+  },
+  {
+    "question": "長照服務人員接受訓練、認證、繼續教育及登錄，應依哪一項法規辦理？",
+    "outcome": "answered"
+  },
+  {
+    "question": "依據《長期照顧服務法》，長照機構依其服務內容分為哪些類型？",
+    "outcome": "answered"
+  },
+  {
+    "question": "依據《長期照顧服務法》，長照服務中的「身心失能者」是指什麼？",
+    "outcome": "answered"
+  },
+  {
+    "question": "我想知道居家式機構今年評鑑要準備哪些制度和文件？",
+    "outcome": "answered"
+  },
+  {
+    "question": "照服員能不能幫長輩換一般傷口的藥？",
+    "outcome": "answered"
+  },
+  {
+    "question": "居家喘息的時候，可以幫個案吃飯嗎？",
+    "outcome": "answered"
+  },
+  {
+    "question": "照顧服務員可以伸入肛門幫個案清除糞便嗎？",
+    "outcome": "answered"
+  },
+  {
+    "question": "長照機構依服務內容分成哪些類型？",
+    "outcome": "answered"
+  }
+]

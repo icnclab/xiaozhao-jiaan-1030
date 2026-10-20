@@ -1,0 +1,17 @@
+{
+  "database": "ltc_clean",
+  "migration": "0002_quality_feedback",
+  "business_counts": {
+    "qa_items": 29,
+    "cases": 22,
+    "citations": 6,
+    "feedback": 0,
+    "case_events": 23,
+    "case_messages": 1
+  },
+  "quality_counts": {
+    "feedback_entries": 0,
+    "feedback_reviews": 0
+  },
+  "business_counts_unchanged": true
+}

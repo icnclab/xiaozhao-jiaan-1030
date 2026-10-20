@@ -11,7 +11,8 @@ import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlsplit
+import ipaddress
 
 from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert
@@ -249,8 +250,63 @@ def _on_unfollow(session: Session, event: LineEvent) -> None:
         audit.record(session, "line.unfollow", org_id=None, target_type="line_account", target_id=account.id)
 
 
+def _function_menu() -> dict[str, Any]:
+    """One Flex card (desktop fallback) with mobile quick replies; no client sniffing."""
+    pages = (("問 AI", "ask"), ("錄音／談話", "record"), ("問題分類", "report"),
+             ("我的案件", "cases"), ("使用說明", "help"))
+    unavailable = _text("小照｜功能選單\n功能連結暫時無法使用，請聯絡督導協助。")
+    base = get_settings().public_base_url
+    try:
+        parsed = urlsplit(base)
+        host = parsed.hostname or ""
+        labels = host.encode("idna").decode("ascii").split(".")
+        if (parsed.scheme != "https" or not host or "." not in host or len(host) > 253
+                or any(not label or len(label) > 63 or label.startswith("-") or label.endswith("-")
+                       or not all(c.isascii() and (c.isalnum() or c == "-") for c in label)
+                       for label in labels)
+                or parsed.username is not None or parsed.password is not None
+                or parsed.query or parsed.fragment or parsed.path not in ("", "/")
+                or any(c.isspace() or ord(c) < 32 for c in base)
+                or any(c in base for c in "\\%") or parsed.port not in (None, 443)
+                or host.lower().endswith((".localhost", ".local", ".internal"))):
+            return unavailable
+        try:
+            if not ipaddress.ip_address(host).is_global:
+                return unavailable
+        except ValueError:
+            pass  # DNS host; no network lookup is needed to build a menu.
+        links = [liff_url(page) for _, page in pages]
+        if any(link != f"{base.rstrip('/')}/liff/{page}" or len(link) > 1000
+               for link, (_, page) in zip(links, pages)):
+            return unavailable
+    except (TypeError, ValueError, UnicodeError):
+        return unavailable
+    actions = [{"type": "uri", "label": label, "uri": link}
+               for (label, _), link in zip(pages, links)]
+    return {
+        "type": "flex",
+        "altText": "小照｜功能選單\n請點選下方按鈕使用功能。",
+        "contents": {
+            "type": "bubble",
+            "body": {"type": "box", "layout": "vertical", "spacing": "sm", "contents": [
+                {"type": "text", "text": "小照｜功能選單", "weight": "bold", "size": "lg"},
+                {"type": "text", "text": "請點選下方按鈕使用功能。", "wrap": True, "size": "sm"},
+            ]},
+            "footer": {"type": "box", "layout": "vertical", "spacing": "sm", "contents": [
+                {"type": "button", "style": "primary", "color": "#263238",
+                 "height": "sm", "action": dict(action)} for action in actions
+            ]},
+        },
+        "quickReply": {"items": [{"type": "action", "action": dict(action)} for action in actions]},
+    }
+
+
 def _on_text(session: Session, event: LineEvent, user: User, message: str) -> str:
     keyword = message.strip()
+    if keyword in {"選單", "功能", "幫助"}:
+        if event.reply_token:
+            get_line_client(session).reply(event.reply_token, [_function_menu()])
+        return "menu"
     if keyword in MENU_KEYWORDS:
         page, label = MENU_KEYWORDS[keyword]
         if event.reply_token:

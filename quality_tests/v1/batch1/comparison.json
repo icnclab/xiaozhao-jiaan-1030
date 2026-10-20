@@ -1,0 +1,136 @@
+{
+  "source_baseline": "quality_tests/v1/baseline_report.json",
+  "final_report": "quality_tests/v1/batch1/final_checked/baseline_report.json",
+  "metrics": {
+    "expected_behavior_match": {
+      "before": {
+        "numerator": 14,
+        "denominator": 18,
+        "rate": 0.7777777777777778
+      },
+      "after": {
+        "numerator": 18,
+        "denominator": 18,
+        "rate": 1.0
+      }
+    },
+    "risk_block_recall": {
+      "before": {
+        "numerator": 11,
+        "denominator": 13,
+        "rate": 0.8461538461538461
+      },
+      "after": {
+        "numerator": 13,
+        "denominator": 13,
+        "rate": 1.0
+      }
+    },
+    "clarification_match": {
+      "before": {
+        "numerator": 1,
+        "denominator": 1,
+        "rate": 1.0
+      },
+      "after": {
+        "numerator": 1,
+        "denominator": 1,
+        "rate": 1.0
+      }
+    },
+    "false_refusal_rate": {
+      "before": {
+        "numerator": 2,
+        "denominator": 4,
+        "rate": 0.5
+      },
+      "after": {
+        "numerator": 0,
+        "denominator": 4,
+        "rate": 0.0
+      }
+    },
+    "answer_correctness_proxy": {
+      "before": {
+        "numerator": 2,
+        "denominator": 4,
+        "rate": 0.5
+      },
+      "after": {
+        "numerator": 4,
+        "denominator": 4,
+        "rate": 1.0
+      }
+    },
+    "citation_correctness_proxy": {
+      "before": {
+        "numerator": 2,
+        "denominator": 4,
+        "rate": 0.5
+      },
+      "after": {
+        "numerator": 4,
+        "denominator": 4,
+        "rate": 1.0
+      }
+    },
+    "repetition_regression_pass": {
+      "before": {
+        "numerator": 1,
+        "denominator": 2,
+        "rate": 0.5
+      },
+      "after": {
+        "numerator": 2,
+        "denominator": 2,
+        "rate": 1.0
+      }
+    },
+    "concise_presentation_proxy_pass": {
+      "before": {
+        "numerator": 1,
+        "denominator": 2,
+        "rate": 0.5
+      },
+      "after": {
+        "numerator": 2,
+        "denominator": 2,
+        "rate": 1.0
+      }
+    },
+    "automated_check_pass": {
+      "before": {
+        "numerator": 13,
+        "denominator": 18,
+        "rate": 0.7222222222222222
+      },
+      "after": {
+        "numerator": 18,
+        "denominator": 18,
+        "rate": 1.0
+      }
+    }
+  },
+  "regression_ids": [],
+  "resolved_failure_ids": [
+    "cfd792c1-653a-443b-8ba0-a3f5b47e877e",
+    "c01c328b-9ea0-45d8-8baf-43025772d8c9",
+    "4e90ee8c-e8fa-46bf-8762-dbc0c7f15e9d",
+    "8d9000d2-00a2-4f59-a2a8-5c1aa39497c1",
+    "663f3622-b666-460f-9d8e-773626b85bad"
+  ],
+  "remaining_failures": [],
+  "gold_sha256_unchanged": true,
+  "production_db_unchanged": true,
+  "tests": {
+    "backend": 74,
+    "frontend": 68,
+    "build": "pass"
+  },
+  "versions": {
+    "frozen_safety": "2026-10-11.safety-coverage.1",
+    "current_safety": "2026-10-11.safety-coverage.2",
+    "clarification": "2026-10-11.clarification.1",
+    "qa_policy": "2026-10-11.gold-batch1.1"
+  }
+}

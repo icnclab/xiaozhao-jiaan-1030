@@ -1,0 +1,243 @@
+[
+  {
+    "id": "refusal_certificate",
+    "question": "長照人員認證證明快到期了，申請更新是否保證一天內核准？",
+    "outcome": "escalate",
+    "reason": "insufficient",
+    "claims": [],
+    "checks": {
+      "deid_hits": {},
+      "risk_codes": [],
+      "retrieval": [
+        {
+          "chunk_id": "89498112-ba24-4297-9e2d-1127b27d0510",
+          "coverage": 0.5991,
+          "vector": 0.4621,
+          "combined": 0.558,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "97ab83f2-7b08-4983-b44c-16eca2379cf3",
+          "coverage": 0.5203,
+          "vector": 0.4175,
+          "combined": 0.4894,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "e55dce3a-73de-4047-a4bd-eba7a2fbbca6",
+          "coverage": 0.4861,
+          "vector": 0.3411,
+          "combined": 0.4426,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "4be5ada4-0796-4874-a73d-61a5d1370e8d",
+          "coverage": 0.2719,
+          "vector": 0.3937,
+          "combined": 0.3085,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "7ccabb53-b6d4-498f-9789-17734626c746",
+          "coverage": 0.2719,
+          "vector": 0.343,
+          "combined": 0.2933,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "d0a27657-9cbe-44e6-987a-d9e9575aff62",
+          "coverage": 0.3187,
+          "vector": 0.191,
+          "combined": 0.2804,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "cec00ff6-516e-4ea6-9b0a-4dd622f85a5f",
+          "coverage": 0.2719,
+          "vector": 0.2854,
+          "combined": 0.276,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "14d68216-d546-4b6c-bfdb-e48d869e3666",
+          "coverage": 0.236,
+          "vector": 0.2593,
+          "combined": 0.243,
+          "injection_flag": false
+        }
+      ],
+      "injection_chunks_excluded": [],
+      "evidence_focus": {
+        "enabled": true,
+        "document_id": "eb432b32-179b-4e37-887d-d35bbf7b35a6",
+        "title": "長期照顧服務人員訓練認證繼續教育及登錄辦法",
+        "top_score": 0.558,
+        "best_other_score": 0.2134
+      },
+      "llm_flags": {
+        "needs_human": true,
+        "conflict": false,
+        "reason": "證據中未提及認證證明文件更新的核准時程。"
+      }
+    },
+    "timings": {
+      "retrieve": 44,
+      "generate": 1522,
+      "graph_total": 1573
+    },
+    "evidence": {
+      "E1": {
+        "title": "長期照顧服務人員訓練認證繼續教育及登錄辦法",
+        "locator": "第 12 條",
+        "version": "Phase1_MD_2026-10-06_v1",
+        "text": "第 12 條　長照人員於認證證明文件有效期限屆至後，擬繼續從事長照服務者，應於有效期限屆至前六個月內，填具申請書，並檢附下列文件、資料及繳納費用，向原登錄長照服務單位所在地直轄市、縣（市）主管機關申請更新：一、原領認證證明文件。二、最近三個月內之一吋正面脫帽半身照片二張。三、完成第十五條第一項所定繼續教育之證明文件。四、實際提供長照服務之證明文件，或提供長照服務單位擬聘僱之證明文件。長照人員逾前項規定期限始申請更新者，應向擬登錄之長照服務單位所在地直轄市、縣（市）主管機關提出，除應檢附前項所定文件外，其中前項第三款證明文件之繼續教育，應以申請更新日前六年內完成者為限。"
+      },
+      "E2": {
+        "title": "長期照顧服務人員訓練認證繼續教育及登錄辦法",
+        "locator": "第 11 條",
+        "version": "Phase1_MD_2026-10-06_v1",
+        "text": "第 11 條　認證證明文件有效期間為六年；其有效期限，依下列規定計算：一、依第八條規定申請認證：自證明文件所載生效日期起算滿六年之末日。二、依第十二條第一項規定申請更新：自原證明文件所載有效期限次日起算滿六年之末日。三、依第十二條第二項規定申請更新：自申請更新日期起算滿六年之末日。四、依第十三條規定申請更新：自申請更新日期起算滿六年之末日。長照人員應於前項第二款及第三款所定有效期間內，依第二十三條規定登錄於其提供服務之長照服務單位或實際提供之長照服務。"
+      },
+      "E3": {
+        "title": "長期照顧服務人員訓練認證繼續教育及登錄辦法",
+        "locator": "第 13 條",
+        "version": "Phase1_MD_2026-10-06_v1",
+        "text": "第 13 條　長照人員有下列情形之一，而擬繼續從事長照服務者，得準用前條第一項程序，申請更新認證證明文件：一、自取得長照人員認證證明文件之日起算，於認證證明文件期限屆至前，逾五年未提供長照服務。二、各類長照人員認證證明文件，均經依第二十四條規定，辦理離職異動登錄連續逾二年。前項情形，於準用前條第一項第三款規定應檢附之繼續教育證明文件，得以申請更新前一年內，接受第十五條第一項各款繼續教育課程總積分達六分之一以上之證明文件代之，並免受第十五條第二項、第三項規定之限制。"
+      },
+      "E4": {
+        "title": "長期照顧服務人員訓練認證繼續教育及登錄辦法",
+        "locator": "第 10 條",
+        "version": "Phase1_MD_2026-10-06_v1",
+        "text": "第 10 條　有下列情形之一者，直轄市、縣（市）主管機關不予發給長照人員認證證明文件；已發給者，撤銷或廢止之：一、曾受本法第五十六條規定廢止認證證明文件。二、受監護或輔助宣告，尚未撤銷。前項第二款原因消滅後，仍得依本辦法規定，申請長照人員認證證明文件。"
+      }
+    }
+  },
+  {
+    "id": "refusal_meeting",
+    "question": "居家式機構的督導制度，行政聯繫會議缺席一次要罰多少錢？",
+    "outcome": "answer",
+    "reason": null,
+    "claims": [
+      {
+        "text": "評鑑當日業務負責人未出席，本項逕評核為 E。",
+        "refs": [
+          "E1"
+        ],
+        "support": 0.941
+      },
+      {
+        "text": "業務負責人應定期(至少每 3 個月)召開行政聯繫會議，並有會議紀錄及出席表。",
+        "refs": [
+          "E1"
+        ],
+        "support": 0.92
+      }
+    ],
+    "checks": {
+      "deid_hits": {},
+      "risk_codes": [],
+      "retrieval": [
+        {
+          "chunk_id": "c8d51a75-74fb-4969-ad50-5f783d81566a",
+          "coverage": 0.3723,
+          "vector": 0.1999,
+          "combined": 0.3205,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "b48c5161-9bbe-4f4c-bd4e-1ee391f10755",
+          "coverage": 0.2075,
+          "vector": 0.178,
+          "combined": 0.1986,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "676a8723-a409-4866-a259-81a423dd9120",
+          "coverage": 0.1774,
+          "vector": 0.1092,
+          "combined": 0.157,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "b44093b9-c691-4b0f-9a6c-deaf4121bc3e",
+          "coverage": 0.126,
+          "vector": 0.1823,
+          "combined": 0.1429,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "3a74039f-0beb-4796-8cd8-879f0a268b4c",
+          "coverage": 0.1195,
+          "vector": 0.1892,
+          "combined": 0.1404,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "587890ce-be81-4951-936f-50ea3a9e5a69",
+          "coverage": 0.1398,
+          "vector": 0.1411,
+          "combined": 0.1402,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "f9625167-57fc-4c33-8dab-ca677a073a09",
+          "coverage": 0.1623,
+          "vector": 0.0862,
+          "combined": 0.1395,
+          "injection_flag": false
+        },
+        {
+          "chunk_id": "c244bc27-1c74-48ea-8c07-f0b8c09c0291",
+          "coverage": 0.1486,
+          "vector": 0.1162,
+          "combined": 0.1389,
+          "injection_flag": false
+        }
+      ],
+      "injection_chunks_excluded": [
+        "23fe1484-cd61-4485-8556-f7a61f4a34c5",
+        "d8d3870e-6dc3-46db-9558-9d12e3b05225",
+        "904c060e-503c-4612-8880-3cb2f71c817f"
+      ],
+      "evidence_focus": {
+        "enabled": false
+      },
+      "llm_flags": {
+        "needs_human": false,
+        "conflict": false,
+        "reason": ""
+      },
+      "claims": [
+        {
+          "refs": [
+            "E1"
+          ],
+          "unknown_refs": [],
+          "support": 0.941,
+          "accepted": true
+        },
+        {
+          "refs": [
+            "E1"
+          ],
+          "unknown_refs": [],
+          "support": 0.92,
+          "accepted": true
+        }
+      ]
+    },
+    "timings": {
+      "retrieve": 42,
+      "generate": 1480,
+      "graph_total": 1526
+    },
+    "evidence": {
+      "E1": {
+        "title": "附件一-115年度居家式長期照顧服務機構評鑑基準",
+        "locator": "一、經營管理效能（9 項，總分 36 分，佔43%）｜第 4 段",
+        "version": "Phase1_MD_2026-10-06_v1",
+        "text": "一、經營管理效能（9 項，總分 36 分，佔43%）\n之內容。\n每項評鑑指標均為 4 分\n「A」者為得 4 分； 「B」者為得 3 分\n「C」者為得 2 分； 「D」者為得 1 分\n「E」者為 0 分\n<!-- 第 2 頁 -->\n第2頁  共 12 頁\n代碼 共識基準 基準說明 評核方式 評分標準 備註說明\nA3 督導制度\n運作情形\n1. 業務負責人應定期(至少每 3 個月)召開\n行政聯繫會議，並有會議紀錄及出席\n表。\n2. 行政聯繫會議討論事項應包含服務品質\n及工作改善等內容，並且確實追踨決議\n事項的辦理情形。\n3. 訂有督導機制，依期程執行，且有紀\n錄。並應對督導事項進行追蹤管考。\n4. 督導能針對被督導者反應問題能適當的\n處理並留有紀錄。\n文件檢閱\n現場訪談\n1. 檢視行政聯繫會議、個別督導會議、\n團體督導會議等資料。\n2. 訪談業務負責人及居家服務督導員執\n行情形。\n3. 評鑑當日業務負責人未出席，本項逕\n評核為 E。\nE.完全不符合\nD.符合第 1 項\nC.符合第 1、2 項\nB.符合第 1、2、3 項"
+      }
+    }
+  }
+]

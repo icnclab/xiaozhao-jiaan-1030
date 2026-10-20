@@ -1,0 +1,674 @@
+{
+  "summary": {
+    "passed": 3,
+    "n": 5,
+    "answer_median_ms": 1382.0
+  },
+  "results": [
+    {
+      "id": "fine",
+      "question": "行政聯繫會議缺席一次要罰多少錢",
+      "passed": false,
+      "outcome": "answer",
+      "reason": null,
+      "answer": "評鑑當日業務負責人未出席，本項逕評核為 E。 業務負責人應定期(至少每 3 個月)召開行政聯繫會議，並有會議紀錄及出席表。",
+      "claims": [
+        {
+          "text": "評鑑當日業務負責人未出席，本項逕評核為 E。",
+          "refs": [
+            "E1"
+          ],
+          "support": 0.941
+        },
+        {
+          "text": "業務負責人應定期(至少每 3 個月)召開行政聯繫會議，並有會議紀錄及出席表。",
+          "refs": [
+            "E1"
+          ],
+          "support": 0.92
+        }
+      ],
+      "cited": [
+        [
+          "附件一-115年度居家式長期照顧服務機構評鑑基準",
+          "Phase1_MD_2026-10-06_v1"
+        ]
+      ],
+      "wall_ms": 1881,
+      "timings": {
+        "retrieve": 32,
+        "evidence_prepare": 0,
+        "generate": 1835,
+        "graph_total": 1873
+      },
+      "checks": {
+        "deid_hits": {},
+        "risk_codes": [],
+        "retrieval": [
+          {
+            "chunk_id": "c8d51a75-74fb-4969-ad50-5f783d81566a",
+            "coverage": 0.3667,
+            "vector": 0.1773,
+            "combined": 0.3099,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "b0581a19-6061-4faa-b454-8b4aafa82fb8",
+            "coverage": 0.2148,
+            "vector": 0.0816,
+            "combined": 0.1748,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "e7469922-9370-42ef-afd9-31f7f6dbbcc7",
+            "coverage": 0.2125,
+            "vector": 0.049,
+            "combined": 0.1635,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "9e0f9d5d-694b-4da7-9a1e-0961a6542a32",
+            "coverage": 0.1109,
+            "vector": 0.0943,
+            "combined": 0.1059,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "97cc5a02-517b-4bbf-9d5b-4a981ee80205",
+            "coverage": 0.1109,
+            "vector": 0.0802,
+            "combined": 0.1017,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "7ccb2c21-3b67-4517-924a-cbdec0f4182c",
+            "coverage": 0.1109,
+            "vector": 0.051,
+            "combined": 0.093,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "820c066f-861f-4eff-b82d-8316d49e87f8",
+            "coverage": 0.115,
+            "vector": 0.0388,
+            "combined": 0.0921,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "b48c5161-9bbe-4f4c-bd4e-1ee391f10755",
+            "coverage": 0.1109,
+            "vector": 0.0452,
+            "combined": 0.0912,
+            "injection_flag": false
+          }
+        ],
+        "injection_chunks_excluded": [],
+        "evidence_focus": {
+          "enabled": false
+        },
+        "evidence_size": {
+          "chunks": 1,
+          "chars": 464
+        },
+        "llm_metrics": {
+          "load_duration": 4532600,
+          "prompt_eval_duration": 502544000,
+          "eval_duration": 1037338000,
+          "total_duration": 1646645100,
+          "prompt_eval_count": 1192,
+          "eval_count": 139
+        },
+        "llm_flags": {
+          "needs_human": false,
+          "conflict": false,
+          "reason": ""
+        },
+        "claims": [
+          {
+            "refs": [
+              "E1"
+            ],
+            "unknown_refs": [],
+            "support": 0.941,
+            "accepted": true
+          },
+          {
+            "refs": [
+              "E1"
+            ],
+            "unknown_refs": [],
+            "support": 0.92,
+            "accepted": true
+          }
+        ]
+      },
+      "evidence": {
+        "E1": {
+          "title": "附件一-115年度居家式長期照顧服務機構評鑑基準",
+          "locator": "一、經營管理效能（9 項，總分 36 分，佔43%）｜第 4 段",
+          "version": "Phase1_MD_2026-10-06_v1",
+          "text": "一、經營管理效能（9 項，總分 36 分，佔43%）\n之內容。\n每項評鑑指標均為 4 分\n「A」者為得 4 分； 「B」者為得 3 分\n「C」者為得 2 分； 「D」者為得 1 分\n「E」者為 0 分\n<!-- 第 2 頁 -->\n第2頁  共 12 頁\n代碼 共識基準 基準說明 評核方式 評分標準 備註說明\nA3 督導制度\n運作情形\n1. 業務負責人應定期(至少每 3 個月)召開\n行政聯繫會議，並有會議紀錄及出席\n表。\n2. 行政聯繫會議討論事項應包含服務品質\n及工作改善等內容，並且確實追踨決議\n事項的辦理情形。\n3. 訂有督導機制，依期程執行，且有紀\n錄。並應對督導事項進行追蹤管考。\n4. 督導能針對被督導者反應問題能適當的\n處理並留有紀錄。\n文件檢閱\n現場訪談\n1. 檢視行政聯繫會議、個別督導會議、\n團體督導會議等資料。\n2. 訪談業務負責人及居家服務督導員執\n行情形。\n3. 評鑑當日業務負責人未出席，本項逕\n評核為 E。\nE.完全不符合\nD.符合第 1 項\nC.符合第 1、2 項\nB.符合第 1、2、3 項"
+        }
+      }
+    },
+    {
+      "id": "frequency",
+      "question": "行政聯繫會議多久至少要開一次",
+      "passed": true,
+      "outcome": "answer",
+      "reason": null,
+      "answer": "業務負責人應定期(至少每 3 個月)召開行政聯繫會議，並有會議紀錄及出席表。 行政聯繫會議的討論事項應包含服務品質及工作改善等內容，並且確實追踨決議事項的辦理情形。",
+      "claims": [
+        {
+          "text": "業務負責人應定期(至少每 3 個月)召開行政聯繫會議，並有會議紀錄及出席表。",
+          "refs": [
+            "E1"
+          ],
+          "support": 0.92
+        },
+        {
+          "text": "行政聯繫會議的討論事項應包含服務品質及工作改善等內容，並且確實追踨決議事項的辦理情形。",
+          "refs": [
+            "E1"
+          ],
+          "support": 0.895
+        }
+      ],
+      "cited": [
+        [
+          "附件一-115年度居家式長期照顧服務機構評鑑基準",
+          "Phase1_MD_2026-10-06_v1"
+        ]
+      ],
+      "wall_ms": 1412,
+      "timings": {
+        "retrieve": 28,
+        "evidence_prepare": 0,
+        "generate": 1380,
+        "graph_total": 1411
+      },
+      "checks": {
+        "deid_hits": {},
+        "risk_codes": [],
+        "retrieval": [
+          {
+            "chunk_id": "c8d51a75-74fb-4969-ad50-5f783d81566a",
+            "coverage": 0.4526,
+            "vector": 0.1762,
+            "combined": 0.3697,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "b0581a19-6061-4faa-b454-8b4aafa82fb8",
+            "coverage": 0.2352,
+            "vector": 0.0706,
+            "combined": 0.1859,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "50116b34-4539-4a91-af41-11ef0d1b77ca",
+            "coverage": 0.2241,
+            "vector": 0.0527,
+            "combined": 0.1727,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "e7469922-9370-42ef-afd9-31f7f6dbbcc7",
+            "coverage": 0.2327,
+            "vector": 0.0306,
+            "combined": 0.1721,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "8dffc745-21cd-42d5-bb41-149de68b6dd5",
+            "coverage": 0.167,
+            "vector": 0.0442,
+            "combined": 0.1302,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "54f5c579-f6b6-4bf4-8e24-d42df18315df",
+            "coverage": 0.1626,
+            "vector": 0.0362,
+            "combined": 0.1247,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "6efe7277-b9fa-4e3c-8e96-a062bec0542f",
+            "coverage": 0.1626,
+            "vector": 0.0272,
+            "combined": 0.122,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "9e0f9d5d-694b-4da7-9a1e-0961a6542a32",
+            "coverage": 0.1215,
+            "vector": 0.1191,
+            "combined": 0.1208,
+            "injection_flag": false
+          }
+        ],
+        "injection_chunks_excluded": [],
+        "evidence_focus": {
+          "enabled": false
+        },
+        "evidence_size": {
+          "chunks": 1,
+          "chars": 464
+        },
+        "llm_metrics": {
+          "load_duration": 6277300,
+          "prompt_eval_duration": 242514000,
+          "eval_duration": 1118889000,
+          "total_duration": 1378251700,
+          "prompt_eval_count": 1190,
+          "eval_count": 151
+        },
+        "llm_flags": {
+          "needs_human": false,
+          "conflict": false,
+          "reason": ""
+        },
+        "claims": [
+          {
+            "refs": [
+              "E1"
+            ],
+            "unknown_refs": [],
+            "support": 0.92,
+            "accepted": true
+          },
+          {
+            "refs": [
+              "E1"
+            ],
+            "unknown_refs": [],
+            "support": 0.895,
+            "accepted": true
+          }
+        ]
+      },
+      "evidence": {
+        "E1": {
+          "title": "附件一-115年度居家式長期照顧服務機構評鑑基準",
+          "locator": "一、經營管理效能（9 項，總分 36 分，佔43%）｜第 4 段",
+          "version": "Phase1_MD_2026-10-06_v1",
+          "text": "一、經營管理效能（9 項，總分 36 分，佔43%）\n之內容。\n每項評鑑指標均為 4 分\n「A」者為得 4 分； 「B」者為得 3 分\n「C」者為得 2 分； 「D」者為得 1 分\n「E」者為 0 分\n<!-- 第 2 頁 -->\n第2頁  共 12 頁\n代碼 共識基準 基準說明 評核方式 評分標準 備註說明\nA3 督導制度\n運作情形\n1. 業務負責人應定期(至少每 3 個月)召開\n行政聯繫會議，並有會議紀錄及出席\n表。\n2. 行政聯繫會議討論事項應包含服務品質\n及工作改善等內容，並且確實追踨決議\n事項的辦理情形。\n3. 訂有督導機制，依期程執行，且有紀\n錄。並應對督導事項進行追蹤管考。\n4. 督導能針對被督導者反應問題能適當的\n處理並留有紀錄。\n文件檢閱\n現場訪談\n1. 檢視行政聯繫會議、個別督導會議、\n團體督導會議等資料。\n2. 訪談業務負責人及居家服務督導員執\n行情形。\n3. 評鑑當日業務負責人未出席，本項逕\n評核為 E。\nE.完全不符合\nD.符合第 1 項\nC.符合第 1、2 項\nB.符合第 1、2、3 項"
+        }
+      }
+    },
+    {
+      "id": "supervision_frequency",
+      "question": "督導制度多久至少要開一次聯繫會議",
+      "passed": true,
+      "outcome": "answer",
+      "reason": null,
+      "answer": "業務負責人應定期(至少每 3 個月)召開行政聯繫會議 行政聯繫會議的討論事項應包含服務品質及工作改善等內容，並且確實追踨決議事項的辦理情形。",
+      "claims": [
+        {
+          "text": "業務負責人應定期(至少每 3 個月)召開行政聯繫會議",
+          "refs": [
+            "E1"
+          ],
+          "support": 0.944
+        },
+        {
+          "text": "行政聯繫會議的討論事項應包含服務品質及工作改善等內容，並且確實追踨決議事項的辦理情形。",
+          "refs": [
+            "E1"
+          ],
+          "support": 0.895
+        }
+      ],
+      "cited": [
+        [
+          "附件一-115年度居家式長期照顧服務機構評鑑基準",
+          "Phase1_MD_2026-10-06_v1"
+        ]
+      ],
+      "wall_ms": 1352,
+      "timings": {
+        "retrieve": 40,
+        "evidence_prepare": 0,
+        "generate": 1308,
+        "graph_total": 1352
+      },
+      "checks": {
+        "deid_hits": {},
+        "risk_codes": [],
+        "retrieval": [
+          {
+            "chunk_id": "c8d51a75-74fb-4969-ad50-5f783d81566a",
+            "coverage": 0.4433,
+            "vector": 0.1824,
+            "combined": 0.365,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "b48c5161-9bbe-4f4c-bd4e-1ee391f10755",
+            "coverage": 0.2408,
+            "vector": 0.1157,
+            "combined": 0.2033,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "e7469922-9370-42ef-afd9-31f7f6dbbcc7",
+            "coverage": 0.2454,
+            "vector": 0.018,
+            "combined": 0.1772,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "8dffc745-21cd-42d5-bb41-149de68b6dd5",
+            "coverage": 0.2061,
+            "vector": 0.0522,
+            "combined": 0.16,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "50116b34-4539-4a91-af41-11ef0d1b77ca",
+            "coverage": 0.2024,
+            "vector": 0.0442,
+            "combined": 0.1549,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "b44093b9-c691-4b0f-9a6c-deaf4121bc3e",
+            "coverage": 0.1443,
+            "vector": 0.1761,
+            "combined": 0.1538,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "c244bc27-1c74-48ea-8c07-f0b8c09c0291",
+            "coverage": 0.1337,
+            "vector": 0.078,
+            "combined": 0.117,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "6c3d0701-a407-4c51-a1c0-5ee64d2c70ca",
+            "coverage": 0.126,
+            "vector": 0.0913,
+            "combined": 0.1156,
+            "injection_flag": false
+          }
+        ],
+        "injection_chunks_excluded": [
+          "904c060e-503c-4612-8880-3cb2f71c817f"
+        ],
+        "evidence_focus": {
+          "enabled": false
+        },
+        "evidence_size": {
+          "chunks": 1,
+          "chars": 464
+        },
+        "llm_metrics": {
+          "load_duration": 5168000,
+          "prompt_eval_duration": 240508000,
+          "eval_duration": 1047317000,
+          "total_duration": 1307080600,
+          "prompt_eval_count": 1192,
+          "eval_count": 143
+        },
+        "llm_flags": {
+          "needs_human": false,
+          "conflict": false,
+          "reason": ""
+        },
+        "claims": [
+          {
+            "refs": [
+              "E1"
+            ],
+            "unknown_refs": [],
+            "support": 0.944,
+            "accepted": true
+          },
+          {
+            "refs": [
+              "E1"
+            ],
+            "unknown_refs": [],
+            "support": 0.895,
+            "accepted": true
+          }
+        ]
+      },
+      "evidence": {
+        "E1": {
+          "title": "附件一-115年度居家式長期照顧服務機構評鑑基準",
+          "locator": "一、經營管理效能（9 項，總分 36 分，佔43%）｜第 4 段",
+          "version": "Phase1_MD_2026-10-06_v1",
+          "text": "一、經營管理效能（9 項，總分 36 分，佔43%）\n之內容。\n每項評鑑指標均為 4 分\n「A」者為得 4 分； 「B」者為得 3 分\n「C」者為得 2 分； 「D」者為得 1 分\n「E」者為 0 分\n<!-- 第 2 頁 -->\n第2頁  共 12 頁\n代碼 共識基準 基準說明 評核方式 評分標準 備註說明\nA3 督導制度\n運作情形\n1. 業務負責人應定期(至少每 3 個月)召開\n行政聯繫會議，並有會議紀錄及出席\n表。\n2. 行政聯繫會議討論事項應包含服務品質\n及工作改善等內容，並且確實追踨決議\n事項的辦理情形。\n3. 訂有督導機制，依期程執行，且有紀\n錄。並應對督導事項進行追蹤管考。\n4. 督導能針對被督導者反應問題能適當的\n處理並留有紀錄。\n文件檢閱\n現場訪談\n1. 檢視行政聯繫會議、個別督導會議、\n團體督導會議等資料。\n2. 訪談業務負責人及居家服務督導員執\n行情形。\n3. 評鑑當日業務負責人未出席，本項逕\n評核為 E。\nE.完全不符合\nD.符合第 1 項\nC.符合第 1、2 項\nB.符合第 1、2、3 項"
+        }
+      }
+    },
+    {
+      "id": "fine_variant",
+      "question": "沒有參加行政聯繫會議，罰款金額是多少？",
+      "passed": true,
+      "outcome": "escalate",
+      "reason": "no_evidence",
+      "answer": "",
+      "claims": [],
+      "cited": [],
+      "wall_ms": 31,
+      "timings": {
+        "retrieve": 29,
+        "graph_total": 31
+      },
+      "checks": {
+        "deid_hits": {},
+        "risk_codes": [],
+        "retrieval": [
+          {
+            "chunk_id": "c8d51a75-74fb-4969-ad50-5f783d81566a",
+            "coverage": 0.327,
+            "vector": 0.228,
+            "combined": 0.2973,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "e7469922-9370-42ef-afd9-31f7f6dbbcc7",
+            "coverage": 0.1895,
+            "vector": 0.0863,
+            "combined": 0.1586,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "b0581a19-6061-4faa-b454-8b4aafa82fb8",
+            "coverage": 0.1915,
+            "vector": 0.032,
+            "combined": 0.1437,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "9e0f9d5d-694b-4da7-9a1e-0961a6542a32",
+            "coverage": 0.0989,
+            "vector": 0.1632,
+            "combined": 0.1182,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "1f84cf09-7698-4feb-aee3-2a6b01dbb690",
+            "coverage": 0.1411,
+            "vector": 0.037,
+            "combined": 0.1098,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "b2fa0f86-4af2-4c9f-acfa-6f7d2cfd45c7",
+            "coverage": 0.1144,
+            "vector": 0.0575,
+            "combined": 0.0973,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "fb43cdf9-6214-46e4-9c6b-8a18f6507b8c",
+            "coverage": 0.0959,
+            "vector": 0.0985,
+            "combined": 0.0967,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "6211b303-33ce-4530-b273-31608a103620",
+            "coverage": 0.1088,
+            "vector": 0.0567,
+            "combined": 0.0931,
+            "injection_flag": false
+          }
+        ],
+        "injection_chunks_excluded": []
+      },
+      "evidence": {}
+    },
+    {
+      "id": "deduction_variant",
+      "question": "行政聯繫會議未出席一次要扣薪多少元？",
+      "passed": false,
+      "outcome": "answer",
+      "reason": null,
+      "answer": "評鑑當日業務負責人未出席，本項逕評核為 E。 業務負責人應定期(至少每 3 個月)召開行政聯繫會議，並有會議紀錄及出席表。",
+      "claims": [
+        {
+          "text": "評鑑當日業務負責人未出席，本項逕評核為 E。",
+          "refs": [
+            "E1"
+          ],
+          "support": 0.941
+        },
+        {
+          "text": "業務負責人應定期(至少每 3 個月)召開行政聯繫會議，並有會議紀錄及出席表。",
+          "refs": [
+            "E1"
+          ],
+          "support": 0.92
+        }
+      ],
+      "cited": [
+        [
+          "附件一-115年度居家式長期照顧服務機構評鑑基準",
+          "Phase1_MD_2026-10-06_v1"
+        ]
+      ],
+      "wall_ms": 1284,
+      "timings": {
+        "retrieve": 27,
+        "evidence_prepare": 0,
+        "generate": 1254,
+        "graph_total": 1284
+      },
+      "checks": {
+        "deid_hits": {},
+        "risk_codes": [],
+        "retrieval": [
+          {
+            "chunk_id": "c8d51a75-74fb-4969-ad50-5f783d81566a",
+            "coverage": 0.4523,
+            "vector": 0.1766,
+            "combined": 0.3696,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "8dffc745-21cd-42d5-bb41-149de68b6dd5",
+            "coverage": 0.2268,
+            "vector": 0.0448,
+            "combined": 0.1722,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "b0581a19-6061-4faa-b454-8b4aafa82fb8",
+            "coverage": 0.1858,
+            "vector": 0.06,
+            "combined": 0.148,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "8c3cb709-9d8b-4a66-851d-d3fde0e120ed",
+            "coverage": 0.1822,
+            "vector": 0.0558,
+            "combined": 0.1443,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "e7469922-9370-42ef-afd9-31f7f6dbbcc7",
+            "coverage": 0.1838,
+            "vector": 0.0514,
+            "combined": 0.1441,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "c244bc27-1c74-48ea-8c07-f0b8c09c0291",
+            "coverage": 0.1524,
+            "vector": 0.0838,
+            "combined": 0.1318,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "3a74039f-0beb-4796-8cd8-879f0a268b4c",
+            "coverage": 0.1133,
+            "vector": 0.0983,
+            "combined": 0.1088,
+            "injection_flag": false
+          },
+          {
+            "chunk_id": "59fb9ab2-1e73-406b-b0a9-1beb2a5e737c",
+            "coverage": 0.1352,
+            "vector": 0.043,
+            "combined": 0.1076,
+            "injection_flag": false
+          }
+        ],
+        "injection_chunks_excluded": [],
+        "evidence_focus": {
+          "enabled": false
+        },
+        "evidence_size": {
+          "chunks": 1,
+          "chars": 464
+        },
+        "llm_metrics": {
+          "load_duration": 4242400,
+          "prompt_eval_duration": 237303000,
+          "eval_duration": 996844000,
+          "total_duration": 1252861600,
+          "prompt_eval_count": 1194,
+          "eval_count": 139
+        },
+        "llm_flags": {
+          "needs_human": false,
+          "conflict": false,
+          "reason": ""
+        },
+        "claims": [
+          {
+            "refs": [
+              "E1"
+            ],
+            "unknown_refs": [],
+            "support": 0.941,
+            "accepted": true
+          },
+          {
+            "refs": [
+              "E1"
+            ],
+            "unknown_refs": [],
+            "support": 0.92,
+            "accepted": true
+          }
+        ]
+      },
+      "evidence": {
+        "E1": {
+          "title": "附件一-115年度居家式長期照顧服務機構評鑑基準",
+          "locator": "一、經營管理效能（9 項，總分 36 分，佔43%）｜第 4 段",
+          "version": "Phase1_MD_2026-10-06_v1",
+          "text": "一、經營管理效能（9 項，總分 36 分，佔43%）\n之內容。\n每項評鑑指標均為 4 分\n「A」者為得 4 分； 「B」者為得 3 分\n「C」者為得 2 分； 「D」者為得 1 分\n「E」者為 0 分\n<!-- 第 2 頁 -->\n第2頁  共 12 頁\n代碼 共識基準 基準說明 評核方式 評分標準 備註說明\nA3 督導制度\n運作情形\n1. 業務負責人應定期(至少每 3 個月)召開\n行政聯繫會議，並有會議紀錄及出席\n表。\n2. 行政聯繫會議討論事項應包含服務品質\n及工作改善等內容，並且確實追踨決議\n事項的辦理情形。\n3. 訂有督導機制，依期程執行，且有紀\n錄。並應對督導事項進行追蹤管考。\n4. 督導能針對被督導者反應問題能適當的\n處理並留有紀錄。\n文件檢閱\n現場訪談\n1. 檢視行政聯繫會議、個別督導會議、\n團體督導會議等資料。\n2. 訪談業務負責人及居家服務督導員執\n行情形。\n3. 評鑑當日業務負責人未出席，本項逕\n評核為 E。\nE.完全不符合\nD.符合第 1 項\nC.符合第 1、2 項\nB.符合第 1、2、3 項"
+        }
+      }
+    }
+  ]
+}

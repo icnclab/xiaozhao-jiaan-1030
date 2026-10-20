@@ -1,0 +1,98 @@
+{
+  "law_current.html": {
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+    "final_url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+    "status": "downloaded",
+    "sha256": "169906610d8632803a96c42e649c5c8284963c84f0719fb79e113e4e54b8e9bd",
+    "bytes": 64059,
+    "captured_at": "2026-10-16T21:37:18.076959+08:00"
+  },
+  "law_history.html": {
+    "url": "https://law.moj.gov.tw/LawClass/LawHistory.aspx?pcode=L0070059",
+    "final_url": "https://law.moj.gov.tw/LawClass/LawHistory.aspx?pcode=L0070059",
+    "status": "downloaded",
+    "sha256": "d37e9870b488b32a0cb0a3005e4ddb2c531438908049ceaa897924fb20340c8f",
+    "bytes": 40290,
+    "captured_at": "2026-10-16T21:37:17.808122+08:00"
+  },
+  "law_20220120.html": {
+    "url": "https://law.moj.gov.tw/LawClass/LawOldVer.aspx?lnndate=20220120&lser=001&pcode=L0070059",
+    "final_url": "https://law.moj.gov.tw/LawClass/LawOldVer.aspx?lnndate=20220120&lser=001&pcode=L0070059",
+    "status": "downloaded",
+    "sha256": "5a9e8d9b6d6394832287e813cb18f101cd69a21e6064f44c5e8801d4c99fbb4c",
+    "bytes": 49468,
+    "captured_at": "2026-10-16T21:37:17.917291+08:00"
+  },
+  "annex4_current.pdf": {
+    "url": "https://law.moj.gov.tw/LawClass/LawGetFile.ashx?FileId=0000398331&lan=C",
+    "final_url": "https://law.moj.gov.tw/LawClass/LawGetFile.ashx?FileId=0000398331&lan=C",
+    "status": "downloaded",
+    "sha256": "78df59bc8828b7495da524a445c9a000e7bd20b7ce12b41f8b1a47705d95a9e4",
+    "bytes": 523791,
+    "captured_at": "2026-10-16T21:37:17.691173+08:00"
+  },
+  "manual_landing.html": {
+    "url": "https://1966.gov.tw/LTC/cp-7565-86698-207.html",
+    "final_url": "https://1966.gov.tw/LTC/cp-7565-86698-207.html",
+    "status": "downloaded",
+    "sha256": "534bbff9ca74ce44c8cc6796b7d75582644bab6d1eb777bca98d415b19609124",
+    "bytes": 19440,
+    "captured_at": "2026-10-16T21:37:18.090001+08:00"
+  },
+  "manual_official.pdf": {
+    "url": "https://www.mohw.gov.tw/dl-100619-d08f6862-e9f4-48be-99cb-a79d0bb0b2f9.html",
+    "final_url": "https://www.mohw.gov.tw/dl-100619-d08f6862-e9f4-48be-99cb-a79d0bb0b2f9.html",
+    "status": "downloaded",
+    "sha256": "8a4ac8a2a8a2721356388207c3fb204d503f14aa4eb4cc8738bddb9c17545ca0",
+    "bytes": 3968871,
+    "captured_at": "2026-10-16T21:37:19.445423+08:00"
+  },
+  "amendment_landing.html": {
+    "url": "https://www.mohw.gov.tw/cp-7186-82814-1.html",
+    "final_url": "https://www.mohw.gov.tw/cp-7186-82814-1.html",
+    "status": "downloaded",
+    "sha256": "4d472920ec48613984ec463cd350923cfd8a7bfcc97c4308f477de89e38b4743",
+    "bytes": 34544,
+    "captured_at": "2026-10-16T21:37:18.310065+08:00"
+  },
+  "amendment_order_20250619.pdf": {
+    "url": "https://www.mohw.gov.tw/dl-96429-c3652d8d-7f6f-484d-b91b-880fded89c83.html",
+    "final_url": "https://www.mohw.gov.tw/dl-96429-c3652d8d-7f6f-484d-b91b-880fded89c83.html",
+    "status": "downloaded",
+    "sha256": "0965eb425f12c13f199d1b318fe193c98127a81e4c19ab191f0c48f1ded4dcc4",
+    "bytes": 67630,
+    "captured_at": "2026-10-16T21:37:18.327927+08:00"
+  },
+  "amendment_comparison_20250619.pdf": {
+    "url": "https://www.mohw.gov.tw/dl-96430-927a14bd-adf8-4254-9aba-272e61b26e84.html",
+    "final_url": "https://www.mohw.gov.tw/dl-96430-927a14bd-adf8-4254-9aba-272e61b26e84.html",
+    "status": "downloaded",
+    "sha256": "6e290eb6c51760f857f185f6d9d6ac796853a02590af8fcbd0555386d69cf173",
+    "bytes": 1532583,
+    "captured_at": "2026-10-16T21:37:18.882781+08:00"
+  },
+  "amendment_combined_20250619.pdf": {
+    "url": "https://www.mohw.gov.tw/dl-96432-db9a3724-e14c-4ec5-9b00-09babfdf07ff.html",
+    "final_url": "https://www.mohw.gov.tw/dl-96432-db9a3724-e14c-4ec5-9b00-09babfdf07ff.html",
+    "status": "downloaded",
+    "sha256": "d1c13b10a4f18f33e363f3b4b869affc718c0c0f3aa145cf95d625a1a5f5f406",
+    "bytes": 683170,
+    "captured_at": "2026-10-16T21:37:18.708134+08:00"
+  },
+  "correction_20251003.pdf": {
+    "url": "https://gazette.nat.gov.tw/EG_FileManager/eguploadpub/eg031189/ch08/type7/gov70/num40/Eg.pdf",
+    "final_url": "https://gazette.nat.gov.tw/EG_FileManager/eguploadpub/eg031189/ch08/type7/gov70/num40/Eg.pdf",
+    "status": "downloaded",
+    "sha256": "982221c59b280cb0fa64990ead79429ee7c881ff950b8949d47acbaaad017be3",
+    "bytes": 278146,
+    "captured_at": "2026-10-16T21:37:18.874998+08:00"
+  },
+  "ba16_notice_landing.html": {
+    "url": "https://www.health.taichung.gov.tw/26198/1614263/1617520/1617525/1617526/3231141",
+    "final_url": "https://www.health.taichung.gov.tw/26198/1614263/1617520/1617525/1617526/3231141",
+    "status": "downloaded",
+    "sha256": "cdcd75aef74a00341cc66213b00224571ac76915adabe74f4ef26c64a47eb5b3",
+    "bytes": 96460,
+    "captured_at": "2026-10-16T21:37:19.180809+08:00"
+  }
+}

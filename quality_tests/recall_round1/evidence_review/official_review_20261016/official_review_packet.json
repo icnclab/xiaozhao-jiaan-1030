@@ -1,0 +1,657 @@
+{
+  "schema_version": 1,
+  "checked_for_client_date": "2026-10-16",
+  "prior_review_sha256": "03cba34537bb62ea59d301679c82fec33b09a1acb686f6a3097115557fd4df59",
+  "status_vocabulary": [
+    "官方來源已核對，待人工核准",
+    "官方版本仍有疑問",
+    "必要事實缺少可靠證據",
+    "不適用居家服務"
+  ],
+  "cases": [
+    {
+      "case_id": "R-05b44283-c723-4721-b13f-9f370eb1e692",
+      "display_id": "Q1",
+      "question": "可以幫忙買藥嗎？",
+      "origin": {
+        "file": "quality_tests/v1/gold_dataset_v1.json",
+        "record_id": "05b44283-c723-4721-b13f-9f370eb1e692",
+        "sha256": "ffe2477000f48fa357dd44b2f462058a5b424636a45c7662cd4df1649eea08de",
+        "kind": "existing_reviewed_feedback; no_new_question_wording"
+      },
+      "evidence_status": "官方來源已核對，待人工核准",
+      "draft_necessary_facts": [
+        {
+          "id": "Q1-C1",
+          "draft_fact": "藥品列在BA16目的物品內。",
+          "evidence_id": "BA16-1",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q1-C2",
+          "draft_fact": "物品原則為給付對象本身所需。",
+          "evidence_id": "BA16-3",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        }
+      ],
+      "previous_draft_preserved_at": "../review_packet.json",
+      "previous_fact_ids": [
+        "Q1-F1",
+        "Q1-F2",
+        "Q1-F3",
+        "Q1-F4",
+        "Q1-F5",
+        "Q1-F6"
+      ],
+      "revision_note": "僅按問題範圍提出較精簡候選；未刪除舊草稿，未替人工決定必要事實或核准答案。",
+      "supplementary_evidence_ids": [
+        "BA16-2",
+        "BA16-3",
+        "BA16-4",
+        "E09"
+      ],
+      "unresolved_claims": [
+        {
+          "claim": "舊答案中自行選藥、劑量、服法及醫療專業確認的完整責任界線",
+          "status": "必要事實缺少可靠證據",
+          "note": "E09只支持私自給藥／越權處置的指引；不補造完整醫療法規。必要性待督導決定。"
+        }
+      ],
+      "source_kind": "法規附表BA16",
+      "home_care": "來源範圍支持居家；實際給付資格、所在地及機構分工待督導確認",
+      "service_date": null,
+      "service_location": null,
+      "reviewer": null,
+      "signed_at": null,
+      "human_approved": false,
+      "necessity_review_complete": false,
+      "local_applicability_confirmed": false,
+      "reviewer_notes": "",
+      "eligible_for_formal_recall": false
+    },
+    {
+      "case_id": "R-c01c328b-9ea0-45d8-8baf-43025772d8c9",
+      "display_id": "Q2",
+      "question": "照服員可以幫長輩代領藥嗎？",
+      "origin": {
+        "file": "quality_tests/v1/gold_dataset_v1.json",
+        "record_id": "c01c328b-9ea0-45d8-8baf-43025772d8c9",
+        "sha256": "ffe2477000f48fa357dd44b2f462058a5b424636a45c7662cd4df1649eea08de",
+        "kind": "existing_reviewed_feedback; no_new_question_wording"
+      },
+      "evidence_status": "官方來源已核對，待人工核准",
+      "draft_necessary_facts": [
+        {
+          "id": "Q2-C1",
+          "draft_fact": "BA16代購／代領／代送服務的目的物品包含藥品。",
+          "evidence_id": "BA16-1",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q2-C2",
+          "draft_fact": "物品原則為給付對象本身所需。",
+          "evidence_id": "BA16-3",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        }
+      ],
+      "previous_draft_preserved_at": "../review_packet.json",
+      "previous_fact_ids": [
+        "Q2-F1",
+        "Q2-F2",
+        "Q2-F3",
+        "Q2-F4"
+      ],
+      "revision_note": "僅按問題範圍提出較精簡候選；未刪除舊草稿，未替人工決定必要事實或核准答案。",
+      "supplementary_evidence_ids": [
+        "BA16-2",
+        "BA16-3",
+        "BA16-4",
+        "E09"
+      ],
+      "unresolved_claims": [
+        {
+          "claim": "舊答案中自行選藥、劑量、服法及醫療專業確認的完整責任界線",
+          "status": "必要事實缺少可靠證據",
+          "note": "E09只支持私自給藥／越權處置的指引；不補造完整醫療法規。必要性待督導決定。"
+        }
+      ],
+      "source_kind": "法規附表BA16",
+      "home_care": "來源範圍支持居家；實際給付資格、所在地及機構分工待督導確認",
+      "service_date": null,
+      "service_location": null,
+      "reviewer": null,
+      "signed_at": null,
+      "human_approved": false,
+      "necessity_review_complete": false,
+      "local_applicability_confirmed": false,
+      "reviewer_notes": "",
+      "eligible_for_formal_recall": false
+    },
+    {
+      "case_id": "R-8d9000d2-00a2-4f59-a2a8-5c1aa39497c1",
+      "display_id": "Q3",
+      "question": "代購服務最遠可以到幾公里？",
+      "origin": {
+        "file": "quality_tests/v1/gold_dataset_v1.json",
+        "record_id": "8d9000d2-00a2-4f59-a2a8-5c1aa39497c1",
+        "sha256": "ffe2477000f48fa357dd44b2f462058a5b424636a45c7662cd4df1649eea08de",
+        "kind": "existing_reviewed_feedback; no_new_question_wording"
+      },
+      "evidence_status": "官方來源已核對，待人工核准",
+      "draft_necessary_facts": [
+        {
+          "id": "Q3-C1",
+          "draft_fact": "自案家出門起算五公里內適用本組合。",
+          "evidence_id": "BA16-4",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q3-C2",
+          "draft_fact": "超過五公里所需費用由給付對象自行負擔；不是絕對禁止超過五公里。",
+          "evidence_id": "BA16-4",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        }
+      ],
+      "previous_draft_preserved_at": "../review_packet.json",
+      "previous_fact_ids": [
+        "Q3-F1",
+        "Q3-F2"
+      ],
+      "revision_note": "僅按問題範圍提出較精簡候選；未刪除舊草稿，未替人工決定必要事實或核准答案。",
+      "supplementary_evidence_ids": [],
+      "unresolved_claims": [],
+      "source_kind": "法規附表BA16",
+      "home_care": "來源範圍支持居家；實際給付資格、所在地及機構分工待督導確認",
+      "service_date": null,
+      "service_location": null,
+      "reviewer": null,
+      "signed_at": null,
+      "human_approved": false,
+      "necessity_review_complete": false,
+      "local_applicability_confirmed": false,
+      "reviewer_notes": "",
+      "eligible_for_formal_recall": false
+    },
+    {
+      "case_id": "R-663f3622-b666-460f-9d8e-773626b85bad",
+      "display_id": "Q4",
+      "question": "代購的東西一定只能是長輩自己要用的嗎？",
+      "origin": {
+        "file": "quality_tests/v1/gold_dataset_v1.json",
+        "record_id": "663f3622-b666-460f-9d8e-773626b85bad",
+        "sha256": "ffe2477000f48fa357dd44b2f462058a5b424636a45c7662cd4df1649eea08de",
+        "kind": "existing_reviewed_feedback; no_new_question_wording"
+      },
+      "evidence_status": "官方來源已核對，待人工核准",
+      "draft_necessary_facts": [
+        {
+          "id": "Q4-C1",
+          "draft_fact": "物品原則為給付對象本身所需。",
+          "evidence_id": "BA16-3",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q4-C2",
+          "draft_fact": "包含給付對象以外家人物品時，組合金額僅支付百分之五十。",
+          "evidence_id": "BA16-3",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q4-C3",
+          "draft_fact": "包含給付對象以外家人物品時，另外百分之五十由給付對象自行負擔。",
+          "evidence_id": "BA16-3",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        }
+      ],
+      "previous_draft_preserved_at": "../review_packet.json",
+      "previous_fact_ids": [
+        "Q4-F1",
+        "Q4-F2",
+        "Q4-F3"
+      ],
+      "revision_note": "僅按問題範圍提出較精簡候選；未刪除舊草稿，未替人工決定必要事實或核准答案。",
+      "supplementary_evidence_ids": [],
+      "unresolved_claims": [],
+      "source_kind": "法規附表BA16",
+      "home_care": "來源範圍支持居家；實際給付資格、所在地及機構分工待督導確認",
+      "service_date": null,
+      "service_location": null,
+      "reviewer": null,
+      "signed_at": null,
+      "human_approved": false,
+      "necessity_review_complete": false,
+      "local_applicability_confirmed": false,
+      "reviewer_notes": "",
+      "eligible_for_formal_recall": false
+    },
+    {
+      "case_id": "R-C003",
+      "display_id": "Q5",
+      "question": "當服務使用者出現異常生理狀況時，照服員之通報與紀錄責任為何？",
+      "origin": {
+        "file": "quality_tests/v1/calibration_set.json",
+        "record_id": "C003",
+        "sha256": "556087b7f3f681c52ce3f633269b0b5dfc9cd98b5298272b3655977d58b1383e",
+        "kind": "existing_calibration_case_with_saved_result; not_claimed_real_staff_interview"
+      },
+      "evidence_status": "官方來源已核對，待人工核准",
+      "draft_necessary_facts": [
+        {
+          "id": "Q5-C1",
+          "draft_fact": "第一線服務人員發現異常事件應立即報告單位主管。",
+          "evidence_id": "E05",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q5-C2",
+          "draft_fact": "說明事情發生經過。",
+          "evidence_id": "E05",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q5-C3",
+          "draft_fact": "不得無故延遲回報。",
+          "evidence_id": "E05",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        }
+      ],
+      "previous_draft_preserved_at": "../review_packet.json",
+      "previous_fact_ids": [
+        "Q5-F1",
+        "Q5-F2",
+        "Q5-F3",
+        "Q5-F4",
+        "Q5-F5"
+      ],
+      "revision_note": "僅按問題範圍提出較精簡候選；未刪除舊草稿，未替人工決定必要事實或核准答案。",
+      "supplementary_evidence_ids": [
+        "E06",
+        "E07",
+        "E08",
+        "LAW16",
+        "E15"
+      ],
+      "unresolved_claims": [
+        {
+          "claim": "個案分級、通報對象／期限、診斷責任及機構內紀錄分工",
+          "status": "必要事實缺少可靠證據",
+          "note": "沒有個案嚴重度、所在地主管機關規範與機構SOP；不得從第16條推導通報時限。"
+        }
+      ],
+      "source_kind": "工作指引及一般服務紀錄法規",
+      "home_care": "來源範圍支持居家；實際給付資格、所在地及機構分工待督導確認",
+      "service_date": null,
+      "service_location": null,
+      "reviewer": null,
+      "signed_at": null,
+      "human_approved": false,
+      "necessity_review_complete": false,
+      "local_applicability_confirmed": false,
+      "reviewer_notes": "",
+      "eligible_for_formal_recall": false
+    },
+    {
+      "case_id": "R-C014",
+      "display_id": "Q6",
+      "question": "我今天到個案家提供服務，家屬說外出時順便幫長輩買成藥。我想確認照服員代購或代領或代送服務中，藥品是否屬於 BA16 的目的物品，以及距離和購買對象有哪些條件？",
+      "origin": {
+        "file": "quality_tests/v1/calibration_set.json",
+        "record_id": "C014",
+        "sha256": "556087b7f3f681c52ce3f633269b0b5dfc9cd98b5298272b3655977d58b1383e",
+        "kind": "existing_calibration_case_with_saved_result; not_claimed_real_staff_interview"
+      },
+      "evidence_status": "官方來源已核對，待人工核准",
+      "draft_necessary_facts": [
+        {
+          "id": "Q6-C1",
+          "draft_fact": "藥品列在BA16目的物品內。",
+          "evidence_id": "BA16-1",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q6-C2",
+          "draft_fact": "物品原則為給付對象本身所需。",
+          "evidence_id": "BA16-3",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q6-C3",
+          "draft_fact": "包含給付對象以外家人物品時，組合金額僅支付百分之五十。",
+          "evidence_id": "BA16-3",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q6-C4",
+          "draft_fact": "包含給付對象以外家人物品時，另外百分之五十由給付對象自行負擔。",
+          "evidence_id": "BA16-3",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q6-C5",
+          "draft_fact": "自案家出門起算五公里內適用本組合。",
+          "evidence_id": "BA16-4",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        },
+        {
+          "id": "Q6-C6",
+          "draft_fact": "超過五公里所需費用由給付對象自行負擔。",
+          "evidence_id": "BA16-4",
+          "evidence_status": "官方來源已核對，待人工核准",
+          "necessity_status": "待人工確認",
+          "human_approved": false
+        }
+      ],
+      "previous_draft_preserved_at": "../review_packet.json",
+      "previous_fact_ids": [
+        "Q6-F1",
+        "Q6-F2",
+        "Q6-F3",
+        "Q6-F4",
+        "Q6-F5",
+        "Q6-F6"
+      ],
+      "revision_note": "僅按問題範圍提出較精簡候選；未刪除舊草稿，未替人工決定必要事實或核准答案。",
+      "supplementary_evidence_ids": [
+        "E09"
+      ],
+      "unresolved_claims": [
+        {
+          "claim": "舊答案中自行選藥、劑量、服法及醫療專業確認的完整責任界線",
+          "status": "必要事實缺少可靠證據",
+          "note": "E09只支持私自給藥／越權處置的指引；不補造完整醫療法規。必要性待督導決定。"
+        }
+      ],
+      "source_kind": "法規附表BA16",
+      "home_care": "來源範圍支持居家；實際給付資格、所在地及機構分工待督導確認",
+      "service_date": null,
+      "service_location": null,
+      "reviewer": null,
+      "signed_at": null,
+      "human_approved": false,
+      "necessity_review_complete": false,
+      "local_applicability_confirmed": false,
+      "reviewer_notes": "",
+      "eligible_for_formal_recall": false
+    }
+  ],
+  "official_evidence": {
+    "BA16-1": {
+      "quote": "一、目的物品或事項包括：餐食、食材、生活用品、藥品、郵寄、補助品、衣物床單送洗（或取回）及必要之辦理事項（如洽政府機關或繳費）。",
+      "kind": "法規附表",
+      "status": "官方來源已核對，待人工核准",
+      "official_file": "sources/annex4_current.pdf",
+      "official_url": "https://law.moj.gov.tw/LawClass/LawGetFile.ashx?FileId=0000398331&lan=C",
+      "official_pdf_pages": [
+        14,
+        15
+      ],
+      "original_printed_pages": null,
+      "page_note": "附表該處未見印刷頁碼；使用PDF檔案頁序。",
+      "local_pdf_pages": [
+        14
+      ],
+      "comparison": "僅移除排版空白後逐字一致；不含BA15及價格欄",
+      "version": "114年6月19日修正發布；併查114年10月3日勘誤；以本次官方附件SHA256識別",
+      "version_regime_from": "2025-09-01",
+      "first_ever_ba16_effective_date": null,
+      "date_note": "2025-09-01是本次修正版一般施行日，不是BA16首次生效日；對照表明列BA16未修正。歷史服務日期另查。"
+    },
+    "BA16-2": {
+      "quote": "二、以上服務均含購物清單規劃與確認、購物、購買物品之清理與歸位及記帳之相關事前準備至善後之完整服務。",
+      "kind": "法規附表",
+      "status": "官方來源已核對，待人工核准",
+      "official_file": "sources/annex4_current.pdf",
+      "official_url": "https://law.moj.gov.tw/LawClass/LawGetFile.ashx?FileId=0000398331&lan=C",
+      "official_pdf_pages": [
+        15
+      ],
+      "original_printed_pages": null,
+      "page_note": "附表該處未見印刷頁碼；使用PDF檔案頁序。",
+      "local_pdf_pages": [
+        14
+      ],
+      "comparison": "僅移除排版空白後逐字一致；不含BA15及價格欄",
+      "version": "114年6月19日修正發布；併查114年10月3日勘誤；以本次官方附件SHA256識別",
+      "version_regime_from": "2025-09-01",
+      "first_ever_ba16_effective_date": null,
+      "date_note": "2025-09-01是本次修正版一般施行日，不是BA16首次生效日；對照表明列BA16未修正。歷史服務日期另查。"
+    },
+    "BA16-3": {
+      "quote": "三、上述目的物品或事項應為長照給付對象本身所需，如包含長照給付對象以外之家人物品，則本項組合之金額僅支付百分之五十，另外百分之五十應由長照給付對象自行負擔支付。",
+      "kind": "法規附表",
+      "status": "官方來源已核對，待人工核准",
+      "official_file": "sources/annex4_current.pdf",
+      "official_url": "https://law.moj.gov.tw/LawClass/LawGetFile.ashx?FileId=0000398331&lan=C",
+      "official_pdf_pages": [
+        15
+      ],
+      "original_printed_pages": null,
+      "page_note": "附表該處未見印刷頁碼；使用PDF檔案頁序。",
+      "local_pdf_pages": [
+        14
+      ],
+      "comparison": "僅移除排版空白後逐字一致；不含BA15及價格欄",
+      "version": "114年6月19日修正發布；併查114年10月3日勘誤；以本次官方附件SHA256識別",
+      "version_regime_from": "2025-09-01",
+      "first_ever_ba16_effective_date": null,
+      "date_note": "2025-09-01是本次修正版一般施行日，不是BA16首次生效日；對照表明列BA16未修正。歷史服務日期另查。"
+    },
+    "BA16-4": {
+      "quote": "四、本組合以代購或代領或代送長照給付對象物品或事項為主，距離自案家出門起算五公里內，適用本組合。超過五公里所需費用由長照給付對象自行負擔。",
+      "kind": "法規附表",
+      "status": "官方來源已核對，待人工核准",
+      "official_file": "sources/annex4_current.pdf",
+      "official_url": "https://law.moj.gov.tw/LawClass/LawGetFile.ashx?FileId=0000398331&lan=C",
+      "official_pdf_pages": [
+        15
+      ],
+      "original_printed_pages": null,
+      "page_note": "附表該處未見印刷頁碼；使用PDF檔案頁序。",
+      "local_pdf_pages": [
+        14
+      ],
+      "comparison": "僅移除排版空白後逐字一致；不含BA15及價格欄",
+      "version": "114年6月19日修正發布；併查114年10月3日勘誤；以本次官方附件SHA256識別",
+      "version_regime_from": "2025-09-01",
+      "first_ever_ba16_effective_date": null,
+      "date_note": "2025-09-01是本次修正版一般施行日，不是BA16首次生效日；對照表明列BA16未修正。歷史服務日期另查。"
+    },
+    "E05": {
+      "document_id": "D2",
+      "pdf_page": 111,
+      "locator": "第四章第二節／肆、二、事件嚴重度與通報時效，表格前正文",
+      "quote": "事件發生後，發現異常事件的第一線服務人員應立即報告單位主管，說明事情發生經過，現場對服務使用者及其家屬即時解說並取得諒解，不得無故延遲回報。",
+      "whitespace_only_normalized": true,
+      "scope_note": "",
+      "review_status": "待人工確認",
+      "kind": "官方督導工作指引；非獨立法規",
+      "status": "官方來源已核對，待人工核准",
+      "official_file": "sources/manual_official.pdf",
+      "official_url": "https://www.mohw.gov.tw/dl-100619-d08f6862-e9f4-48be-99cb-a79d0bb0b2f9.html",
+      "official_pdf_pages": [
+        111
+      ],
+      "original_printed_pages": [
+        111
+      ],
+      "version": "114年12月初版；官方網頁115-05-29建檔、115-06-04更新；本機與官方PDF整檔SHA256相同",
+      "formal_effective_date": null,
+      "date_note": "出版／上架／更新日期不等於法律生效日；不得溯及假設所有歷史服務均適用。"
+    },
+    "E06": {
+      "document_id": "D2",
+      "pdf_page": 111,
+      "locator": "同節（一）初報／中度傷害列附註",
+      "quote": "第一線服務人員應立即報告單位主管，說明事情發生或發現經過，依指示完成初步處理，視服務使用者實際狀況撥打救護車或協助就醫，並完整記錄事發經過，對服務使用者及其家屬即時解說並取得諒解，不得無故延遲回報。",
+      "whitespace_only_normalized": true,
+      "scope_note": "表格附註位於中度傷害列；不可據未知症狀自行套用事件分級或期限。",
+      "review_status": "待人工確認",
+      "kind": "官方督導工作指引；非獨立法規",
+      "status": "官方來源已核對，待人工核准",
+      "official_file": "sources/manual_official.pdf",
+      "official_url": "https://www.mohw.gov.tw/dl-100619-d08f6862-e9f4-48be-99cb-a79d0bb0b2f9.html",
+      "official_pdf_pages": [
+        111
+      ],
+      "original_printed_pages": [
+        111
+      ],
+      "version": "114年12月初版；官方網頁115-05-29建檔、115-06-04更新；本機與官方PDF整檔SHA256相同",
+      "formal_effective_date": null,
+      "date_note": "出版／上架／更新日期不等於法律生效日；不得溯及假設所有歷史服務均適用。"
+    },
+    "E07": {
+      "document_id": "D2",
+      "pdf_page": 112,
+      "locator": "同節初報表續頁／重度、極重度及死亡列附註",
+      "quote": "第一線服務人員應立即報告單位主管，說明事情發生經過，依指示完成現場緊急處理，並撥打救護車，完整記錄事發經過。",
+      "whitespace_only_normalized": true,
+      "scope_note": "與111頁處置文字不同，須保留嚴重度條件。",
+      "review_status": "待人工確認",
+      "kind": "官方督導工作指引；非獨立法規",
+      "status": "官方來源已核對，待人工核准",
+      "official_file": "sources/manual_official.pdf",
+      "official_url": "https://www.mohw.gov.tw/dl-100619-d08f6862-e9f4-48be-99cb-a79d0bb0b2f9.html",
+      "official_pdf_pages": [
+        112
+      ],
+      "original_printed_pages": [
+        112
+      ],
+      "version": "114年12月初版；官方網頁115-05-29建檔、115-06-04更新；本機與官方PDF整檔SHA256相同",
+      "formal_effective_date": null,
+      "date_note": "出版／上架／更新日期不等於法律生效日；不得溯及假設所有歷史服務均適用。"
+    },
+    "E08": {
+      "document_id": "D2",
+      "pdf_page": 112,
+      "locator": "初報表後／各縣市主管機關要求",
+      "quote": "若因以上事件，導致居家服務無法如服務契約執行，例如因事件發生導致服務的頻次、項目、時間或執行內涵有所變化，或導致服務使用者住院或需結案等狀態改變等情況，則須依各縣市主管機關所訂定之要求，進入照管平台進行異動通報。",
+      "whitespace_only_normalized": true,
+      "scope_note": "通報者、對象及地方流程須由督導確認；不設通用期限。",
+      "review_status": "待人工確認",
+      "kind": "官方督導工作指引；非獨立法規",
+      "status": "官方來源已核對，待人工核准",
+      "official_file": "sources/manual_official.pdf",
+      "official_url": "https://www.mohw.gov.tw/dl-100619-d08f6862-e9f4-48be-99cb-a79d0bb0b2f9.html",
+      "official_pdf_pages": [
+        112
+      ],
+      "original_printed_pages": [
+        112
+      ],
+      "version": "114年12月初版；官方網頁115-05-29建檔、115-06-04更新；本機與官方PDF整檔SHA256相同",
+      "formal_effective_date": null,
+      "date_note": "出版／上架／更新日期不等於法律生效日；不得溯及假設所有歷史服務均適用。"
+    },
+    "E09": {
+      "document_id": "D2",
+      "pdf_page": 75,
+      "locator": "第二章／二、服務紀律與時間問題（六）",
+      "quote": "（六）違規操作或越權行為，如私自給藥、做醫療性質處置（如打針）等。",
+      "whitespace_only_normalized": true,
+      "scope_note": "僅直接支持私自給藥／越權處置界線，不能擴寫成所有選藥、劑量及服法的完整法規。",
+      "review_status": "待人工確認",
+      "kind": "官方督導工作指引；非獨立法規",
+      "status": "官方來源已核對，待人工核准",
+      "official_file": "sources/manual_official.pdf",
+      "official_url": "https://www.mohw.gov.tw/dl-100619-d08f6862-e9f4-48be-99cb-a79d0bb0b2f9.html",
+      "official_pdf_pages": [
+        75
+      ],
+      "original_printed_pages": [
+        75
+      ],
+      "version": "114年12月初版；官方網頁115-05-29建檔、115-06-04更新；本機與官方PDF整檔SHA256相同",
+      "formal_effective_date": null,
+      "date_note": "出版／上架／更新日期不等於法律生效日；不得溯及假設所有歷史服務均適用。"
+    },
+    "E15": {
+      "document_id": "D2",
+      "pdf_page": 4,
+      "locator": "前言末段",
+      "quote": "本手冊內容係依編撰時之最新法規編定，僅供居督員依工作所需參酌運用。實務執行時，仍應以當前最新公告之法令規定為準。",
+      "whitespace_only_normalized": true,
+      "scope_note": "",
+      "review_status": "待人工確認",
+      "kind": "官方督導工作指引；非獨立法規",
+      "status": "官方來源已核對，待人工核准",
+      "official_file": "sources/manual_official.pdf",
+      "official_url": "https://www.mohw.gov.tw/dl-100619-d08f6862-e9f4-48be-99cb-a79d0bb0b2f9.html",
+      "official_pdf_pages": [
+        4
+      ],
+      "original_printed_pages": [
+        4
+      ],
+      "version": "114年12月初版；官方網頁115-05-29建檔、115-06-04更新；本機與官方PDF整檔SHA256相同",
+      "formal_effective_date": null,
+      "date_note": "出版／上架／更新日期不等於法律生效日；不得溯及假設所有歷史服務均適用。"
+    },
+    "LAW16": {
+      "quote": "長照特約單位應就其提供之長照服務有關事項製作紀錄，供地方主管機關查核。",
+      "kind": "法規本文",
+      "status": "官方來源已核對，待人工核准",
+      "official_url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+      "official_file": "sources/law_current.html",
+      "locator": "第16條末項",
+      "official_pdf_pages": [
+        3
+      ],
+      "pdf_alternative": "sources/amendment_combined_20250619.pdf",
+      "original_printed_pages": null,
+      "formal_effective_date": "2025-09-01",
+      "scope_note": "主體是長照特約單位的一般服務紀錄義務，沒有規定所有異常事件的通報期限。"
+    }
+  },
+  "official_source_capture": "official_sources.json",
+  "local_full_annex_version_status": "官方版本仍有疑問",
+  "local_full_annex_note": "本機51頁與官方53頁整檔不同；只確認本輪BA16四點一致，不宣稱整本同版或替換知識庫。",
+  "coverage_limit": "6題中5題集中BA16、1題事件通報；不是廣泛長照知識庫測試。",
+  "new_notice_caution": {
+    "landing": "https://www.health.taichung.gov.tw/26198/1614263/1617520/1617525/1617526/3231141",
+    "document_number": "115年3月5日衛部顧字第1151960640號函",
+    "source_kind": "地方政府轉載中央函釋",
+    "original_pdf_download_status": "unavailable",
+    "status": "官方版本仍有疑問",
+    "note": "官方轉載頁已核對，原函PDF未成功取得；在宅領受、關懷及異常通報之補充必要性與地方適用待督導核對，不自動加入標準答案。"
+  },
+  "formal_recall_eligible": 0,
+  "human_approved": 0,
+  "recall_rates": null,
+  "historical_date_caution": "2025修正版一般施行日不等於BA16首次施行日；2025-09-01以前服務須另取當時有效原始附件。手冊也不得直接溯用。"
+}

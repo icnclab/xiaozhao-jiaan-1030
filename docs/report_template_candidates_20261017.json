@@ -1,0 +1,51 @@
+{
+  "format": "review_only_not_api_payload",
+  "source": "小照專題情境設計，待嘉安確認",
+  "status": "待人工審核，未匯入正式系統",
+  "org_id": null,
+  "human_approved": false,
+  "is_active": false,
+  "warning": "分類回報不取代正式緊急處理、醫療求助或機構通報流程。以下為情境設計問題，不是法規答案，也不是嘉安實際統計。",
+  "groups": [
+    {"candidate_group": "家屬額外要求", "category_id": null, "actual_category_name": null, "mapping_confirmed": false, "questions": [
+      "家屬希望每天額外幫長輩準備一餐，可以嗎？",
+      "家屬希望我幫忙購買藥品，該如何確認？",
+      "家屬臨時要求增加原本沒有安排的服務，該怎麼回報？"
+    ]},
+    {"candidate_group": "服務範圍", "category_id": null, "actual_category_name": null, "mapping_confirmed": false, "questions": [
+      "家屬要求我打掃其他家人的房間，可以嗎？",
+      "長輩希望我順便幫家人買東西，可以嗎？",
+      "服務時被要求做原本沒安排的工作，該怎麼辦？"
+    ]},
+    {"candidate_group": "移位", "category_id": null, "actual_category_name": null, "mapping_confirmed": false, "questions": [
+      "長輩今天站不穩，原本的移位方式還能使用嗎？",
+      "移位時長輩突然喊痛，應該如何回報？",
+      "長輩需要兩人協助移位，但現場只有我一人，怎麼辦？"
+    ]},
+    {"candidate_group": "沐浴", "category_id": null, "actual_category_name": null, "mapping_confirmed": false, "questions": [
+      "長輩今天身體不舒服，還要照原訂計畫洗澡嗎？",
+      "家屬臨時要求改變洗澡方式，需要先確認嗎？",
+      "洗澡時發現長輩皮膚有異常，應該如何記錄？"
+    ]},
+    {"candidate_group": "飲食", "category_id": null, "actual_category_name": null, "mapping_confirmed": false, "questions": [
+      "家屬希望額外增加點心，需要先確認嗎？",
+      "長輩今天吃得比平常少，需要留下紀錄嗎？",
+      "家屬要求更改長輩的飲食內容，該找誰確認？"
+    ]},
+    {"candidate_group": "事件處理", "category_id": null, "actual_category_name": null, "mapping_confirmed": false, "questions": [
+      "長輩在家中跌倒了，應該怎麼回報？",
+      "服務時發現長輩出現異常狀況，需要通知誰？",
+      "發生異常事件後，應該記錄哪些事情？"
+    ]},
+    {"candidate_group": "紀錄申報", "category_id": null, "actual_category_name": null, "mapping_confirmed": false, "questions": [
+      "服務內容臨時改變，紀錄應該怎麼填？",
+      "忘記填寫服務紀錄，應該如何補報？",
+      "實際服務內容與原定服務項目不同，應該如何確認申報？"
+    ]},
+    {"candidate_group": "其他", "category_id": null, "actual_category_name": null, "mapping_confirmed": false, "questions": [
+      "家屬對服務內容有意見，可以怎麼回報？",
+      "不確定問題該選哪個分類，怎麼辦？",
+      "已經送出問題，要在哪裡查看督導的回覆？"
+    ]}
+  ]
+}

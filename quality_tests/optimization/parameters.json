@@ -1,0 +1,1261 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-11T14:51:50.310763+08:00",
+  "scope": "aa source + resolved runtime settings; not a claim that an existing server has reloaded files",
+  "classification_legend": {
+    "A": "可數值搜尋（僅未來離線）",
+    "B": "可離散比較",
+    "C": "規則型，需要人工設計",
+    "D": "不建議自動調整"
+  },
+  "parameters": [
+    {
+      "parameter_id": "chunk.target",
+      "layer": "ingest",
+      "name": "段落目標字數",
+      "current_value": 400,
+      "code_location": "backend/app/services/ingest.py:16",
+      "configurable": false,
+      "possible_search_space": [
+        300,
+        400,
+        500
+      ],
+      "metric_affected": [
+        "retrieval recall@k",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": "字符而非 token；頁面／標題／條文可提前切塊；需離線重建索引。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "chunk.max",
+      "layer": "ingest",
+      "name": "長段落句界切分目標",
+      "current_value": 700,
+      "code_location": "backend/app/services/ingest.py:15",
+      "configurable": false,
+      "possible_search_space": [
+        500,
+        700,
+        900
+      ],
+      "metric_affected": [
+        "retrieval recall@k",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": "不是嚴格上限：單一超長句仍可能超過，標題／條號也增加字數。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "chunk.overlap",
+      "layer": "ingest",
+      "name": "正文滑動 overlap",
+      "current_value": 0,
+      "code_location": "backend/app/services/ingest.py:141",
+      "configurable": false,
+      "possible_search_space": [
+        0
+      ],
+      "metric_affected": [
+        "retrieval recall@k",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "B",
+      "notes": "沒有 sliding overlap；可能重複標題，不等於正文 overlap。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "embedding.provider",
+      "layer": "embedding",
+      "name": "實際 provider",
+      "current_value": "hash",
+      "code_location": "backend/app/providers/embedding.py:91",
+      "configurable": true,
+      "possible_search_space": {
+        "allowed_now": [
+          "hash"
+        ]
+      },
+      "metric_affected": [
+        "answer correctness"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "embedding.model",
+      "layer": "embedding",
+      "name": "實際向量模型",
+      "current_value": "hash-ngram-1024",
+      "code_location": "backend/app/providers/embedding.py:40",
+      "configurable": true,
+      "possible_search_space": {
+        "allowed_now": [
+          "hash-ngram-1024"
+        ]
+      },
+      "metric_affected": [
+        "answer correctness"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "hash provider 忽略設定中的 EMBEDDING_MODEL。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "embedding.configured_model",
+      "layer": "embedding",
+      "name": "設定中的 model",
+      "current_value": "bge-m3",
+      "code_location": "backend/app/providers/embedding.py:96",
+      "configurable": true,
+      "possible_search_space": {
+        "allowed_now": [
+          "bge-m3"
+        ]
+      },
+      "metric_affected": [
+        "answer correctness"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "embedding.dimension",
+      "layer": "embedding",
+      "name": "向量維度",
+      "current_value": 1024,
+      "code_location": "backend/app/providers/embedding.py:39",
+      "configurable": true,
+      "possible_search_space": {
+        "allowed_now": [
+          1024
+        ]
+      },
+      "metric_affected": [
+        "answer correctness"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "DB vector(1024)；不可自動改。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.candidate_k",
+      "layer": "retrieval",
+      "name": "candidate_k",
+      "current_value": 50,
+      "code_location": "backend/app/services/qa_policy.py:29",
+      "configurable": false,
+      "possible_search_space": [
+        25,
+        50,
+        75,
+        100
+      ],
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": "QaPolicy 可作離線實例覆寫；production 沒有環境變數旋鈕。candidate_k 是每個 lexical/vector 通道上限，合併標題及 adjacency 後候選總數可能超過。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.top_k",
+      "layer": "retrieval",
+      "name": "top_k",
+      "current_value": 5,
+      "code_location": "backend/app/services/qa_policy.py:28",
+      "configurable": false,
+      "possible_search_space": [
+        3,
+        5,
+        7
+      ],
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": "共享門檻；禁止單題／全域盲目降低。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.lexical_weight",
+      "layer": "retrieval",
+      "name": "lexical_weight",
+      "current_value": 0.55,
+      "code_location": "backend/app/services/qa_policy.py:30",
+      "configurable": false,
+      "possible_search_space": [
+        0.45,
+        0.55,
+        0.65
+      ],
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": "共享門檻；禁止單題／全域盲目降低。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.min_top_coverage",
+      "layer": "retrieval",
+      "name": "min_top_coverage",
+      "current_value": 0.18,
+      "code_location": "backend/app/services/qa_policy.py:31",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "numeric_offline",
+        "values": [
+          0.18
+        ],
+        "expand_only_after_verified_dataset": true
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": "共享門檻；禁止單題／全域盲目降低。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.min_combined",
+      "layer": "retrieval",
+      "name": "min_combined",
+      "current_value": 0.24,
+      "code_location": "backend/app/services/qa_policy.py:32",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "numeric_offline",
+        "values": [
+          0.24
+        ],
+        "expand_only_after_verified_dataset": true
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": "共享門檻；禁止單題／全域盲目降低。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.min_evidence_score",
+      "layer": "retrieval",
+      "name": "min_evidence_score",
+      "current_value": 0.16,
+      "code_location": "backend/app/services/qa_policy.py:33",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "numeric_offline",
+        "values": [
+          0.16
+        ],
+        "expand_only_after_verified_dataset": true
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": "共享門檻；禁止單題／全域盲目降低。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.min_support",
+      "layer": "answer",
+      "name": "min_support",
+      "current_value": 0.45,
+      "code_location": "backend/app/services/qa_policy.py:34",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": 0.45
+      },
+      "metric_affected": [
+        "answer correctness",
+        "citation correctness",
+        "escalation accuracy"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "共享門檻；禁止單題／全域盲目降低。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.min_gate_vector",
+      "layer": "gate",
+      "name": "min_gate_vector",
+      "current_value": 0.52,
+      "code_location": "backend/app/services/qa_policy.py:49",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": 0.52
+      },
+      "metric_affected": [
+        "false refusal rate",
+        "unsafe answer rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "共享門檻；禁止單題／全域盲目降低。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.min_gate_body_topic",
+      "layer": "gate",
+      "name": "min_gate_body_topic",
+      "current_value": 0.5,
+      "code_location": "backend/app/services/qa_policy.py:50",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": 0.5
+      },
+      "metric_affected": [
+        "false refusal rate",
+        "unsafe answer rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "共享門檻；禁止單題／全域盲目降低。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.min_gate_title_topic",
+      "layer": "gate",
+      "name": "min_gate_title_topic",
+      "current_value": 0.8,
+      "code_location": "backend/app/services/qa_policy.py:51",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": 0.8
+      },
+      "metric_affected": [
+        "false refusal rate",
+        "unsafe answer rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "共享門檻；禁止單題／全域盲目降低。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.min_gate_rule_topic",
+      "layer": "gate",
+      "name": "min_gate_rule_topic",
+      "current_value": 0.8,
+      "code_location": "backend/app/services/qa_policy.py:52",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": 0.8
+      },
+      "metric_affected": [
+        "false refusal rate",
+        "unsafe answer rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "共享門檻；禁止單題／全域盲目降低。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "retrieval.vector_weight",
+      "layer": "retrieval",
+      "name": "向量權重",
+      "current_value": 0.44999999999999996,
+      "code_location": "backend/app/services/retrieval.py:447",
+      "configurable": false,
+      "possible_search_space": {
+        "derived_from": "1-policy.lexical_weight"
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": "不得與 lexical 權重独立搜尋。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "retrieval.hybrid",
+      "layer": "retrieval",
+      "name": "原始與正規化 scoring",
+      "current_value": {
+        "raw": "lexical_weight*coverage+(1-lexical_weight)*max(vector,0)",
+        "normalized": "lexical_weight*normalized_coverage+(1-lexical_weight)*max(vector,0)",
+        "rank": "max(raw,normalized)+title_bonus+intent_bonus"
+      },
+      "code_location": "backend/app/services/retrieval.py:448",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": {
+          "raw": "lexical_weight*coverage+(1-lexical_weight)*max(vector,0)",
+          "normalized": "lexical_weight*normalized_coverage+(1-lexical_weight)*max(vector,0)",
+          "rank": "max(raw,normalized)+title_bonus+intent_bonus"
+        }
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": "不是 RRF；lexical coverage 使用 IDF 加權原問句 bigrams。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "ranking.absent_token_factor",
+      "layer": "retrieval",
+      "name": "ABSENT_TOKEN_FACTOR",
+      "current_value": 0.6,
+      "code_location": "backend/app/services/retrieval.py:60",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "numeric_offline",
+        "values": [
+          0.6
+        ],
+        "expand_only_after_verified_dataset": true
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "ranking.exact_title_bonus",
+      "layer": "retrieval",
+      "name": "EXACT_TITLE_BONUS",
+      "current_value": 0.25,
+      "code_location": "backend/app/services/retrieval.py:61",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "numeric_offline",
+        "values": [
+          0.25
+        ],
+        "expand_only_after_verified_dataset": true
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "ranking.fuzzy_title_bonus_weight",
+      "layer": "retrieval",
+      "name": "FUZZY_TITLE_BONUS_WEIGHT",
+      "current_value": 0.3,
+      "code_location": "backend/app/services/retrieval.py:62",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "numeric_offline",
+        "values": [
+          0.3
+        ],
+        "expand_only_after_verified_dataset": true
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "ranking.fuzzy_title_min_coverage",
+      "layer": "retrieval",
+      "name": "FUZZY_TITLE_MIN_COVERAGE",
+      "current_value": 0.35,
+      "code_location": "backend/app/services/retrieval.py:63",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "numeric_offline",
+        "values": [
+          0.35
+        ],
+        "expand_only_after_verified_dataset": true
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "ranking.permission_intent_bonus",
+      "layer": "retrieval",
+      "name": "PERMISSION_INTENT_BONUS",
+      "current_value": 0.22,
+      "code_location": "backend/app/services/retrieval.py:64",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "numeric_offline",
+        "values": [
+          0.22
+        ],
+        "expand_only_after_verified_dataset": true
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "ranking.intent_conditions",
+      "layer": "retrieval",
+      "name": "意圖 bonus 條件",
+      "current_value": "def _ranking_bonuses(question: str, title: str, chunk_text: str) -> tuple[float, float, float]:\n    \"\"\"主題相關性、標題分、意圖分；expanded query 不參與最終計分。\n\n    意圖需主題至少 50% 命中；內文主題或業務範圍訊號限制段落加分，\n    防止公文信頭只憑標題取得完整意圖分。所有分項有界、可稽核。\n    \"\"\"\n    groups = _topic_token_groups(question)\n    title_topic = _topic_match(title_token_groups(question), set(bigrams(title)))\n    chunk_topic = _topic_match(groups, set(bigrams(chunk_text)))\n    topic = max(title_topic, chunk_topic)\n    title_bonus = FUZZY_TITLE_BONUS_WEIGHT * title_topic if title_topic >= FUZZY_TITLE_MIN_COVERAGE else 0.0\n    scope = bool(_SCOPE_RE.search(normalize(re.sub(r\"\\s+\", \"\", chunk_text))))\n    intent_bonus = 0.0\n    if permission_intent(question) and topic >= 0.5 and (not boundary_intent(question) or boundary_support(chunk_text)):\n        title_intent = any(term in title for term in (\"疑義\", \"資格\", \"業務內容\", \"業務範圍\", \"規定\", \"辦法\"))\n        intent_strength = 1.0 if title_intent else (0.5 if scope else 0.0)\n        paragraph_relevance = max(chunk_topic, 0.75 if scope else 0.0)\n        intent_bonus = PERMISSION_INTENT_BONUS * topic * intent_strength * paragraph_relevance\n    return topic, title_bonus, intent_bonus\n",
+      "code_location": "backend/app/services/retrieval.py:103",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "def _ranking_bonuses(question: str, title: str, chunk_text: str) -> tuple[float, float, float]:\n    \"\"\"主題相關性、標題分、意圖分；expanded query 不參與最終計分。\n\n    意圖需主題至少 50% 命中；內文主題或業務範圍訊號限制段落加分，\n    防止公文信頭只憑標題取得完整意圖分。所有分項有界、可稽核。\n    \"\"\"\n    groups = _topic_token_groups(question)\n    title_topic = _topic_match(title_token_groups(question), set(bigrams(title)))\n    chunk_topic = _topic_match(groups, set(bigrams(chunk_text)))\n    topic = max(title_topic, chunk_topic)\n    title_bonus = FUZZY_TITLE_BONUS_WEIGHT * title_topic if title_topic >= FUZZY_TITLE_MIN_COVERAGE else 0.0\n    scope = bool(_SCOPE_RE.search(normalize(re.sub(r\"\\s+\", \"\", chunk_text))))\n    intent_bonus = 0.0\n    if permission_intent(question) and topic >= 0.5 and (not boundary_intent(question) or boundary_support(chunk_text)):\n        title_intent = any(term in title for term in (\"疑義\", \"資格\", \"業務內容\", \"業務範圍\", \"規定\", \"辦法\"))\n        intent_strength = 1.0 if title_intent else (0.5 if scope else 0.0)\n        paragraph_relevance = max(chunk_topic, 0.75 if scope else 0.0)\n        intent_bonus = PERMISSION_INTENT_BONUS * topic * intent_strength * paragraph_relevance\n    return topic, title_bonus, intent_bonus\n"
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "retrieval.title_candidates",
+      "layer": "retrieval",
+      "name": "標題候選",
+      "current_value": {
+        "minimum_overlap_bigrams": 2,
+        "minimum_title_coverage": 0.35,
+        "document_chunks": "all eligible chunks of matched document"
+      },
+      "code_location": "backend/app/services/retrieval.py:357",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": {
+          "minimum_overlap_bigrams": 2,
+          "minimum_title_coverage": 0.35,
+          "document_chunks": "all eligible chunks of matched document"
+        }
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "retrieval.reranking",
+      "layer": "retrieval",
+      "name": "reranking",
+      "current_value": {
+        "model": null,
+        "algorithm": "heuristic combined score; medication scope+drug flag first, then combined DESC"
+      },
+      "code_location": "backend/app/services/retrieval.py:491",
+      "configurable": false,
+      "possible_search_space": {
+        "baseline": [
+          "heuristic_no_cross_encoder"
+        ]
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "B",
+      "notes": "無獨立 reranker model 或 rerank score；combined 是排序分。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "adjacency.service_span",
+      "layer": "retrieval",
+      "name": "代購表相鄰候選",
+      "current_value": {
+        "anchor_to_seq_plus": 4,
+        "maximum_chunks": 5,
+        "stop": "next BA code",
+        "eligibility": "same eligible version; explicit purpose includes drugs; no injection"
+      },
+      "code_location": "backend/app/services/retrieval.py:411",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": {
+          "anchor_to_seq_plus": 4,
+          "maximum_chunks": 5,
+          "stop": "next BA code",
+          "eligibility": "same eligible version; explicit purpose includes drugs; no injection"
+        }
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "adjacency.answer_focus",
+      "layer": "answer",
+      "name": "同文件相鄰證據",
+      "current_value": {
+        "distance": "ORDER BY ABS(seq-anchor.seq), seq",
+        "limit": "policy.top_k",
+        "exclude_intents": "permission/reporting/record",
+        "body_topic_threshold": 0.5
+      },
+      "code_location": "backend/app/services/qa_graph.py:225",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": {
+          "distance": "ORDER BY ABS(seq-anchor.seq), seq",
+          "limit": "policy.top_k",
+          "exclude_intents": "permission/reporting/record",
+          "body_topic_threshold": 0.5
+        }
+      },
+      "metric_affected": [
+        "answer correctness",
+        "citation correctness",
+        "escalation accuracy"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "answer.focus_min",
+      "layer": "answer",
+      "name": "同文件 focus 分數",
+      "current_value": 0.45,
+      "code_location": "backend/app/services/qa_graph.py:209",
+      "configurable": false,
+      "possible_search_space": [
+        0.4,
+        0.45,
+        0.5
+      ],
+      "metric_affected": [
+        "answer correctness",
+        "citation correctness",
+        "escalation accuracy"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "answer.focus_margin",
+      "layer": "answer",
+      "name": "同文件 focus 分差",
+      "current_value": 0.05,
+      "code_location": "backend/app/services/qa_graph.py:212",
+      "configurable": false,
+      "possible_search_space": [
+        0.03,
+        0.05,
+        0.08
+      ],
+      "metric_affected": [
+        "answer correctness",
+        "citation correctness",
+        "escalation accuracy"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "A",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "gate.reporting_threshold",
+      "layer": "gate",
+      "name": "通報 evidence 門檻",
+      "current_value": {
+        "dedicated_numeric_threshold": null,
+        "shared_procedure_topic_min": 0.8,
+        "explicit_frontline_route": "care_reporting AND reporting_duty(body), prior to base numeric signal"
+      },
+      "code_location": "backend/app/services/retrieval_gate.py:100",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": {
+          "dedicated_numeric_threshold": null,
+          "shared_procedure_topic_min": 0.8,
+          "explicit_frontline_route": "care_reporting AND reporting_duty(body), prior to base numeric signal"
+        }
+      },
+      "metric_affected": [
+        "false refusal rate",
+        "unsafe answer rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "不能報成另有 reporting=0.8 門檻；一般通報用共享0.8，明確第一線責任為規則通道。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "gate.intent_routes",
+      "layer": "gate",
+      "name": "意圖專用 evidence matching",
+      "current_value": "def assess_evidence(question: str, chunk: RetrievedChunk, policy: QaPolicy, *, check_injection: bool = True) -> GateDecision:\n    \"\"\"Never use combined/title_bonus/intent_bonus as admission confidence.\"\"\"\n    groups = _topic_token_groups(question)\n    body = substantive_body(chunk.text)\n    title_topic = _topic_match(title_token_groups(question), set(bigrams(chunk.title)))\n    body_topic = _topic_match(groups, set(bigrams(body)))\n    permission = permission_intent(question)\n    reporting = reporting_intent(question)\n    hybrid = policy.lexical_weight * chunk.coverage + (1 - policy.lexical_weight) * max(chunk.vector, 0)\n    rule_topic, excerpt = 0.0, ''\n    procedure_topic, procedure_excerpt = 0.0, ''\n    for sentence in re.split(r'[。！？!?；;]', body):\n        # No cross-sentence or unlimited cross-paragraph topic/rule stitching.\n        for start in range(0, len(sentence), 160):\n            window = sentence[start:start + 320]\n            score = _topic_match(groups, set(bigrams(window)))\n            if _NORMATIVE.search(window) and _SCOPE.search(window) and score > rule_topic:\n                rule_topic, excerpt = score, window\n            if reporting and score > procedure_topic and re.search(r'應|須|請|不得|即可|通報|報告', window) and re.search(r'通報|回報|報告|報知', window):\n                procedure_topic, procedure_excerpt = score, window\n    base = hybrid >= policy.min_combined and (chunk.coverage >= policy.min_top_coverage or chunk.vector >= policy.min_gate_vector)\n    normalized_hybrid = policy.lexical_weight * chunk.normalized_coverage + (1 - policy.lexical_weight) * max(chunk.vector, 0)\n    normalized_base = (normalized_hybrid >= policy.min_combined and chunk.normalized_coverage >= policy.min_top_coverage\n                       and body_topic >= policy.min_gate_body_topic)\n    # For ordinary questions keep the calibrated lexical body channel: verified\n    # original coverage plus cleaned body topic coverage must BOTH meet its\n    # existing threshold. Vector-only and the new title route need stronger\n    # cleaned body relevance. This avoids penalizing long colloquial questions\n    # merely because their unexpanded topic tokens include conversational text.\n    lexical_body = (not permission and chunk.coverage >= policy.min_top_coverage\n                    and body_topic >= policy.min_top_coverage)\n    substantive = bool(groups) and (body_topic >= policy.min_gate_body_topic or lexical_body)\n    permission_rule = rule_topic >= policy.min_gate_rule_topic\n    # The new route is conjunctive: title LOCATES, topical rule text SUPPORTS.\n    located_rule = title_topic >= policy.min_gate_title_topic and substantive and permission_rule\n    care_duty = care_reporting(question) and reporting_duty(body, records=bool(re.search(r'紀錄|記錄', question)))\n    scope = re.sub(r'\\s+', '', chunk.scope_context)\n    admin_scope = (medication_admin_intent(question) and permission and not boundary_intent(question)\n                   and bool(chunk.scope_chunk_ids) and '藥品' in body\n                   and bool(re.search(r'BA\\d{2}代購.{0,12}代領.{0,12}代送', scope))\n                   and bool(re.search(r'目的物品.{0,30}包括.{0,50}藥品', scope)))\n    if check_injection and (chunk.injection_flag or looks_like_injection(chunk.text)):\n        admitted, route, reason = False, 'reject', 'injection'\n    elif clarification_reason(question):\n        admitted, route, reason = False, 'reject', 'needs_clarification'\n    elif meal_cough(question) and not reporting:\n        # Retrieval can find a procedure without establishing its clinical applicability.\n        admitted, route, reason = False, 'reject', 'clinical_context_not_established'\n    elif admin_scope and not looks_like_injection(chunk.scope_context):\n        admitted, route, reason = True, 'administrative_scope_table', 'explicit_medication_purchase_scope'\n    elif care_duty:\n        admitted, route, reason = True, 'frontline_reporting_duty', 'explicit_frontline_reporting_duty'\n    elif medication_admin_intent(question) and re.search(r'餐食|食材|午餐', body) and not re.search(r'藥品|成藥|買藥|領藥', body):\n        admitted, route, reason = False, 'reject', 'food_purchase_not_medication_scope'\n    elif record_intent(question) and not record_support(body):\n        admitted, route, reason = False, 'reject', 'record_evidence_missing'\n    elif not substantive:\n        admitted, route, reason = False, 'reject', 'body_topic_missing'\n    elif reporting and procedure_topic < policy.min_gate_rule_topic:\n        admitted, route, reason = False, 'reject', 'reporting_rule_missing'\n    elif permission and boundary_intent(question) and re.search(r'BA\\d{2}', body, re.I) and not re.search(r'BA\\d{2}', question, re.I):\n        admitted, route, reason = False, 'reject', 'specific_service_scope_not_requested'\n    elif permission and boundary_intent(question) and not boundary_support(excerpt):\n        admitted, route, reason = False, 'reject', 'service_boundary_rule_missing'\n    elif permission and not permission_rule:\n        admitted, route, reason = False, 'reject', 'permission_rule_missing'\n    elif base:\n        admitted, route, reason = True, 'body_hybrid', 'body_relevant_and_base_signal'\n    elif normalized_base:\n        admitted, route, reason = True, 'normalized_body_hybrid', 'normalized_body_lexical_signal'\n    elif permission and located_rule:\n        admitted, route, reason = True, 'located_permission_rule', 'title_locates_body_rule'\n    else:\n        admitted, route, reason = False, 'reject', 'base_signal_insufficient'\n    return GateDecision(admitted, route, permission, round(hybrid, 4), chunk.coverage,\n                        chunk.vector, round(title_topic, 4), round(body_topic, 4),\n                        round(rule_topic, 4), excerpt[:320], reason, chunk.normalized_coverage,\n                        round(normalized_hybrid, 4), reporting, round(procedure_topic, 4), procedure_excerpt[:320])\n",
+      "code_location": "backend/app/services/retrieval_gate.py:50",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "def assess_evidence(question: str, chunk: RetrievedChunk, policy: QaPolicy, *, check_injection: bool = True) -> GateDecision:\n    \"\"\"Never use combined/title_bonus/intent_bonus as admission confidence.\"\"\"\n    groups = _topic_token_groups(question)\n    body = substantive_body(chunk.text)\n    title_topic = _topic_match(title_token_groups(question), set(bigrams(chunk.title)))\n    body_topic = _topic_match(groups, set(bigrams(body)))\n    permission = permission_intent(question)\n    reporting = reporting_intent(question)\n    hybrid = policy.lexical_weight * chunk.coverage + (1 - policy.lexical_weight) * max(chunk.vector, 0)\n    rule_topic, excerpt = 0.0, ''\n    procedure_topic, procedure_excerpt = 0.0, ''\n    for sentence in re.split(r'[。！？!?；;]', body):\n        # No cross-sentence or unlimited cross-paragraph topic/rule stitching.\n        for start in range(0, len(sentence), 160):\n            window = sentence[start:start + 320]\n            score = _topic_match(groups, set(bigrams(window)))\n            if _NORMATIVE.search(window) and _SCOPE.search(window) and score > rule_topic:\n                rule_topic, excerpt = score, window\n            if reporting and score > procedure_topic and re.search(r'應|須|請|不得|即可|通報|報告', window) and re.search(r'通報|回報|報告|報知', window):\n                procedure_topic, procedure_excerpt = score, window\n    base = hybrid >= policy.min_combined and (chunk.coverage >= policy.min_top_coverage or chunk.vector >= policy.min_gate_vector)\n    normalized_hybrid = policy.lexical_weight * chunk.normalized_coverage + (1 - policy.lexical_weight) * max(chunk.vector, 0)\n    normalized_base = (normalized_hybrid >= policy.min_combined and chunk.normalized_coverage >= policy.min_top_coverage\n                       and body_topic >= policy.min_gate_body_topic)\n    # For ordinary questions keep the calibrated lexical body channel: verified\n    # original coverage plus cleaned body topic coverage must BOTH meet its\n    # existing threshold. Vector-only and the new title route need stronger\n    # cleaned body relevance. This avoids penalizing long colloquial questions\n    # merely because their unexpanded topic tokens include conversational text.\n    lexical_body = (not permission and chunk.coverage >= policy.min_top_coverage\n                    and body_topic >= policy.min_top_coverage)\n    substantive = bool(groups) and (body_topic >= policy.min_gate_body_topic or lexical_body)\n    permission_rule = rule_topic >= policy.min_gate_rule_topic\n    # The new route is conjunctive: title LOCATES, topical rule text SUPPORTS.\n    located_rule = title_topic >= policy.min_gate_title_topic and substantive and permission_rule\n    care_duty = care_reporting(question) and reporting_duty(body, records=bool(re.search(r'紀錄|記錄', question)))\n    scope = re.sub(r'\\s+', '', chunk.scope_context)\n    admin_scope = (medication_admin_intent(question) and permission and not boundary_intent(question)\n                   and bool(chunk.scope_chunk_ids) and '藥品' in body\n                   and bool(re.search(r'BA\\d{2}代購.{0,12}代領.{0,12}代送', scope))\n                   and bool(re.search(r'目的物品.{0,30}包括.{0,50}藥品', scope)))\n    if check_injection and (chunk.injection_flag or looks_like_injection(chunk.text)):\n        admitted, route, reason = False, 'reject', 'injection'\n    elif clarification_reason(question):\n        admitted, route, reason = False, 'reject', 'needs_clarification'\n    elif meal_cough(question) and not reporting:\n        # Retrieval can find a procedure without establishing its clinical applicability.\n        admitted, route, reason = False, 'reject', 'clinical_context_not_established'\n    elif admin_scope and not looks_like_injection(chunk.scope_context):\n        admitted, route, reason = True, 'administrative_scope_table', 'explicit_medication_purchase_scope'\n    elif care_duty:\n        admitted, route, reason = True, 'frontline_reporting_duty', 'explicit_frontline_reporting_duty'\n    elif medication_admin_intent(question) and re.search(r'餐食|食材|午餐', body) and not re.search(r'藥品|成藥|買藥|領藥', body):\n        admitted, route, reason = False, 'reject', 'food_purchase_not_medication_scope'\n    elif record_intent(question) and not record_support(body):\n        admitted, route, reason = False, 'reject', 'record_evidence_missing'\n    elif not substantive:\n        admitted, route, reason = False, 'reject', 'body_topic_missing'\n    elif reporting and procedure_topic < policy.min_gate_rule_topic:\n        admitted, route, reason = False, 'reject', 'reporting_rule_missing'\n    elif permission and boundary_intent(question) and re.search(r'BA\\d{2}', body, re.I) and not re.search(r'BA\\d{2}', question, re.I):\n        admitted, route, reason = False, 'reject', 'specific_service_scope_not_requested'\n    elif permission and boundary_intent(question) and not boundary_support(excerpt):\n        admitted, route, reason = False, 'reject', 'service_boundary_rule_missing'\n    elif permission and not permission_rule:\n        admitted, route, reason = False, 'reject', 'permission_rule_missing'\n    elif base:\n        admitted, route, reason = True, 'body_hybrid', 'body_relevant_and_base_signal'\n    elif normalized_base:\n        admitted, route, reason = True, 'normalized_body_hybrid', 'normalized_body_lexical_signal'\n    elif permission and located_rule:\n        admitted, route, reason = True, 'located_permission_rule', 'title_locates_body_rule'\n    else:\n        admitted, route, reason = False, 'reject', 'base_signal_insufficient'\n    return GateDecision(admitted, route, permission, round(hybrid, 4), chunk.coverage,\n                        chunk.vector, round(title_topic, 4), round(body_topic, 4),\n                        round(rule_topic, 4), excerpt[:320], reason, chunk.normalized_coverage,\n                        round(normalized_hybrid, 4), reporting, round(procedure_topic, 4), procedure_excerpt[:320])\n"
+      },
+      "metric_affected": [
+        "false refusal rate",
+        "unsafe answer rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "gate.rule_window",
+      "layer": "gate",
+      "name": "同句規範證據視窗",
+      "current_value": {
+        "stride_chars": 160,
+        "window_chars": 320
+      },
+      "code_location": "backend/app/services/retrieval_gate.py:63",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": {
+          "stride_chars": 160,
+          "window_chars": 320
+        }
+      },
+      "metric_affected": [
+        "false refusal rate",
+        "unsafe answer rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "risk.medication_and_other",
+      "layer": "risk",
+      "name": "risk gate 規則",
+      "current_value": [
+        {
+          "code": "emergency",
+          "pattern": "(昏倒|昏迷|不省人事|沒有?呼吸|沒有?心跳|大量出血|抽搐|胸痛|噎住|呼吸困難|意識不清|叫不醒)"
+        },
+        {
+          "code": "clinical",
+          "pattern": "(診斷|病情|是不是(中風|骨折|感染|失智|肺炎)|要不要(送醫|就醫|看醫生|叫救護車)|該不該(送醫|就醫)|發燒.{0,6}(怎麼辦|處理|要不要)|血壓.{0,4}(多少|太高|太低|正常)|血糖.{0,4}(多少|太高|太低)|傷口.{0,4}(感染|化膿|發炎)|褥瘡.{0,4}(怎麼|如何)(處理|治療)|嗆到|(?:一直|持續|反覆|常常|經常|容易|常)嗆|嗆咳|吞嚥困難|吞不下去|噎到)"
+        },
+        {
+          "code": "medication",
+          "pattern": "((給|餵|吃|服|用)(幾|多少)(顆|錠|粒|毫升|cc|c\\.c\\.)|劑量|藥量|能不能(吃|服用|使用).{0,6}藥|要不要(吃|給|餵).{0,4}藥|停藥|加藥|減藥|藥.{0,4}(副作用|交互作用)|藥.{0,14}(給|餵|讓|吃|服用|使用).{0,8}(長輩|住民|個案|吃|服用)|(?:可以|能不能|可不可以|是否可以).{0,4}(?:多給|多吃|多餵).{0,6}(?:藥|一次)|(安眠藥|止痛藥|退燒藥).{0,6}(可以|能不能|要不要)|(給|讓).{0,4}(吃|服|用).{0,6}(半|[一二三四五六七八九十]|\\d+).{0,2}(顆|錠|粒).{0,8}藥)"
+        },
+        {
+          "code": "subsidy_amount",
+          "pattern": "(補助|給付|費用|自付額).{0,6}(多少|幾元|幾塊|金額|怎麼算)|可以(領|拿|補助|報)多少"
+        }
+      ],
+      "code_location": "backend/app/services/qa_policy.py:56",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": [
+          {
+            "code": "emergency",
+            "pattern": "(昏倒|昏迷|不省人事|沒有?呼吸|沒有?心跳|大量出血|抽搐|胸痛|噎住|呼吸困難|意識不清|叫不醒)"
+          },
+          {
+            "code": "clinical",
+            "pattern": "(診斷|病情|是不是(中風|骨折|感染|失智|肺炎)|要不要(送醫|就醫|看醫生|叫救護車)|該不該(送醫|就醫)|發燒.{0,6}(怎麼辦|處理|要不要)|血壓.{0,4}(多少|太高|太低|正常)|血糖.{0,4}(多少|太高|太低)|傷口.{0,4}(感染|化膿|發炎)|褥瘡.{0,4}(怎麼|如何)(處理|治療)|嗆到|(?:一直|持續|反覆|常常|經常|容易|常)嗆|嗆咳|吞嚥困難|吞不下去|噎到)"
+          },
+          {
+            "code": "medication",
+            "pattern": "((給|餵|吃|服|用)(幾|多少)(顆|錠|粒|毫升|cc|c\\.c\\.)|劑量|藥量|能不能(吃|服用|使用).{0,6}藥|要不要(吃|給|餵).{0,4}藥|停藥|加藥|減藥|藥.{0,4}(副作用|交互作用)|藥.{0,14}(給|餵|讓|吃|服用|使用).{0,8}(長輩|住民|個案|吃|服用)|(?:可以|能不能|可不可以|是否可以).{0,4}(?:多給|多吃|多餵).{0,6}(?:藥|一次)|(安眠藥|止痛藥|退燒藥).{0,6}(可以|能不能|要不要)|(給|讓).{0,4}(吃|服|用).{0,6}(半|[一二三四五六七八九十]|\\d+).{0,2}(顆|錠|粒).{0,8}藥)"
+          },
+          {
+            "code": "subsidy_amount",
+            "pattern": "(補助|給付|費用|自付額).{0,6}(多少|幾元|幾塊|金額|怎麼算)|可以(領|拿|補助|報)多少"
+          }
+        ]
+      },
+      "metric_affected": [
+        "risk recall",
+        "risk false positive rate",
+        "unsafe answer rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "risk input 與 output 均檢查；不許自動調整／繞過。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "query.normalization",
+      "layer": "query",
+      "name": "query normalization",
+      "current_value": "def normalize_colloquial(question: str) -> str:\n    \"\"\"Keep every substantive clause, including clinical warning signs.\"\"\"\n    q = re.sub(r'\\s+', ' ', question.strip())\n    # Only remove explicit conversational fillers, never symptoms/actions.\n    return re.sub(r'^(?:(?:嗯|呃|那個|我想請問|想請問)[，,：:])+', '', q)\n",
+      "code_location": "backend/app/services/query_understanding.py:28",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "def normalize_colloquial(question: str) -> str:\n    \"\"\"Keep every substantive clause, including clinical warning signs.\"\"\"\n    q = re.sub(r'\\s+', ' ', question.strip())\n    # Only remove explicit conversational fillers, never symptoms/actions.\n    return re.sub(r'^(?:(?:嗯|呃|那個|我想請問|想請問)[，,：:])+', '', q)\n"
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "query.context",
+      "layer": "query",
+      "name": "administrative follow-up normalization",
+      "current_value": "def contextual_question(question: str, previous: str | None) -> str:\n    \"\"\"Only resolve an explicit administrative follow-up in the same thread.\"\"\"\n    q = normalize_colloquial(question)\n    if re.fullmatch(r'(?:那)?可以代買嗎[？?。]?', q) and previous:\n        from app.services.qa_policy import screen_risk\n        if medication_admin_intent(previous) and not screen_risk(previous):\n            return normalize_colloquial(previous) + '，' + q\n    return q\n",
+      "code_location": "backend/app/services/query_understanding.py:35",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "def contextual_question(question: str, previous: str | None) -> str:\n    \"\"\"Only resolve an explicit administrative follow-up in the same thread.\"\"\"\n    q = normalize_colloquial(question)\n    if re.fullmatch(r'(?:那)?可以代買嗎[？?。]?', q) and previous:\n        from app.services.qa_policy import screen_risk\n        if medication_admin_intent(previous) and not screen_risk(previous):\n            return normalize_colloquial(previous) + '，' + q\n    return q\n"
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "query.action_aliases",
+      "layer": "query",
+      "name": "query aliases",
+      "current_value": [
+        [
+          "換藥",
+          "更換敷料"
+        ],
+        [
+          "清傷口",
+          "清潔傷口",
+          "清洗傷口",
+          "傷口清潔",
+          "傷口簡易清潔"
+        ],
+        [
+          "餵食",
+          "進食",
+          "吃飯",
+          "餵飯"
+        ],
+        [
+          "抽痰",
+          "抽吸"
+        ],
+        [
+          "洗澡",
+          "沐浴"
+        ],
+        [
+          "翻身",
+          "變換姿勢"
+        ],
+        [
+          "回報",
+          "通報",
+          "報告",
+          "報知"
+        ],
+        [
+          "服務計畫外",
+          "服務範圍外",
+          "非服務項目",
+          "超出服務範圍",
+          "超過服務範圍",
+          "服務界線",
+          "角色界線",
+          "回歸服務契約",
+          "依據契約與工作範圍",
+          "額外需求"
+        ],
+        [
+          "代購成藥",
+          "代買成藥",
+          "買成藥",
+          "幫忙買藥",
+          "代購藥品",
+          "代買藥品",
+          "買藥",
+          "代購"
+        ],
+        [
+          "幫忙領藥",
+          "幫長輩領藥",
+          "代領藥品",
+          "代領藥",
+          "領藥",
+          "代領"
+        ]
+      ],
+      "code_location": "backend/app/services/query_understanding.py:11",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": [
+          [
+            "換藥",
+            "更換敷料"
+          ],
+          [
+            "清傷口",
+            "清潔傷口",
+            "清洗傷口",
+            "傷口清潔",
+            "傷口簡易清潔"
+          ],
+          [
+            "餵食",
+            "進食",
+            "吃飯",
+            "餵飯"
+          ],
+          [
+            "抽痰",
+            "抽吸"
+          ],
+          [
+            "洗澡",
+            "沐浴"
+          ],
+          [
+            "翻身",
+            "變換姿勢"
+          ],
+          [
+            "回報",
+            "通報",
+            "報告",
+            "報知"
+          ],
+          [
+            "服務計畫外",
+            "服務範圍外",
+            "非服務項目",
+            "超出服務範圍",
+            "超過服務範圍",
+            "服務界線",
+            "角色界線",
+            "回歸服務契約",
+            "依據契約與工作範圍",
+            "額外需求"
+          ],
+          [
+            "代購成藥",
+            "代買成藥",
+            "買成藥",
+            "幫忙買藥",
+            "代購藥品",
+            "代買藥品",
+            "買藥",
+            "代購"
+          ],
+          [
+            "幫忙領藥",
+            "幫長輩領藥",
+            "代領藥品",
+            "代領藥",
+            "領藥",
+            "代領"
+          ]
+        ]
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "query.expansion",
+      "layer": "query",
+      "name": "候選 query expansion",
+      "current_value": "def _expand_query(question: str, today: date) -> str:\n    \"\"\"只用於檢索的保守查詢擴展，不改變使用者原始問題。\"\"\"\n    aliases: list[str] = []\n    aliases.extend(candidate_aliases(question))\n\n    # 一般口語正規化：只影響檢索，不改使用者原始問題。\n    # 目的不是針對單一題目，而是讓居服現場常見口語較容易對上正式文件用語。\n    general_terms = (\n        (\"照服員\", \"照顧服務員\"),\n        (\"長輩\", \"個案\"),\n        (\"老人\", \"個案\"),\n        (\"怎麼辦\", \"如何處理\"),\n        (\"怎麼處理\", \"處理流程\"),\n        (\"要怎麼處理\", \"處理流程\"),\n        (\"要通知誰\", \"通報\"),\n        (\"要跟誰說\", \"通報\"),\n        (\"回報給誰\", \"通報\"),\n        (\"跟進\", \"追蹤\"),\n        (\"後續處理\", \"後續追蹤\"),\n    )\n    for colloquial, formal in general_terms:\n        if colloquial in question:\n            aliases.append(formal)\n\n    # 認證更新期限：僅在認證證明＋到期語境下轉換口語，保留其他條件。\n    # 不全域替換「展延」，機構設立許可的展延是不同程序。\n    if (\"長照人員\" in question or \"長期照顧服務人員\" in question) and \"認證\" in question and any(\n        word in question for word in (\"到期\", \"有效期限\", \"屆至\")\n    ) and any(word in question for word in (\"更新\", \"展延\")):\n        question = question.replace(\"認證證明快到期了\", \"認證證明文件有效期限屆至\")\n        question = question.replace(\"認證證明即將到期\", \"認證證明文件有效期限屆至\")\n        question = question.replace(\"快到期了\", \"有效期限屆至\").replace(\"即將到期\", \"有效期限屆至\")\n        question = question.replace(\"到期\", \"有效期限屆至\").replace(\"申請展延\", \"申請更新\")\n        question = question.replace(\"最晚要在什麼時候前\", \"何時\")\n\n    # 評鑑督導制度：只處理聯繫會議頻率，不擴展到個別／團體督導。\n    if ((\"督導制度\" in question or \"行政聯繫會議\" in question)\n        and \"聯繫會議\" in question\n        and any(word in question for word in (\"多久\", \"頻率\", \"多常\", \"幾個月\", \"每隔\"))):\n        if \"行政聯繫會議\" not in question:\n            question = question.replace(\"聯繫會議\", \"行政聯繫會議\")\n        question = question.replace(\"至少多久要開一次\", \"應定期召開\")\n        question = question.replace(\"多久召開一次\", \"應定期召開\")\n        question = question.replace(\"多久至少要開一次\", \"應定期召開\")\n\n    # 傷口換藥：正式問法與口語問法\n    if (\n        \"換藥\" in question\n        or \"更換敷料\" in question\n        or (\"傷口\" in question and \"換\" in question and \"藥\" in question)\n    ):\n        aliases.append(\n            \"照顧服務員執行傷口換藥疑義 \"\n            \"一般傷口更換敷料 傷口簡易清潔\"\n        )\n\n    # 居家喘息：吃飯／餵食 → 進食\n    if (\"居家喘息\" in question or \"居家式喘息\" in question) and any(\n        word in question for word in (\"吃飯\", \"餵食\", \"進食\", \"灌食\")\n    ):\n        aliases.append(\n            \"居家式喘息服務進食服務疑義 進食 協助餵食 灌食\"\n        )\n\n    # 跌倒等事故的口語問法 → 異常事件處理／通報\n    if \"跌倒\" in question and any(\n        word in question for word in (\"回報\", \"通報\", \"通知\", \"處理\", \"怎麼辦\")\n    ):\n        aliases.append(\n            \"居家服務督導員工作手冊 異常事件 跌倒 通報 處理流程 初報 續報 結報 後續追蹤\"\n        )\n    # 居督異常事件\n    if \"異常事件\" in question and any(\n        word in question for word in (\"督導\", \"居督\", \"居家服務\")\n    ):\n        aliases.append(\n            \"居家服務督導員工作手冊 \"\n            \"異常事件 通報 處理流程 完整記錄 後續追蹤\"\n        )\n\n    # 官方服務紀錄參考格式\n    if \"服務紀錄\" in question and \"參考格式\" in question:\n        aliases.append(\n            \"長照專業服務操作指引 附錄一服務紀錄參考格式\"\n        )\n\n    # 「今年評鑑」→ 當年度民國年評鑑基準\n    if \"評鑑\" in question and any(\n        word in question for word in (\"居家式\", \"居家機構\", \"居家式機構\")\n    ):\n        roc_year = today.year - 1911\n        aliases.append(\n            f\"附件一 {roc_year}年度居家式長期照顧服務機構評鑑基準 \"\n            \"工作手冊 管理制度 文件\"\n        )\n\n    return question if not aliases else question + \" \" + \" \".join(aliases)\n",
+      "code_location": "backend/app/services/retrieval.py:124",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "def _expand_query(question: str, today: date) -> str:\n    \"\"\"只用於檢索的保守查詢擴展，不改變使用者原始問題。\"\"\"\n    aliases: list[str] = []\n    aliases.extend(candidate_aliases(question))\n\n    # 一般口語正規化：只影響檢索，不改使用者原始問題。\n    # 目的不是針對單一題目，而是讓居服現場常見口語較容易對上正式文件用語。\n    general_terms = (\n        (\"照服員\", \"照顧服務員\"),\n        (\"長輩\", \"個案\"),\n        (\"老人\", \"個案\"),\n        (\"怎麼辦\", \"如何處理\"),\n        (\"怎麼處理\", \"處理流程\"),\n        (\"要怎麼處理\", \"處理流程\"),\n        (\"要通知誰\", \"通報\"),\n        (\"要跟誰說\", \"通報\"),\n        (\"回報給誰\", \"通報\"),\n        (\"跟進\", \"追蹤\"),\n        (\"後續處理\", \"後續追蹤\"),\n    )\n    for colloquial, formal in general_terms:\n        if colloquial in question:\n            aliases.append(formal)\n\n    # 認證更新期限：僅在認證證明＋到期語境下轉換口語，保留其他條件。\n    # 不全域替換「展延」，機構設立許可的展延是不同程序。\n    if (\"長照人員\" in question or \"長期照顧服務人員\" in question) and \"認證\" in question and any(\n        word in question for word in (\"到期\", \"有效期限\", \"屆至\")\n    ) and any(word in question for word in (\"更新\", \"展延\")):\n        question = question.replace(\"認證證明快到期了\", \"認證證明文件有效期限屆至\")\n        question = question.replace(\"認證證明即將到期\", \"認證證明文件有效期限屆至\")\n        question = question.replace(\"快到期了\", \"有效期限屆至\").replace(\"即將到期\", \"有效期限屆至\")\n        question = question.replace(\"到期\", \"有效期限屆至\").replace(\"申請展延\", \"申請更新\")\n        question = question.replace(\"最晚要在什麼時候前\", \"何時\")\n\n    # 評鑑督導制度：只處理聯繫會議頻率，不擴展到個別／團體督導。\n    if ((\"督導制度\" in question or \"行政聯繫會議\" in question)\n        and \"聯繫會議\" in question\n        and any(word in question for word in (\"多久\", \"頻率\", \"多常\", \"幾個月\", \"每隔\"))):\n        if \"行政聯繫會議\" not in question:\n            question = question.replace(\"聯繫會議\", \"行政聯繫會議\")\n        question = question.replace(\"至少多久要開一次\", \"應定期召開\")\n        question = question.replace(\"多久召開一次\", \"應定期召開\")\n        question = question.replace(\"多久至少要開一次\", \"應定期召開\")\n\n    # 傷口換藥：正式問法與口語問法\n    if (\n        \"換藥\" in question\n        or \"更換敷料\" in question\n        or (\"傷口\" in question and \"換\" in question and \"藥\" in question)\n    ):\n        aliases.append(\n            \"照顧服務員執行傷口換藥疑義 \"\n            \"一般傷口更換敷料 傷口簡易清潔\"\n        )\n\n    # 居家喘息：吃飯／餵食 → 進食\n    if (\"居家喘息\" in question or \"居家式喘息\" in question) and any(\n        word in question for word in (\"吃飯\", \"餵食\", \"進食\", \"灌食\")\n    ):\n        aliases.append(\n            \"居家式喘息服務進食服務疑義 進食 協助餵食 灌食\"\n        )\n\n    # 跌倒等事故的口語問法 → 異常事件處理／通報\n    if \"跌倒\" in question and any(\n        word in question for word in (\"回報\", \"通報\", \"通知\", \"處理\", \"怎麼辦\")\n    ):\n        aliases.append(\n            \"居家服務督導員工作手冊 異常事件 跌倒 通報 處理流程 初報 續報 結報 後續追蹤\"\n        )\n    # 居督異常事件\n    if \"異常事件\" in question and any(\n        word in question for word in (\"督導\", \"居督\", \"居家服務\")\n    ):\n        aliases.append(\n            \"居家服務督導員工作手冊 \"\n            \"異常事件 通報 處理流程 完整記錄 後續追蹤\"\n        )\n\n    # 官方服務紀錄參考格式\n    if \"服務紀錄\" in question and \"參考格式\" in question:\n        aliases.append(\n            \"長照專業服務操作指引 附錄一服務紀錄參考格式\"\n        )\n\n    # 「今年評鑑」→ 當年度民國年評鑑基準\n    if \"評鑑\" in question and any(\n        word in question for word in (\"居家式\", \"居家機構\", \"居家式機構\")\n    ):\n        roc_year = today.year - 1911\n        aliases.append(\n            f\"附件一 {roc_year}年度居家式長期照顧服務機構評鑑基準 \"\n            \"工作手冊 管理制度 文件\"\n        )\n\n    return question if not aliases else question + \" \" + \" \".join(aliases)\n"
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "query.intent_aliases",
+      "layer": "query",
+      "name": "局部 intent aliases",
+      "current_value": "def candidate_aliases(question: str) -> list[str]:\n    if care_reporting(question):\n        return ['異常事件', '身體不適', '通報', '回報', '第一線服務人員', '紀錄', '記錄'] + (\n            ['食慾下降', '食慾不振', '進食異常'] if appetite_change(question) else [])\n    if meal_cough(question):\n        return ['進食', '咳嗽', '哽傷', '哽塞', '異物', '吞嚥']\n    if medication_admin_intent(question):\n        return list(ACTION_ALIASES[8]) + ['藥品', '代購或代領或代送', '目的物品', '購物清單']\n    # Existing expansion already covers dressing changes and other older groups.\n    groups = (ACTION_ALIASES[1], ACTION_ALIASES[2], ACTION_ALIASES[6], ACTION_ALIASES[7],\n              ACTION_ALIASES[8], ACTION_ALIASES[9], _CONTEXT_ALIASES[0])\n    if record_intent(question):\n        return ['服務紀錄', '服務記錄', '紀錄內容', '紀錄項目']\n    return [word for aliases in groups if any(word in normalize(question) for word in aliases) for word in aliases]\n",
+      "code_location": "backend/app/services/query_understanding.py:141",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "def candidate_aliases(question: str) -> list[str]:\n    if care_reporting(question):\n        return ['異常事件', '身體不適', '通報', '回報', '第一線服務人員', '紀錄', '記錄'] + (\n            ['食慾下降', '食慾不振', '進食異常'] if appetite_change(question) else [])\n    if meal_cough(question):\n        return ['進食', '咳嗽', '哽傷', '哽塞', '異物', '吞嚥']\n    if medication_admin_intent(question):\n        return list(ACTION_ALIASES[8]) + ['藥品', '代購或代領或代送', '目的物品', '購物清單']\n    # Existing expansion already covers dressing changes and other older groups.\n    groups = (ACTION_ALIASES[1], ACTION_ALIASES[2], ACTION_ALIASES[6], ACTION_ALIASES[7],\n              ACTION_ALIASES[8], ACTION_ALIASES[9], _CONTEXT_ALIASES[0])\n    if record_intent(question):\n        return ['服務紀錄', '服務記錄', '紀錄內容', '紀錄項目']\n    return [word for aliases in groups if any(word in normalize(question) for word in aliases) for word in aliases]\n"
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "answer.evidence_selection",
+      "layer": "answer",
+      "name": "answer evidence selection",
+      "current_value": "def prioritize_admitted(question, admitted, chosen, top_k):\n    \"\"\"Reserve slots for fact-bearing admitted evidence, then other admitted\n    evidence. Adjacent chunks only fill leftover capacity; no top_k increase.\n    \"\"\"\n    supported = [c for c in admitted if field_support(question, c.text)]\n    if not requested_field(question):\n        return chosen[:top_k], []\n    ordered = supported + chosen + admitted\n    result, seen = [], set()\n    for c in ordered:\n        if c.chunk_id not in seen:\n            result.append(c); seen.add(c.chunk_id)\n        if len(result) == top_k:\n            break\n    return result, [str(c.chunk_id) for c in supported]\n",
+      "code_location": "backend/app/services/evidence_selection.py:49",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "def prioritize_admitted(question, admitted, chosen, top_k):\n    \"\"\"Reserve slots for fact-bearing admitted evidence, then other admitted\n    evidence. Adjacent chunks only fill leftover capacity; no top_k increase.\n    \"\"\"\n    supported = [c for c in admitted if field_support(question, c.text)]\n    if not requested_field(question):\n        return chosen[:top_k], []\n    ordered = supported + chosen + admitted\n    result, seen = [], set()\n    for c in ordered:\n        if c.chunk_id not in seen:\n            result.append(c); seen.add(c.chunk_id)\n        if len(result) == top_k:\n            break\n    return result, [str(c.chunk_id) for c in supported]\n"
+      },
+      "metric_affected": [
+        "answer correctness",
+        "citation correctness",
+        "escalation accuracy"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "C",
+      "notes": "另有 frontline reporting／BA service scope 優先選取；不提高 top_k。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "answer.validation",
+      "layer": "answer",
+      "name": "answer validation",
+      "current_value": "def node_verify(state: QaState) -> QaState:\n    \"\"\"驗證：引用存在、字面支持、輸出風險、跨文件衝突；LLM 自報只能多轉人工。\"\"\"\n    policy: QaPolicy = state[\"policy\"]\n    candidate: CandidateAnswer = state[\"candidate\"]\n    evidence_map = state[\"evidence_map\"]\n    checks = dict(state.get(\"checks\", {}))\n    checks[\"llm_flags\"] = {\"needs_human\": candidate.needs_human, \"conflict\": candidate.conflict,\n                           \"reason\": candidate.reason}\n\n    if candidate.conflict:\n        return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": \"conflict\", \"reason_detail\": candidate.reason}\n    if candidate.needs_human or not candidate.claims:\n        reason = \"suspicious_content\" if \"可疑指令\" in candidate.reason else \"insufficient\"\n        return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": reason, \"reason_detail\": candidate.reason}\n\n    claim_checks, verified_claims = [], []\n    for claim in candidate.claims:\n        refs = [r for r in claim[\"citation_refs\"] if r in evidence_map]\n        unknown = [r for r in claim[\"citation_refs\"] if r not in evidence_map]\n        support = max(\n            (\n                support_score(\n                    claim[\"text\"],\n                    f\"{evidence_map[r].title}\\n{evidence_map[r].locator}\\n{evidence_map[r].text}\",\n                )\n                for r in refs\n            ),\n            default=0.0,\n        )\n\n        claim_check = {\n            \"refs\": refs,\n            \"unknown_refs\": unknown,\n            \"support\": round(support, 3),\n        }\n\n        if not refs or unknown:\n            claim_check[\"accepted\"] = False\n            claim_check[\"reject_reason\"] = \"citation_missing\"\n            claim_checks.append(claim_check)\n            checks[\"claims\"] = claim_checks\n            return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": \"citation_missing\"}\n\n        if screen_risk(claim[\"text\"], policy):\n            claim_check[\"accepted\"] = False\n            claim_check[\"reject_reason\"] = \"output_risk\"\n            claim_checks.append(claim_check)\n            checks[\"claims\"] = claim_checks\n            return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": \"output_risk\"}\n\n        role_check = check_roles(claim['text'], [evidence_map[r].text for r in refs])\n        claim_check['roles'] = role_check\n        if not role_check['passed']:\n            claim_check['accepted'] = False\n            claim_check['reject_reason'] = 'role_mismatch'\n            claim_checks.append(claim_check)\n            checks['claims'] = claim_checks\n            return {'checks': checks, 'outcome': 'escalate', 'reason': 'unsupported_claim',\n                    'reason_detail': '引用正文的規範主體與回答角色不一致'}\n\n        if support < policy.min_support:\n            claim_check[\"accepted\"] = False\n            claim_check[\"reject_reason\"] = \"unsupported_claim\"\n            claim_checks.append(claim_check)\n            continue\n\n        claim_check[\"accepted\"] = True\n        claim_checks.append(claim_check)\n        verified_claims.append({\n            \"text\": claim[\"text\"],\n            \"refs\": refs,\n            \"support\": round(support, 3),\n        })\n\n    checks[\"claims\"] = claim_checks\n\n    if not verified_claims:\n        return {\n            \"checks\": checks,\n            \"outcome\": \"escalate\",\n            \"reason\": \"unsupported_claim\",\n        }\n\n    if asks_penalty_amount(state[\"question_masked\"]):\n        responsive = any(\n            answers_supported_penalty_amount(state[\"question_masked\"], claim[\"text\"], evidence_map[ref].text)\n            for claim in verified_claims for ref in claim[\"refs\"]\n        )\n        checks[\"answer_sufficiency\"] = {\"required_fact\": \"penalty_amount\", \"answered\": responsive}\n        if not responsive:\n            return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": \"insufficient\",\n                    \"reason_detail\": \"回答未以引用證據提供所問的罰款或扣款金額\"}\n\n    if requested_field(state['question_masked']) in ('duration', 'frequency', 'quantity'):\n        responsive = any(answers_requested_value(state['question_masked'], c['text'],\n                         [evidence_map[r].text for r in c['refs']]) for c in verified_claims)\n        checks['requested_fact_verification'] = {'field': requested_field(state['question_masked']), 'answered': responsive}\n        if not responsive:\n            return {'checks': checks, 'outcome': 'escalate', 'reason': 'insufficient',\n                    'reason_detail': '回答未以引用證據提供問題所需的數值或期限'}\n\n    strong = [item for item in evidence_map.values() if item.coverage >= policy.min_top_coverage\n              or assess_evidence(state['question_masked'], item, policy).admitted]\n    conflict = detect_conflict(state[\"question_masked\"], strong)\n    if conflict:\n        checks[\"conflict\"] = conflict\n        return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": \"conflict\"}\n    return {\"checks\": checks, \"outcome\": \"answer\", \"claims\": verified_claims}\n",
+      "code_location": "backend/app/services/qa_graph.py:431",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "def node_verify(state: QaState) -> QaState:\n    \"\"\"驗證：引用存在、字面支持、輸出風險、跨文件衝突；LLM 自報只能多轉人工。\"\"\"\n    policy: QaPolicy = state[\"policy\"]\n    candidate: CandidateAnswer = state[\"candidate\"]\n    evidence_map = state[\"evidence_map\"]\n    checks = dict(state.get(\"checks\", {}))\n    checks[\"llm_flags\"] = {\"needs_human\": candidate.needs_human, \"conflict\": candidate.conflict,\n                           \"reason\": candidate.reason}\n\n    if candidate.conflict:\n        return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": \"conflict\", \"reason_detail\": candidate.reason}\n    if candidate.needs_human or not candidate.claims:\n        reason = \"suspicious_content\" if \"可疑指令\" in candidate.reason else \"insufficient\"\n        return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": reason, \"reason_detail\": candidate.reason}\n\n    claim_checks, verified_claims = [], []\n    for claim in candidate.claims:\n        refs = [r for r in claim[\"citation_refs\"] if r in evidence_map]\n        unknown = [r for r in claim[\"citation_refs\"] if r not in evidence_map]\n        support = max(\n            (\n                support_score(\n                    claim[\"text\"],\n                    f\"{evidence_map[r].title}\\n{evidence_map[r].locator}\\n{evidence_map[r].text}\",\n                )\n                for r in refs\n            ),\n            default=0.0,\n        )\n\n        claim_check = {\n            \"refs\": refs,\n            \"unknown_refs\": unknown,\n            \"support\": round(support, 3),\n        }\n\n        if not refs or unknown:\n            claim_check[\"accepted\"] = False\n            claim_check[\"reject_reason\"] = \"citation_missing\"\n            claim_checks.append(claim_check)\n            checks[\"claims\"] = claim_checks\n            return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": \"citation_missing\"}\n\n        if screen_risk(claim[\"text\"], policy):\n            claim_check[\"accepted\"] = False\n            claim_check[\"reject_reason\"] = \"output_risk\"\n            claim_checks.append(claim_check)\n            checks[\"claims\"] = claim_checks\n            return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": \"output_risk\"}\n\n        role_check = check_roles(claim['text'], [evidence_map[r].text for r in refs])\n        claim_check['roles'] = role_check\n        if not role_check['passed']:\n            claim_check['accepted'] = False\n            claim_check['reject_reason'] = 'role_mismatch'\n            claim_checks.append(claim_check)\n            checks['claims'] = claim_checks\n            return {'checks': checks, 'outcome': 'escalate', 'reason': 'unsupported_claim',\n                    'reason_detail': '引用正文的規範主體與回答角色不一致'}\n\n        if support < policy.min_support:\n            claim_check[\"accepted\"] = False\n            claim_check[\"reject_reason\"] = \"unsupported_claim\"\n            claim_checks.append(claim_check)\n            continue\n\n        claim_check[\"accepted\"] = True\n        claim_checks.append(claim_check)\n        verified_claims.append({\n            \"text\": claim[\"text\"],\n            \"refs\": refs,\n            \"support\": round(support, 3),\n        })\n\n    checks[\"claims\"] = claim_checks\n\n    if not verified_claims:\n        return {\n            \"checks\": checks,\n            \"outcome\": \"escalate\",\n            \"reason\": \"unsupported_claim\",\n        }\n\n    if asks_penalty_amount(state[\"question_masked\"]):\n        responsive = any(\n            answers_supported_penalty_amount(state[\"question_masked\"], claim[\"text\"], evidence_map[ref].text)\n            for claim in verified_claims for ref in claim[\"refs\"]\n        )\n        checks[\"answer_sufficiency\"] = {\"required_fact\": \"penalty_amount\", \"answered\": responsive}\n        if not responsive:\n            return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": \"insufficient\",\n                    \"reason_detail\": \"回答未以引用證據提供所問的罰款或扣款金額\"}\n\n    if requested_field(state['question_masked']) in ('duration', 'frequency', 'quantity'):\n        responsive = any(answers_requested_value(state['question_masked'], c['text'],\n                         [evidence_map[r].text for r in c['refs']]) for c in verified_claims)\n        checks['requested_fact_verification'] = {'field': requested_field(state['question_masked']), 'answered': responsive}\n        if not responsive:\n            return {'checks': checks, 'outcome': 'escalate', 'reason': 'insufficient',\n                    'reason_detail': '回答未以引用證據提供問題所需的數值或期限'}\n\n    strong = [item for item in evidence_map.values() if item.coverage >= policy.min_top_coverage\n              or assess_evidence(state['question_masked'], item, policy).admitted]\n    conflict = detect_conflict(state[\"question_masked\"], strong)\n    if conflict:\n        checks[\"conflict\"] = conflict\n        return {\"checks\": checks, \"outcome\": \"escalate\", \"reason\": \"conflict\"}\n    return {\"checks\": checks, \"outcome\": \"answer\", \"claims\": verified_claims}\n"
+      },
+      "metric_affected": [
+        "answer correctness",
+        "citation correctness",
+        "escalation accuracy"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "documents.eligibility",
+      "layer": "retrieval",
+      "name": "文件版本及機構隔離",
+      "current_value": "def current_versions(session: Session, org_id: uuid.UUID, facility_type: str, today: date) -> list[uuid.UUID]:\n    \"\"\"某機構在某日可用的現行版本 ID 清單。\"\"\"\n    rows = session.execute(\n        text(CURRENT_VERSIONS_SQL), {\"today\": today, \"org_id\": org_id, \"facility_type\": facility_type}\n    ).all()\n    return [row.version_id for row in rows]\n",
+      "code_location": "backend/app/services/documents.py:284",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "def current_versions(session: Session, org_id: uuid.UUID, facility_type: str, today: date) -> list[uuid.UUID]:\n    \"\"\"某機構在某日可用的現行版本 ID 清單。\"\"\"\n    rows = session.execute(\n        text(CURRENT_VERSIONS_SQL), {\"today\": today, \"org_id\": org_id, \"facility_type\": facility_type}\n    ).all()\n    return [row.version_id for row in rows]\n"
+      },
+      "metric_affected": [
+        "retrieval recall@k",
+        "false refusal rate",
+        "evidence precision"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "prompt.version",
+      "layer": "answer",
+      "name": "正式 prompt version",
+      "current_value": null,
+      "code_location": "backend/app/providers/llm.py:101",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": null
+      },
+      "metric_affected": [
+        "answer correctness",
+        "citation correctness",
+        "escalation accuracy"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "原程式沒有具名 prompt version；不可捏造。Phase1 trace 用內容 SHA256 派生 fingerprint，不代表既有歷史 QA 已有版本。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "prompt.fingerprint",
+      "layer": "answer",
+      "name": "目前 prompt fingerprint",
+      "current_value": "sha256:849a6f9ddc6ef486bfc62208dd13d62020a80139576cc6de1c93524480c1b52b",
+      "code_location": "backend/app/providers/llm.py:101",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "sha256:849a6f9ddc6ef486bfc62208dd13d62020a80139576cc6de1c93524480c1b52b"
+      },
+      "metric_affected": [
+        "answer correctness",
+        "citation correctness",
+        "escalation accuracy"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": "system prompt + user prompt builder source；派生值。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "policy.version",
+      "layer": "answer",
+      "name": "qa_policy_version",
+      "current_value": "2026-10-09.medication-admin.1",
+      "code_location": "backend/app/services/qa_policy.py:39",
+      "configurable": false,
+      "possible_search_space": {
+        "mode": "manual_design",
+        "baseline_only": "2026-10-09.medication-admin.1"
+      },
+      "metric_affected": [
+        "answer correctness",
+        "citation correctness",
+        "escalation accuracy"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "high",
+      "classification": "D",
+      "notes": " search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    },
+    {
+      "parameter_id": "llm.options",
+      "layer": "answer",
+      "name": "實際生成設定",
+      "current_value": {
+        "temperature": 0,
+        "num_ctx": 6144,
+        "num_predict": 400,
+        "think": false,
+        "format": "ANSWER_SCHEMA"
+      },
+      "code_location": "backend/app/providers/llm.py:197",
+      "configurable": false,
+      "possible_search_space": {
+        "baseline_only": {
+          "temperature": 0,
+          "num_ctx": 6144,
+          "num_predict": 400
+        }
+      },
+      "metric_affected": [
+        "answer correctness",
+        "citation correctness",
+        "escalation accuracy"
+      ],
+      "optimization_goal": "提升證據與答案正確性，並受安全／轉人工限制；不以回答率最大化。",
+      "change_risk": "medium",
+      "classification": "B",
+      "notes": "未開始比較生成設定。 search space 是未來離線候選設計，並非目前允許的 production 修改。"
+    }
+  ]
+}

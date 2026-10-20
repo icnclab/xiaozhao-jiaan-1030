@@ -1,0 +1,13 @@
+{
+  "database": "ltc_clean",
+  "migration": "0001",
+  "quality_schema_exists": false,
+  "business_counts": {
+    "qa_items": 29,
+    "cases": 22,
+    "citations": 6,
+    "feedback": 0,
+    "case_events": 23,
+    "case_messages": 1
+  }
+}

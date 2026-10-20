@@ -140,8 +140,9 @@ def create_case(
 def assign(session: Session, actor: User, case: Case, assignee_id: uuid.UUID) -> Case:
     """指派／改派督導。"""
     assignee = session.get(User, assignee_id)
-    if assignee is None or assignee.org_id != case.org_id or assignee.role not in {"supervisor", "admin"}:
-        raise CaseError("invalid_assignee", "指派對象必須是同機構的督導")
+    if (assignee is None or not assignee.is_active or assignee.org_id != case.org_id
+            or assignee.role not in {"supervisor", "admin"}):
+        raise CaseError("invalid_assignee", "指派對象必須是同機構且啟用中的督導")
     if case.status == "closed":
         raise CaseError("invalid_transition", "已結案的案件不能改派")
     previous = case.assignee_id

@@ -1,0 +1,41 @@
+{
+  "purpose": "reproducibility_only_no_runtime_import",
+  "current_source_sha256": {
+    "backend/checks/offline_rag_metrics.py": "aa9545b3adb7a2fb8679dffb0bbef49cd7944f36fafe7f64af88e3ee256e7ac9",
+    "backend/checks/recall_baseline.py": "6546a2337cf03e8c85681830fe26f20d4bf1cb0ebeca9fdad3d88cd1da77d8df",
+    "backend/app/services/retrieval.py": "a0b7d4e91e684beb269a0c14287985f118a39295d735aaf4f7e6d1b28fdaa968",
+    "backend/app/services/retrieval_gate.py": "2f83e5543b7f54242eb9521ca73b1c8dde690751cd974f155695e5c951cc3e5d",
+    "backend/app/services/qa_graph.py": "f412ab1eed3a9242e74d0681440dd20a6453ef3be8de8266695aa08d1633b01b",
+    "backend/app/services/qa_policy.py": "15915a36bd5960871760479398212b6af733486b5387cfca8f4501c1edcdece5",
+    "backend/app/services/query_understanding.py": "5673f068e513c451c7b253d2caf1b25080b48d898e8bc737fe5bfa7fba43499d",
+    "backend/app/services/quality_trace.py": "6c685fc83c4ff5b2cf35c40b9b00bc26601c9390be58258daf333b3303918643",
+    "backend/app/providers/llm.py": "e512902984ed1f2e40820b88c90fb463f4e69b62f4bf7ad9efe8baa81a6c1d33"
+  },
+  "database_connections_attempted": 0,
+  "live_searches": 0,
+  "model_calls": 0,
+  "isolated_database_verified": false,
+  "papers": [
+    {
+      "url": "https://arxiv.org/pdf/2408.08067",
+      "pdf_pages": [
+        4,
+        5,
+        6,
+        7,
+        22
+      ]
+    },
+    {
+      "url": "https://aclanthology.org/2025.rocling-main.6.pdf",
+      "pdf_pages": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    }
+  ]
+}

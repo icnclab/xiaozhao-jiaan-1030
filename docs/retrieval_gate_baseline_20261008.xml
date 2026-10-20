@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="1.980" timestamp="2026-10-08T09:24:35.263397+08:00" hostname="STUST"><testcase classname="tests.test_documents" name="test_version_supersede_and_history" time="0.812"><failure message="AssertionError: assert 'answered' == 'escalated'&#10;  &#10;  - escalated&#10;  + answered">client = &lt;starlette.testclient.TestClient object at 0x0000012429EEF050&gt;
+world = &lt;tests.conftest.World object at 0x0000012429EAEDD0&gt;
+
+    def test_version_supersede_and_history(client, world):
+        """先讓 v2 停用：答案引 v1；恢復一個新版後答案改引新版，舊回答仍指向 v1 並可開啟。"""
+        admin = login_web(client, "admin_happy")
+        cg = login_liff(client, "cg1")
+        # 1) 停用 v2 → 現行只剩 v1（v1 有失效日 2025-12-31，今天已過期 → 無現行版）
+        client.post(f"/api/admin/versions/{world.ids['reg_v2']}/deactivate", headers=admin)
+        none_now = ask(client, cg, "夜間每多少位住民要配置一名照服員？")
+&gt;       assert none_now["outcome"] == "escalated"  # 過期的 v1 不混入現行查詢
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert 'answered' == 'escalated'
+E         
+E         - escalated
+E         + answered
+
+tests\test_documents.py:25: AssertionError</failure></testcase><testcase classname="tests.test_qa_flow" name="test_escalate_conflict" time="0.481"><failure message="AssertionError: assert 'answered' == 'escalated'&#10;  &#10;  - escalated&#10;  + answered">client = &lt;starlette.testclient.TestClient object at 0x0000012429EAF010&gt;
+world = &lt;tests.conftest.World object at 0x000001242AC13790&gt;
+
+    def test_escalate_conflict(client, world):
+        """A2：營運規範（24 小時）與機構 SOP（48 小時）衝突 → 轉督導。"""
+        headers = login_liff(client, "cg1")
+        data = ask(client, headers, "住民跌倒沒有受傷，要在幾小時內完成異常事件紀錄？")
+&gt;       assert data["outcome"] == "escalated"
+E       AssertionError: assert 'answered' == 'escalated'
+E         
+E         - escalated
+E         + answered
+
+tests\test_qa_flow.py:53: AssertionError</failure></testcase><testcase classname="tests.test_qa_flow" name="test_escalate_clinical_and_medication" time="0.528"><failure message="AssertionError: ('住民突然昏倒叫不醒怎麼辦？', {'id': '89c1c0c6-111d-4b5f-9f4a-9debed0a3120', 'created_at': '2026-10-08T01:24:37.224549+00:00', 'outcome': 'clarify', 'label': 'AI 初步參考', ...})&#10;assert 'clarify' == 'escalated'&#10;  &#10;  - escalated&#10;  + clarify">client = &lt;starlette.testclient.TestClient object at 0x000001242AB19250&gt;
+world = &lt;tests.conftest.World object at 0x000001242AED8A90&gt;
+
+    def test_escalate_clinical_and_medication(client, world):
+        """A2：臨床、用藥、補助金額、緊急 → 規則轉人工，不進生成。"""
+        headers = login_liff(client, "cg1")
+        cases = {
+            "住民發燒到 38.5 度要不要送醫？": "risk_clinical",
+            "安眠藥可以多給半顆嗎？要不要給藥": "risk_medication",
+            "住宿式機構的補助可以領多少錢？": "risk_subsidy_amount",
+            "住民突然昏倒叫不醒怎麼辦？": "risk_emergency",
+        }
+        for question, reason in cases.items():
+            data = ask(client, headers, question)
+&gt;           assert data["outcome"] == "escalated", (question, data)
+E           AssertionError: ('住民突然昏倒叫不醒怎麼辦？', {'id': '89c1c0c6-111d-4b5f-9f4a-9debed0a3120', 'created_at': '2026-10-08T01:24:37.224549+00:00', 'outcome': 'clarify', 'label': 'AI 初步參考', ...})
+E           assert 'clarify' == 'escalated'
+E             
+E             - escalated
+E             + clarify
+
+tests\test_qa_flow.py:69: AssertionError</failure></testcase></testsuite></testsuites>

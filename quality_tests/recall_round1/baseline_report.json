@@ -1,0 +1,858 @@
+{
+  "schema_version": 1,
+  "evaluator_version": "offline-rag-1.1",
+  "run_mode": "saved_files_only_no_search_no_model",
+  "dataset_sha256": "ce4bebc4c68c9fdb44deadc1866579a30c18a0a2fa34b72c9984c4ae6e3bdd12",
+  "observations_sha256": "115718f7284ccbbb1ed197a7ae452954f0526057d6a97ad71def8195b897b411",
+  "annotations_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "case_count": 20,
+  "approved_count": 0,
+  "common_measurable_case_count": 0,
+  "statistics": {
+    "candidate_context_recall": {
+      "numerator": null,
+      "denominator": null,
+      "rate": null,
+      "reason": "no_common_reviewed_measurable_cohort"
+    },
+    "gate_context_recall": {
+      "numerator": null,
+      "denominator": null,
+      "rate": null,
+      "reason": "no_common_reviewed_measurable_cohort"
+    },
+    "selected_context_recall": {
+      "numerator": null,
+      "denominator": null,
+      "rate": null,
+      "reason": "no_common_reviewed_measurable_cohort"
+    }
+  },
+  "results": [
+    {
+      "id": "R-3e9e7f13-31ea-4d65-80d8-263a6acbd59d",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-f008a9d4-2ec1-417f-bd24-0f98f666b165",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-05b44283-c723-4721-b13f-9f370eb1e692",
+      "review_status": "pending",
+      "execution": "search_executed",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-cfd792c1-653a-443b-8ba0-a3f5b47e877e",
+      "review_status": "pending",
+      "execution": "search_executed",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-eccc1eb1-9f77-4724-8540-27d234aacb54",
+      "review_status": "pending",
+      "execution": "search_execution_unconfirmed",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-c01c328b-9ea0-45d8-8baf-43025772d8c9",
+      "review_status": "pending",
+      "execution": "search_executed",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-02c6e9ca-3fd2-4cab-b23a-41dc3052a814",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-e73333e8-89bc-4205-a60d-bbe13bf906fd",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-fcc75152-a958-4471-940d-8e81cd0054bd",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-04ccae84-e3f6-47f5-9196-844a3b1d0b22",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-cdffc657-6413-41f5-98bd-7df2fed5acfe",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-db13bd0e-c277-4f92-9f4f-2f8bdd886d4d",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-2096ce28-277b-4af2-a7ae-c73a1f676a42",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-5b6ce909-e58d-4c9b-887f-989fbb6819a5",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-8024fd88-d366-4fe2-8b20-717d1fe77404",
+      "review_status": "pending",
+      "execution": "safety_blocked_without_search",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-4e90ee8c-e8fa-46bf-8762-dbc0c7f15e9d",
+      "review_status": "pending",
+      "execution": "search_executed",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-8d9000d2-00a2-4f59-a2a8-5c1aa39497c1",
+      "review_status": "pending",
+      "execution": "search_executed",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-663f3622-b666-460f-9d8e-773626b85bad",
+      "review_status": "pending",
+      "execution": "search_executed",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-C003",
+      "review_status": "pending",
+      "execution": "search_executed",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    },
+    {
+      "id": "R-C014",
+      "review_status": "pending",
+      "execution": "search_executed",
+      "metrics": {
+        "candidate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "gate_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        },
+        "selected_context_recall": {
+          "numerator": null,
+          "denominator": null,
+          "rate": null,
+          "reason": "case_pending_human_review",
+          "details": []
+        }
+      },
+      "stage_observations": {
+        "status": "cannot_localize_without_complete_reviewed_stages"
+      },
+      "provider_context": {
+        "items": null,
+        "reason": "stage_not_observed",
+        "provenance": null
+      },
+      "model_input": {
+        "items": null,
+        "reason": "actual_model_request_not_saved",
+        "provenance": null
+      }
+    }
+  ],
+  "limitations": [
+    "Historical traces are not a current-code search baseline.",
+    "No model was called during this run; missing historical input stays unknown.",
+    "Common A/B/C cohort only; excluded cases are never scored as zero."
+  ]
+}

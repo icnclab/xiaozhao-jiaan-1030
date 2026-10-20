@@ -1,0 +1,31 @@
+{
+  "runtime": "ltc_clean",
+  "quality_routes_loaded": true,
+  "existing_qa_and_line_routes_retained": true,
+  "unauthenticated_checks": {
+    "/api/quality/feedback": 401,
+    "/api/quality/dataset/export": 401,
+    "/api/quality/qa/00000000-0000-0000-0000-000000000000/feedback": 401
+  },
+  "frontend_page_and_assets_http": 200,
+  "business_counts": {
+    "qa_items": 29,
+    "cases": 22,
+    "citations": 6,
+    "feedback": 0,
+    "case_events": 23,
+    "case_messages": 1
+  },
+  "quality_counts": {
+    "feedback_entries": 0,
+    "feedback_reviews": 0
+  },
+  "tests": {
+    "quality_backend": 12,
+    "frontend": 34,
+    "v1_evaluator": 7
+  },
+  "production_build": "passed",
+  "rag_core_hash_check": "passed",
+  "notes": "No live QA, case or feedback created; authenticated flow tested in disposable schemas."
+}
