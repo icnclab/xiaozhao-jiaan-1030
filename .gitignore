@@ -1,0 +1,47 @@
+# Credentials and application environment
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*token*
+*credential*
+*secret*
+# Databases and user content
+*.dump
+*.backup
+*.db
+*.sqlite
+*.sqlite3
+*.csv
+*.xlsx
+*.xls
+*.doc
+*.docx
+*.pdf
+*.m4a
+*.mp3
+*.wav
+*.mp4
+*.mov
+# Local builds, artifacts, and caches
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+dist/
+build/
+*.zip
+*.7z
+*.log
+.DS_Store
+Thumbs.db
+# Runtime and exports
+exports/
+backups/
+private/
+logs/
+uploads/

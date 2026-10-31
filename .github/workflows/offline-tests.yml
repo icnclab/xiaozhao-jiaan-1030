@@ -1,0 +1,18 @@
+name: Offline regression tests
+on:
+  push:
+  pull_request:
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: pip install -r requirements-test.txt
+      - name: Run role-safety and emergency tests (no database access)
+        run: |
+          python tests/test_1030.py
+          python tests/test_emergency.py
