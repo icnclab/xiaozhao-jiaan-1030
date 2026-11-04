@@ -18,12 +18,12 @@ it('defaults to formal cases and toggles test cases with a visible label', async
   });
   render(<MemoryRouter><AdminCasesPage /></MemoryRouter>);
   await screen.findByText('formal-case');
-  const toggle = screen.getByRole('checkbox', {name: '顯示測試案件'}) as HTMLInputElement;
+  const toggle = screen.getByRole('checkbox', {name: '包含測試帳號建立的案件'}) as HTMLInputElement;
   expect(toggle.checked).toBe(false);
   expect(screen.queryByText('test-case')).toBeNull();
   fireEvent.click(toggle);
   await screen.findByText('test-case');
-  expect(screen.getByText('內部測試')).toBeTruthy();
+  expect(screen.getByText('測試帳號建立')).toBeTruthy();
   expect(screen.getByText('formal-case')).toBeTruthy();
   expect(vi.mocked(api).mock.calls.at(-1)?.[0]).toContain('include_test=true');
   fireEvent.click(screen.getByRole('checkbox', {name: '只看指派給我'}));
@@ -42,7 +42,7 @@ it('ignores an older test-inclusive reply arriving after the checkbox is cleared
   vi.mocked(api).mockImplementation(() => new Promise(resolve => pending.push(resolve as (rows: unknown[]) => void)));
   render(<MemoryRouter><AdminCasesPage /></MemoryRouter>);
   await act(async () => pending[0]([]));
-  const toggle = screen.getByRole('checkbox', {name: '顯示測試案件'});
+  const toggle = screen.getByRole('checkbox', {name: '包含測試帳號建立的案件'});
   fireEvent.click(toggle);
   fireEvent.click(toggle);
   expect(vi.mocked(api).mock.calls.at(-1)?.[0]).toContain('include_test=false');

@@ -50,7 +50,7 @@ describe.each(['ask','record','report','cases'])('unbound /%s',entry=>{
     const router=mount('/liff/'+entry);
     await screen.findByRole('heading',{name:'綁定帳號'});
     expect(router.state.location.pathname).toBe('/liff/bind');
-    expect(screen.getByText('請輸入督導或管理員提供的 8 碼綁定碼，把您的 LINE 與機構帳號連結。')).toBeTruthy();
+    expect(screen.getByText('請輸入 8 碼綁定碼，將「本人」的 LINE 與機構帳號連結。照服員可向督導領取；督導、主任及管理員需由具權限的人員在後台核發。')).toBeTruthy();
     expect(screen.getByRole('button',{name:'綁定'})).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/\uFFFD|LiffContext missing|Unexpected Application Error/);
     expect(requests).toEqual(['/api/config/public','/api/auth/liff']);

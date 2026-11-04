@@ -73,10 +73,12 @@ def test_escalate_clinical_and_medication(client, world):
 
 
 def test_emergency_note_is_fixed_guidance(client, world):
+    """照服員遇緊急狀況，應明確提示立即撥打119/110，不等待小照或居督回覆（1030訪談角色提示語修正後的行為）。"""
     headers = login_liff(client, "cg1")
     data = ask(client, headers, "住民昏倒了沒有呼吸")
     assert data["escalation_reason"] == "risk_emergency"
-    assert "緊急應變程序" in data["answer_text"]
+    assert "119" in data["answer_text"] and "110" in data["answer_text"]
+    assert "不要等待小照或居督回覆" in data["answer_text"]
 
 
 def test_case_creation_failure(client, world):
