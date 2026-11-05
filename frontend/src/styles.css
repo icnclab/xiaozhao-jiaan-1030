@@ -93,4 +93,6 @@ th { color: var(--muted); font-weight: 600; }
 .metric .def { font-size: 12px; color: var(--muted); }
 .metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
 .mode-banner { background: #fee2e2; color: #991b1b; font-size: 13px; padding: 6px 12px; text-align: center; }
+.admin .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 10px; margin-top: 10px; }
+.admin .action-grid .btn { justify-content: flex-start; text-align: left; padding: 12px 14px; white-space: nowrap; }
 @media (max-width: 720px) { .admin { grid-template-columns: 1fr; } .admin nav { display: flex; flex-wrap: wrap; gap: 4px; } }
