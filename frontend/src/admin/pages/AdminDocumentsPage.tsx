@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, errorMessage, post } from "../../api";
 import { ErrorBox } from "../../liff/components";
 import { useAdmin } from "../AdminApp";
+
+const FEEDBACK_SOURCE_RE = /quality-feedback-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+
+function SourceCell({ source }: { source: string | null }) {
+  if (!source) return <span className="tag warn">待補</span>;
+  const match = source.match(FEEDBACK_SOURCE_RE);
+  if (!match) return <>{source}</>;
+  return <>{source} <Link to={`/admin/feedback?id=${match[1]}`}>（查看來源品質回饋審核紀錄）</Link></>;
+}
 
 interface Version {
   id: string; version_label: string; status: string; effective_from: string | null; effective_to: string | null;
@@ -99,7 +109,7 @@ export function AdminDocumentsPage() {
                   <td>{v.version_label}{v.is_current && <span className="tag ok">現行</span>}<div className="small muted">{v.file_name}</div></td>
                   <td><span className={`tag ${v.status === "published" ? "ok" : v.status === "parse_failed" ? "danger" : "warn"}`}>{STATUS[v.status] ?? v.status}</span></td>
                   <td>{v.effective_from ?? "待補"} ～ {v.effective_to ?? "—"}</td>
-                  <td className="small">{v.source ?? <span className="tag warn">待補</span>}</td>
+                  <td className="small"><SourceCell source={v.source} /></td>
                   <td>{v.chunk_count}</td>
                   <td className="small">
                     {v.missing_fields.length > 0 && <div className="tag warn">待補：{v.missing_fields.join("、")}</div>}

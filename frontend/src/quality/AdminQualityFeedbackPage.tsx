@@ -1,7 +1,7 @@
 import { publicLabel, publicDisplayText } from '../publicText';
 import { useEffect, useRef, useState } from "react";
 import { useAdmin } from "../admin/AdminApp";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api, formatTime, getToken, post } from "../api";
 import { ErrorBox } from "../liff/components";
 import { FeedbackFields, type Correction } from "./FeedbackFields";
@@ -19,6 +19,8 @@ interface Legacy { id: string; qa_item_id: string; question_masked: string; stat
 export function AdminQualityFeedbackPage() {
   const { user } = useAdmin();
   const isAdmin = user.role === "admin";
+  const [searchParams] = useSearchParams();
+  const linkedFeedbackId = searchParams.get("id");
   const [goldFilter, setGoldFilter] = useState("");
   const [goldQueue, setGoldQueue] = useState(false);
   const [stats, setStats] = useState<Record<string, number>>({});
@@ -54,6 +56,12 @@ export function AdminQualityFeedbackPage() {
     } catch (e) { if (seq === request.current) setError(e); }
   };
   useEffect(() => { setSelected(null); setValue(null); void load(); return () => { request.current++; }; }, [status, goldFilter, goldQueue, isAdmin]);
+  useEffect(() => {
+    if (!linkedFeedbackId) return;
+    api<Row>(`/api/quality/feedback/${linkedFeedbackId}`)
+      .then(detail => { setSelected(detail); setValue(detail.reviewed_correction || detail.submission); setChecked(false); setReviewerNotes(""); })
+      .catch(setError);
+  }, [linkedFeedbackId]);
   const choose = async (row: Row) => {
     setBusy(true); setError(null);
     try {
