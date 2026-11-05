@@ -39,6 +39,14 @@ from app.services.metrics import compute_metrics
 
 router = APIRouter(prefix="/admin")
 SUP = ("supervisor", "admin")
+# 主任（director）的業務監督範圍僅限「案件監督（唯讀）」「人員查看」「治理指標」，
+# 與案件實際處理、文件發佈／下架、回饋審核、通知重送、去識別化設定、帳號建立/停用/刪除、
+# LINE 綁定碼管理等技術性或高風險操作完全分開；後者未經會議紀錄明確授權，維持原樣禁止。
+# 依據：frontend/src/admin/AdminApp.tsx 的 DirectorHome／AdminHome 設計註解
+# （「主任負責機構業務管理…與系統管理員的技術設定／帳號維運權限分開設計」）。
+CASE_OVERSIGHT = ("supervisor", "director", "admin")
+GOVERNANCE = ("supervisor", "director", "admin")
+STAFF_VIEW = ("supervisor", "director", "admin")
 DELETED_USERNAME_PREFIX = "__deleted__"
 
 
@@ -68,7 +76,7 @@ def _org_case(db: Session, user: User, case_id: str) -> Case:
 @router.get("/cases")
 def list_cases(status: str | None = None, category_id: str | None = None, assignee_id: str | None = None,
                mine: bool = False, q: str | None = None, include_test: bool = False,
-               user: User = Depends(require_roles(*SUP)),
+               user: User = Depends(require_roles(*CASE_OVERSIGHT)),
                db: Session = Depends(get_db)) -> list[dict]:
     """案件列表與篩選。"""
     original_username = select(AuditLog.meta["original_username"].astext).where(
@@ -114,7 +122,7 @@ def list_cases(status: str | None = None, category_id: str | None = None, assign
 
 
 @router.get("/cases/{case_id}")
-def admin_case(case_id: str, user: User = Depends(require_roles(*SUP)), db: Session = Depends(get_db)) -> dict:
+def admin_case(case_id: str, user: User = Depends(require_roles(*CASE_OVERSIGHT)), db: Session = Depends(get_db)) -> dict:
     """案件詳情（含 AI 引用、歷程、通知狀態）。"""
     return case_out(db, _org_case(db, user, case_id), include_internal=True)
 
@@ -505,7 +513,7 @@ def review_feedback(feedback_id: str, user: User = Depends(require_roles(*SUP)),
 
 
 @router.get("/metrics")
-def metrics(days: int = 30, user: User = Depends(require_roles(*SUP)), db: Session = Depends(get_db)) -> dict:
+def metrics(days: int = 30, user: User = Depends(require_roles(*GOVERNANCE)), db: Session = Depends(get_db)) -> dict:
     """治理指標（每項附分子、分母與定義）。"""
     days = max(1, min(days, 365))
     return compute_metrics(db, user.org_id, _facility(db, user), days)
@@ -529,7 +537,7 @@ def list_audit(action: str | None = None, limit: int = 200, user: User = Depends
 
 
 @router.get("/users")
-def list_users(include_deleted: bool = False, user: User = Depends(require_roles(*SUP)), db: Session = Depends(get_db)) -> list[dict]:
+def list_users(include_deleted: bool = False, user: User = Depends(require_roles(*STAFF_VIEW)), db: Session = Depends(get_db)) -> list[dict]:
     """同機構帳號（督導可看，用於指派；管理員可管理）。"""
     stmt = select(User).where(User.org_id == user.org_id)
     if not include_deleted:
