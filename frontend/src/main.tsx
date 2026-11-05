@@ -10,6 +10,8 @@ import { AnswerPage } from "./liff/pages/AnswerPage";
 import { RecordPage } from "./liff/pages/RecordPage";
 import { TranscriptPage } from "./liff/pages/TranscriptPage";
 import { ReportPage } from "./liff/pages/ReportPage";
+import { ReportEntryPage } from "./liff/pages/ReportEntryPage";
+import { ReportPreviewPage } from "./liff/pages/ReportPreviewPage";
 import { CasesPage } from "./liff/pages/CasesPage";
 import { CaseDetailPage } from "./liff/pages/CaseDetailPage";
 import { HelpPage } from "./liff/pages/HelpPage";
@@ -38,6 +40,8 @@ const router = createBrowserRouter([
       { path: "record", element: <RecordPage /> },
       { path: "record/:id", element: <TranscriptPage /> },
       { path: "report", element: <ReportPage /> },
+      { path: "report/entry", element: <ReportEntryPage /> },
+      { path: "report/preview", element: <ReportPreviewPage /> },
       { path: "cases", element: <CasesPage /> },
       { path: "cases/:id", element: <CaseDetailPage /> },
       { path: "help", element: <HelpPage /> },

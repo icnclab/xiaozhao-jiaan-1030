@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api, errorMessage, newRequestId, post, type CaseDetail, type Category } from "../../api";
 import { ErrorBox } from "../components";
 
 /** 分類快速回報：分類 → 常見問題 → 補充文字 → 確認送出。分類與模板來自後台設定。 */
 export function ReportPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const preset = (location.state as { transcript_id?: string; summary?: string } | null) ?? null;
   const [categories, setCategories] = useState<Category[] | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
@@ -55,6 +56,7 @@ export function ReportPage() {
         <p className="small muted">案件建立不代表督導已讀取或回覆，請到「查看案件」確認。這也不等於已完成法定通報或機構正式異常事件程序。</p>
         <Link className="btn primary" to={`/liff/cases/${result.id}`}>查看案件</Link>
         <Link className="btn" to="/liff/report" onClick={() => { setResult(null); setStep(1); setCategory(null); setTemplateId(null); setText(""); requestId.current = newRequestId(); }}>再回報一件</Link>
+        <Link className="btn block" to="/liff/report/entry">返回問題分類</Link>
       </div>
     );
   }
@@ -62,6 +64,8 @@ export function ReportPage() {
   return (
     <div className="page stack">
       <h1>問題分類回報</h1>
+      <p className="notice warn" id="legacy-return-note">{busy ? '正在送交，請等候結果後再返回。' : '返回會離開此表單，未送出的選擇與補充不會保存。'}</p>
+      <button className="btn block" disabled={busy} aria-describedby="legacy-return-note" onClick={() => navigate('/liff/report/entry')}>返回問題分類</button>
       <ErrorBox error={error} />
       {preset?.transcript_id && <div className="notice info">將附上已確認的談話摘要一併送交。</div>}
       {step === 1 && (
@@ -101,12 +105,12 @@ export function ReportPage() {
       )}
       {step === 3 && category && (
         <div className="stack">
-          <p className="muted">③ 補充說明（請用「住民」「家屬」代稱）</p>
+          <p className="muted">③ 補充說明（請用「個案」「家屬」代稱）</p>
           <div className="card small">
             <div><strong>{category.name}</strong></div>
             {templateId && <div>{category.templates.find((t) => t.id === templateId)?.text}</div>}
           </div>
-          <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="例如：家屬要求晚上多餵一次點心，住民有糖尿病紀錄，想確認能不能配合" />
+          <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="請說明發生的情況，以及希望居督協助確認的問題；不要填姓名或政府個案案號" />
           {error ? <div className="notice danger">未能確認送出結果：{errorMessage(error)}。請先到「我的案件」確認；若需重試，請留在本頁再次送出，避免重複建案。<Link to="/liff/cases">查看我的案件</Link></div> : null}
           <div className="row">
             <button className="btn" onClick={() => setStep(2)} disabled={busy}>上一步</button>
