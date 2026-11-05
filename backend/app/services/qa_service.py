@@ -183,7 +183,8 @@ def ask(
         item.escalation_reason = reason_code
         item.escalation_detail = (state.get("reason_detail") or "")[:300] or None
         from app.services.public_messages import escalation_message
-        item.answer_text = (EMERGENCY_NOTE if reason_code == 'risk_emergency' else '') + escalation_message(reason_code)
+        from app.services.jiaan1030_role_guard import make_role_aware
+        item.answer_text = make_role_aware(reason_code, user.role, escalation_message(reason_code), question=item.question_masked)
         case = try_create_escalation_case(session, user, item)
 
     audit.record(
