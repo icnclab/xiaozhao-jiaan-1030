@@ -11,8 +11,9 @@ export function ErrorBox({ error }: { error: unknown }) {
 }
 
 export function CitationCard({ c, index }: { c: Citation; index: number }) {
+  const sourceTypes: Record<string, string> = { regulation: '政府法規', internal_rule: '機構內規', sop: '作業程序', other: '其他文件' };
   const [open, setOpen] = useState(false);
-  const [full, setFull] = useState<{ chunk: { text: string }; context: { locator: string; text: string; is_target: boolean }[]; version: { file_url: string; source_url: string | null } } | null>(null);
+  const [full, setFull] = useState<{ chunk: { text: string }; context: { locator: string; text: string; is_target: boolean }[]; version: { file_url: string; source_url: string | null }; official_source?: { title: string; official_url: string; verified: boolean } | null } | null>(null);
   const [error, setError] = useState<unknown>(null);
   const load = () => {
     setOpen(true);
@@ -21,6 +22,7 @@ export function CitationCard({ c, index }: { c: Citation; index: number }) {
   return (
     <div className="cite">
       <div className="title">出處 {index}：{c.document_title}</div>
+      <span className="tag">{sourceTypes[c.doc_type] ?? '來源類型待確認'}</span>
       <div className="small">
         {c.locator}｜版本 {c.version_label}｜生效日 {c.effective_from ?? "未填"}
         {c.effective_to ? `～${c.effective_to}` : ""}
@@ -70,8 +72,10 @@ export function CitationCard({ c, index }: { c: Citation; index: number }) {
               >
                 下載原始檔
               </button>
-              {full.version.source_url && (
-                <a className="btn" href={full.version.source_url} target="_blank" rel="noreferrer">官方出處</a>
+              {full.official_source?.verified === true && full.official_source.official_url ? (
+                <a className="btn" href={full.official_source.official_url} target="_blank" rel="noopener noreferrer">開啟已審核官方原文</a>
+              ) : (
+                <span className="tag warn">尚無已審核官方原文連結，請以上方原文或「下載原始檔」為準</span>
               )}
             </div>
           )}
