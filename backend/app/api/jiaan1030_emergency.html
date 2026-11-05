@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小照｜嘉安緊急通報與接手</title><meta name="robots" content="noindex,nofollow">
+<style>
+:root{font-family:'Noto Sans TC',system-ui,sans-serif;font-size:18px;color:#17202b;background:#f5f7fa}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:560px;margin:auto;padding:16px}
+h1{font-size:1.3rem;margin:14px 0}h2{font-size:1.1rem;margin:18px 0 10px}h3{font-size:1rem;margin:14px 0 6px}
+.card{background:white;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 2px 12px #10203010}
+.sos-banner{background:#ac2018;color:#fff;border-radius:14px;padding:14px 16px;font-size:1.02rem;font-weight:700;line-height:1.5;margin:14px 0}
+.test-banner{background:#fff7cc;color:#6b5400;border-left:5px solid #b89400;padding:10px 12px;border-radius:10px;font-size:.88rem;margin:10px 0}
+.notice{background:#fff0e8;color:#803014;border-left:5px solid #c53522;padding:12px;border-radius:10px;font-size:.9rem}
+button,a.call{display:inline-block;border:0;border-radius:14px;padding:13px 18px;font-size:1rem;font-weight:700;cursor:pointer;text-decoration:none;color:white;background:#225e8e;margin:5px 3px}
+button.urgent{background:#ac2018;width:100%;font-size:1.3rem;padding:20px}
+button:disabled{opacity:.55;cursor:default}
+button.secondary{background:#eef1f4;color:#324153;box-shadow:none}
+button.secondary.block{width:100%}
+button.done{background:#18755b}
+a.call{background:#a32318}
+select,input{width:100%;padding:14px;border:1px solid #a4b2c0;border-radius:10px;font-size:1rem;margin:8px 0}
+small,.muted{font-size:.82rem;color:#53606a}.hide{display:none!important}#status{white-space:pre-wrap;font-size:.92rem}
+strong{font-size:1rem}
+/* 事件類型按鈕：大面積、可點選，跌倒／暴力／傷口依 10/30 訪談需求優先獨立、最明顯 */
+.cat-grid{display:grid;gap:10px;margin:10px 0}
+.cat-grid-primary{grid-template-columns:repeat(3,1fr)}
+.cat-grid-secondary{grid-template-columns:repeat(2,1fr)}
+.cat-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+ background:#fff;color:#17202b;border:2px solid #d8e0e6;border-radius:16px;padding:16px 8px;
+ min-height:96px;font-size:.95rem;font-weight:700;text-align:center;box-shadow:0 2px 6px #10203008}
+.cat-grid-primary .cat-btn{min-height:116px;font-size:1.05rem;border-color:#e3b3ac;background:#fff6f5}
+.cat-grid-primary .cat-btn .icon{font-size:2.1rem}
+.cat-btn .icon{font-size:1.7rem;line-height:1}
+.cat-btn:active{background:#f0f4f7}
+.cat-grid-primary .cat-btn:active{background:#ffe9e6}
+/* 確認畫面：避免誤觸，點選後需再按一次才會送出 */
+.confirm-card{text-align:center;border:2px solid #ac2018;border-radius:18px;padding:20px;background:#fff8f7}
+.confirm-icon{font-size:3rem;line-height:1}
+.confirm-label{font-size:1.15rem;margin:8px 0 4px}
+/* 通報卡片：一張卡只放一筆事件，不擠成一行 */
+.card-list{display:flex;flex-direction:column;gap:10px}
+.ev-card{border:1px solid #dae1e7;border-radius:16px;padding:14px;background:#fff}
+.ev-card.late{border-color:#b52c20;background:#fff6f5}
+.ev-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ev-cat{font-weight:700;font-size:1.02rem;display:flex;align-items:center;gap:6px}
+.ev-badge{display:inline-block;border-radius:999px;padding:4px 12px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.ev-badge.open{background:#fde3e1;color:#a52317}
+.ev-badge.acknowledged{background:#fff3cd;color:#8a5a00}
+.ev-badge.resolved{background:#e3f5ea;color:#18755b}
+.ev-meta{font-size:.86rem;color:#53606a;margin-top:6px;line-height:1.6}
+.ev-alert{font-weight:700;color:#a52317;margin-top:6px;font-size:.88rem}
+.ev-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn-take{background:#ac2018;flex:1 1 auto;min-height:52px;font-size:1.05rem}
+.ev-ref{font-size:.78rem;color:#8a97a3}
+.toolbar{margin:9px 0}.toolbar label{display:block;font-size:.9rem;margin:5px 0}
+.call-row{display:flex;gap:10px;margin:14px 0}
+.call-row a.call{flex:1;text-align:center;padding:14px}
+details.help{margin:14px 0}
+details.help summary{cursor:pointer;font-weight:700;padding:10px 0;color:#225e8e}
+details.help .notice{margin:8px 0}
+.history p{margin:4px 0;font-size:.86rem}
+</style></head><body><div class="wrap">
+<div class="sos-banner">🚑 危及生命或人身安全，請先撥 119／110，並直接電話聯絡居督。AI 無法、也不會取代現場緊急求援。</div>
+<div id="testModeBanner" class="test-banner hide"></div>
+<h1>小照｜緊急通報</h1>
+<div class="card" id="login"><h2>登入</h2>
+<p>從「小照」原本的 LINE 畫面按「緊急通報」進來，可沿用該頁登入狀態。居督／主任也可輸入後台帳密。</p>
+<input id="username" autocomplete="username" placeholder="居督／主任帳號"><input id="password" autocomplete="current-password" type="password" placeholder="密碼">
+<button id="loginBtn">登入</button><button class="secondary" id="retryBtn">重試原本登入狀態</button></div>
+
+<div class="hide" id="main"><div id="who" class="muted"></div>
+
+<div id="caregiver" class="hide">
+  <div id="categoryStep">
+    <h2>請點選發生了什麼事</h2>
+    <div class="cat-grid cat-grid-primary">
+      <button class="cat-btn" data-cat="fall"><span class="icon">🤕</span>跌倒</button>
+      <button class="cat-btn" data-cat="violence"><span class="icon">✊</span>暴力</button>
+      <button class="cat-btn" data-cat="injury"><span class="icon">🩹</span>傷口</button>
+    </div>
+    <div class="cat-grid cat-grid-secondary">
+      <button class="cat-btn" data-cat="unresponsive"><span class="icon">😵</span>昏倒／意識異常</button>
+      <button class="cat-btn" data-cat="traffic"><span class="icon">🚗</span>車禍</button>
+      <button class="cat-btn" data-cat="self_harm"><span class="icon">⚠️</span>自傷風險</button>
+      <button class="cat-btn" data-cat="other"><span class="icon">❓</span>其他／不確定</button>
+    </div>
+  </div>
+  <div id="confirmStep" class="hide">
+    <div class="confirm-card">
+      <div class="confirm-icon" id="confirmIcon">🤕</div>
+      <div class="confirm-label">確定要通報：<strong id="confirmLabel">跌倒</strong>？</div>
+      <p class="muted">送出後立即記錄，居督開啟此頁即會看到提醒；不會等待 AI 回答，也不保證手機馬上收到通知。</p>
+      <button class="urgent" id="confirmSend">✅ 確認送出通報</button>
+      <button class="secondary block" id="confirmCancel">返回重新選擇</button>
+    </div>
+  </div>
+  <h2>我的通報紀錄</h2>
+  <div id="mylist" class="card-list"><p class="muted">尚無通報紀錄。</p></div>
+</div>
+
+<div id="supervisor" class="hide">
+  <h2>進行中的緊急通報</h2>
+  <section aria-labelledby="openTitle">
+    <h3 id="openTitle">🔴 尚未接手（<span id="openCount">0</span>）</h3>
+    <div id="openList" class="card-list" role="region" aria-label="尚未接手通報"></div>
+  </section>
+  <section aria-labelledby="ackTitle">
+    <h3 id="ackTitle">🟡 已接手、處理中（<span id="ackCount">0</span>）</h3>
+    <div id="ackList" class="card-list" role="region" aria-label="已接手待完成通報"></div>
+  </section>
+  <h3>🟢 最近已完成通報</h3>
+  <div id="resolvedList" class="card-list muted">載入中…</div>
+  <details class="help">
+    <summary>使用說明與系統限制</summary>
+    <div id="notificationReadiness" class="notice" role="status">通知接收資格：查詢中。</div>
+    <div class="toolbar"><label><input id="alerts" type="checkbox" style="width:auto">啟用本頁聲音與通知（僅前景開啟時有效；首次聲音提示需點選）</label><small>未接手超過 60 秒：加強提醒；超過 180 秒：顯示電話升級提示。這不是自動通知或自動升級。</small></div>
+    <p class="muted">本頁每 5 秒自動刷新一次。頁面關閉、背景限制、其他 APP 或鎖屏均不保證提醒送達；此功能沒有自動 LINE 推播或跨 APP／鎖屏持續警報，不得代替現場緊急應變流程。119／110 的分流規則由嘉安正式 SOP 另行確認，本頁不自行判斷最終處置。</p>
+  </details>
+</div>
+
+<h2>目前狀態</h2><div id="status" role="status">準備中</div><button class="secondary" id="refresh">重新整理</button>
+<div class="call-row"><a class="call" href="tel:119">📞 撥打 119</a><a class="call" href="tel:110">📞 撥打 110</a></div>
+</div>
+</div><script>
+'use strict';
+const base='/api/jiaan1030', tokenKey='ltc_session';
+let token=sessionStorage.getItem(tokenKey), me=null, busy=false, pendingRequest=null, selectedCategory=null;
+const $=id=>document.getElementById(id);
+const eventNames={created:'建立通報',acknowledged:'居督接手',resolved:'完成處理'};
+const statusNames={open:'等待居督接手',acknowledged:'居督已接手',resolved:'處理完成'};
+const originalTitle=document.title;let lastUnclaimed=new Set();
+const names={fall:'跌倒',violence:'暴力／威脅',injury:'受傷',unresponsive:'昏倒／意識異常',traffic:'車禍',self_harm:'自傷風險',other:'重大緊急事件'};
+const icons={fall:'🤕',violence:'✊',injury:'🩹',unresponsive:'😵',traffic:'🚗',self_harm:'⚠️',other:'❓'};
+async function api(path,options={}){
+ const h={'Accept':'application/json',...(options.body?{'Content-Type':'application/json'}:{})};
+ if(token)h.Authorization='Bearer '+token;
+ const resp=await fetch(path,{...options,headers:h,cache:'no-store'});
+ const body=await resp.json().catch(()=>({}));
+ if(!resp.ok)throw Error((body.error&&body.error.message)||(body.detail&&body.detail.message)||('HTTP '+resp.status));
+ return body;
+}
+const state=s=>{$('status').textContent=s};
+async function showTestModeBanner(){
+ try{
+  const cfg=await (await fetch('/api/config/public',{cache:'no-store'})).json();
+  if(cfg.line_mode==='mock'){
+   $('testModeBanner').textContent='⚠️ 本頁為模擬通報，不會發送真實 LINE、119 或 110 通知。';
+   $('testModeBanner').classList.remove('hide');
+  }
+ }catch(_){/* 設定查詢失敗不影響既有頁面功能。 */}
+}
+showTestModeBanner();
+async function connect(){
+ try{me=await api('/api/me');$('login').classList.add('hide');$('main').classList.remove('hide');
+ $('who').textContent='已登入：'+me.display_name+'（'+me.role+'）';
+ $('caregiver').classList.remove('hide');
+ if(me.role!=='caregiver') $('supervisor').classList.remove('hide');
+ state('可以使用。緊急狀況仍請先直接求援。');await refresh();if(me.role!=='caregiver')await showReadiness();
+ }catch(e){me=null;$('login').classList.remove('hide');$('main').classList.add('hide');state('登入已失效，請先從小照原頁面進入或使用居督帳密。');}
+}
+$('loginBtn').onclick=async()=>{try{
+ const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('username').value,password:$('password').value})});
+ const j=await r.json();if(!r.ok||!j.session_token)throw Error('登入失敗，請確認帳密及角色');
+ token=j.session_token;sessionStorage.setItem(tokenKey,token);$('password').value='';await connect();
+ }catch(e){state(e.message)}};
+$('retryBtn').onclick=()=>{token=sessionStorage.getItem(tokenKey);connect()};
+
+// ── 照服員：點選事件類型 → 確認 → 送出（全程點選，不需打字） ──
+document.querySelectorAll('.cat-btn').forEach(b=>{
+ b.onclick=()=>{
+  selectedCategory=b.dataset.cat;
+  $('confirmIcon').textContent=icons[selectedCategory]||'❓';
+  $('confirmLabel').textContent=names[selectedCategory]||selectedCategory;
+  $('categoryStep').classList.add('hide');
+  $('confirmStep').classList.remove('hide');
+  $('confirmStep').scrollIntoView({block:'start'});
+ };
+});
+$('confirmCancel').onclick=()=>{selectedCategory=null;$('confirmStep').classList.add('hide');$('categoryStep').classList.remove('hide');};
+function renderMyList(items){
+ const target=$('mylist');
+ target.replaceChildren();
+ if(!items.length){target.innerHTML='<p class="muted">尚無通報紀錄。</p>';return;}
+ for(const x of items){
+  const card=document.createElement('div');card.className='ev-card';
+  const top=document.createElement('div');top.className='ev-top';
+  const cat=document.createElement('div');cat.className='ev-cat';cat.textContent=(icons[x.category]||'❓')+' '+(names[x.category]||x.category);
+  const badge=document.createElement('span');badge.className='ev-badge '+x.status;badge.textContent=statusNames[x.status]||x.status;
+  top.append(cat,badge);
+  const meta=document.createElement('div');meta.className='ev-meta';
+  let line='建立時間：'+new Date(x.created_at).toLocaleString('zh-TW');
+  if(x.status==='acknowledged'&&x.acknowledged_by_name)line+='<br>居督 '+x.acknowledged_by_name+' 已接手：'+new Date(x.acknowledged_at).toLocaleString('zh-TW');
+  else if(x.status==='open')line+='<br>⏳ 等待居督接手中…';
+  meta.innerHTML=line;
+  const ref=document.createElement('div');ref.className='ev-ref';ref.textContent='通報編號 '+shortIncidentId(x.id);
+  card.append(top,meta,ref);target.append(card);
+ }
+}
+async function confirmedSend(){
+ if(busy||!selectedCategory)return;busy=true;$('confirmSend').disabled=true;
+ const category=selectedCategory;
+ if(!pendingRequest)pendingRequest=crypto.randomUUID();
+ try{
+  const v=await api(base+'/emergencies',{method:'POST',body:JSON.stringify({category,client_request_id:pendingRequest})});
+  state('✅ 通報已記錄：編號 '+shortIncidentId(v.id)+'｜'+statusNames[v.status]+'｜'+new Date(v.created_at).toLocaleString('zh-TW')+'\n尚未確認有人接手，請立即電話聯絡居督。');
+  pendingRequest=null;selectedCategory=null;
+  $('confirmStep').classList.add('hide');$('categoryStep').classList.remove('hide');
+  try{const o=await api(base+'/emergencies?status=active');renderMyList(o.items);}catch(_){/* 清單刷新失敗不影響已成功送出的確認訊息。 */}
+ }catch(e){state('通報未確認成功：'+e.message+'。不要重複變更情況，先直接電話求援；可按「確認送出」重試。')}
+ finally{busy=false;$('confirmSend').disabled=false;}
+}
+$('confirmSend').onclick=confirmedSend;
+
+async function showHistory(id, target){
+ try{
+  const h=await api(base+'/emergencies/'+encodeURIComponent(id)+'/history');
+  target.replaceChildren();
+  if(!h.items.length){target.textContent='沒有處理紀錄';return;}
+  for(const item of h.items){
+   const p=document.createElement('p');
+   p.textContent=new Date(item.created_at).toLocaleString('zh-TW')+'｜'+(eventNames[item.event_type]||'狀態更新')+(item.actor_name?'｜'+item.actor_name:'');
+   target.append(p);
+  }
+ }catch(e){state('讀取歷程失敗：'+e.message)}
+}
+function evCard(x,opts={}){
+ const wrap=document.createElement('div');wrap.className='ev-card'+(opts.late?' late':'');
+ const top=document.createElement('div');top.className='ev-top';
+ const cat=document.createElement('div');cat.className='ev-cat';cat.textContent=(icons[x.category]||'❓')+' '+(names[x.category]||x.category);
+ const badge=document.createElement('span');badge.className='ev-badge '+x.status;badge.textContent=statusNames[x.status]||x.status;
+ top.append(cat,badge);wrap.append(top);
+ const meta=document.createElement('div');meta.className='ev-meta';
+ let line='建立時間：'+new Date(x.created_at).toLocaleString('zh-TW');
+ if(x.acknowledged_at)line+='<br>接手人：'+(x.acknowledged_by_name||'（同機構人員）')+'｜接手時間：'+new Date(x.acknowledged_at).toLocaleString('zh-TW');
+ if(x.resolved_at)line+='<br>結案人：'+(x.resolved_by_name||'（同機構人員）')+'｜結案時間：'+new Date(x.resolved_at).toLocaleString('zh-TW');
+ meta.innerHTML=line;wrap.append(meta);
+ const escalation=unattendedLabel(x);
+ if(escalation){const warning=document.createElement('div');warning.className='ev-alert';warning.textContent=escalation;wrap.append(warning);}
+ const ref=document.createElement('div');ref.className='ev-ref';ref.textContent='通報編號 '+shortIncidentId(x.id);wrap.append(ref);
+ const actions=document.createElement('div');actions.className='ev-actions';
+ if(x.status==='open'){const b=document.createElement('button');b.className='btn-take';b.textContent='✅ 我來接手';b.onclick=()=>change(x.id,'acknowledge');actions.append(b);}
+ if(x.status==='acknowledged'){const b=document.createElement('button');b.className='done';b.textContent='解除（已完成實際處理）';b.onclick=()=>change(x.id,'resolve');actions.append(b);}
+ const hist=document.createElement('button');hist.className='secondary';hist.textContent='查看處理歷程';
+ hist.onclick=()=>{let box=wrap.querySelector('.history');if(!box){box=document.createElement('div');box.className='history muted';wrap.append(box)}showHistory(x.id,box)};
+ actions.append(hist);wrap.append(actions);
+ appendDeliveryButton(x,wrap);
+ return wrap;
+}
+async function showResolved(){
+ if(!me||me.role==='caregiver')return;
+ const target=$('resolvedList');
+ try{
+  const result=await api(base+'/emergencies?status=resolved');
+  target.replaceChildren();
+  if(!result.items.length){target.textContent='目前沒有已完成的通報';return;}
+  for(const x of result.items)target.append(evCard(x));
+ }catch(e){target.textContent='已完成通報讀取失敗：'+e.message}
+}
+$('alerts').addEventListener('change',async()=>{
+ if($('alerts').checked){
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(AudioCtx){try{
+   if(!userAudioContext)userAudioContext=new AudioCtx();
+   if(userAudioContext.state==='suspended')await userAudioContext.resume();
+  }catch(_){/* Browser can refuse sound. */}}
+  // Reset for reminders when deliberately re-enabled.
+  soundedStages.clear();
+  refresh();
+ }else{soundedStages.clear();}
+
+ if($('alerts').checked && 'Notification' in window && Notification.permission==='default'){
+  try{await Notification.requestPermission()}catch(_){/* Browser may deny */}
+ }
+});
+// XZ_EMERGENCY_DASHBOARD_20261103
+// Read-only delivery diagnostics. Never implies LINE platform acceptance == handset delivery.
+const deliveryStages=[
+ ['new','新通報（居督）'],
+ ['unacknowledged_60s','未接手 60 秒（居督）'],
+ ['unacknowledged_180s','未接手 180 秒（主任／管理員）']
+];
+const deliveryStatuses=[['queued','排隊'],['sending','發送中'],['accepted','LINE 平台受理'],['failed','失敗'],['skipped','跳過／取消']];
+const deliveryCache=new Map();
+// XZ_EMERGENCY_GROUPED_AND_BINDING_GUIDE_20261103
+async function showReadiness(){
+ const target=$('notificationReadiness');
+ if(!target||!me||me.role==='caregiver')return;
+ try{
+  const r=await api(base+'/emergencies/notification-readiness');
+  const recipients=r.recipients||{};
+  const supervisor=recipients.supervisor||{},director=recipients.director||{},admin=recipients.admin||{};
+  const activeSupervisors=Number(supervisor.active||0);
+  const activeEscalation=Number(director.active||0)+Number(admin.active||0);
+  const lineSupervisors=Number(r.new_and_60s_line_ready||0);
+  const lineEscalation=Number(r['180s_line_ready']||0);
+  target.replaceChildren();
+  const add=(message,alert)=>{
+   const p=document.createElement('p');p.textContent=message;
+   if(alert)p.style.fontWeight='700';
+   target.append(p);
+  };
+  add('LINE 通知接收資格：同機構在職居督 '+activeSupervisors+' 人，其中符合 LINE 接收資格 '+lineSupervisors+' 人；主任／管理員 '+activeEscalation+' 人，其中符合 180 秒提醒資格 '+lineEscalation+' 人。',false);
+  if(lineSupervisors===0){
+   add('目前沒有符合 LINE 接收資格的居督，系統不能保證通知送達。請立即依機構值班電話流程聯絡，不可等待網頁提醒。',true);
+   add('啟用步驟：請「實際值班居督本人」從 LINE 官方帳號開啟小照 LIFF；如出現綁定頁，向機構管理員取得該居督帳號的有效綁定碼，再由本人完成 LINE 身分綁定。完成後重新檢查本頁接收資格。',false);
+   add('請勿共用 LINE 帳號、冒用別人的身分，也不要直接修改資料庫的 LINE 綁定欄位。',false);
+  }
+  if(lineEscalation===0){
+   add('180 秒主任／管理員 LINE 升級接收資格目前為 0；遇到未接手通報仍須按機構流程直接電話升級。',true);
+  }
+  add('本頁只顯示資格，並不代表 Worker 通知派送已開啟、LINE 已受理或手機已實際收到；跨 APP／鎖屏持續警報尚未實作。',false);
+ }catch(e){target.textContent='無法查詢通知接收資格：'+e.message+'。緊急時請直接電話聯絡居督。'}
+}
+function appendDeliveryButton(incident,container){
+ const b=document.createElement('button');
+ b.type='button';b.className='secondary';b.textContent='查看 LINE 通知狀態';
+ const detail=document.createElement('div');detail.className='muted';detail.setAttribute('role','status');
+ const draw=lines=>{detail.replaceChildren();for(const line of lines){const p=document.createElement('p');p.textContent=line;detail.append(p)}};
+ if(deliveryCache.has(incident.id))draw(deliveryCache.get(incident.id));
+ b.onclick=async()=>{
+  b.disabled=true;detail.textContent='正在查詢（僅統計，不會發送通知）…';
+  try{
+   const r=await api(base+'/emergencies/'+encodeURIComponent(incident.id)+'/delivery-status');
+   const lines=[];
+   if(!r.has_notification_jobs){
+    lines.push('沒有建立任何 LINE 通知工作。可能因為通知功能停用、接收者未綁定或排程未執行。請直接電話聯絡居督。');
+   }else{
+    for(const [key,label] of deliveryStages){
+     const counts=r.stages&&r.stages[key]||{};
+     const parts=deliveryStatuses.filter(([status])=>Number(counts[status]||0)>0)
+      .map(([status,title])=>title+' '+Number(counts[status])+' 筆');
+     lines.push(label+'：'+(parts.length?parts.join('、'):'沒有通知工作'));
+    }
+    const failures=deliveryStages.reduce((total,[key])=>total+Number((r.stages&&r.stages[key]||{}).failed||0),0);
+    if(failures)lines.unshift('注意：有 '+failures+' 筆發送失敗，須依值班流程另行聯絡，不能等待手機提醒。');
+   }
+   lines.push('LINE 平台受理≠手機已收到；只有居督按「我來接手」才算接手。');
+   deliveryCache.set(incident.id,lines);
+   if(deliveryCache.size>10)deliveryCache.delete(deliveryCache.keys().next().value);
+   draw(lines);
+  }catch(e){detail.textContent='查詢通知狀態失敗：'+e.message+'。緊急時請直接電話聯絡。'}
+  finally{b.disabled=false}
+ };
+ container.append(b,detail);
+}
+
+// XZ_SUPERVISOR_VISIBLE_SOUND_ALERT_20261103
+// Foreground-only notification: NEVER claim this is an OS background/lock-screen alarm.
+const soundedStages=new Map();
+let userAudioContext=null;
+function emergencyStage(incident){
+ if(incident.status!=='open')return null;
+ const secs=elapsedSeconds(incident.created_at);
+ return secs>=180?'180s':secs>=60?'60s':'new';
+}
+// XZ_FOREGROUND_ALARM_AND_SHORT_ID_20261103
+// 前景警報：只在使用者勾選、頁面可見且聚焦時響，不能當作鎖屏推播。
+const alertLastPlayed=new Map();
+function shortIncidentId(id){
+ const v=String(id||'');
+ return /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(v) ? '#'+v.slice(0,8).toUpperCase() : v;
+}
+function beepForeground(stage){
+ if(!document.hasFocus() || document.visibilityState!=='visible')return;
+ const AudioCtx=window.AudioContext||window.webkitAudioContext;
+ if(!AudioCtx)return;
+ try{
+  if(!userAudioContext)userAudioContext=new AudioCtx();
+  if(userAudioContext.state!=='running')return;
+  const t=userAudioContext.currentTime;
+  // 不同階段不同節奏：新通報三長、60秒四次、180秒五次高低交替。
+  const pattern=stage==='180s'?[0,0.34,0.68,1.02,1.36]:stage==='60s'?[0,0.34,0.68,1.02]:[0,0.42,0.84];
+  const duration=stage==='new'?0.30:0.23;
+  for(let n=0;n<pattern.length;n++){
+   const begin=t+pattern[n];
+   const osc=userAudioContext.createOscillator();
+   const volume=userAudioContext.createGain();
+   osc.type='triangle';
+   osc.frequency.value=stage==='180s'?(n%2?520:880):stage==='60s'?(n%2?650:810):690;
+   volume.gain.setValueAtTime(0.0001,begin);
+   volume.gain.linearRampToValueAtTime(0.20,begin+0.025);
+   volume.gain.setValueAtTime(0.20,begin+duration-0.06);
+   volume.gain.linearRampToValueAtTime(0.0001,begin+duration);
+   osc.connect(volume);volume.connect(userAudioContext.destination);
+   osc.start(begin);osc.stop(begin+duration+0.01);
+  }
+ }catch(_){/* 音效不可用時不應妨礙緊急通報的顯示或接手。 */}
+}
+function notifyVisibleUnclaimed(unclaimed){
+ if(!$('alerts').checked || document.visibilityState!=='visible' || !document.hasFocus())return;
+ const active=new Set(unclaimed.map(x=>x.id));
+ for(const id of soundedStages.keys())if(!active.has(id))soundedStages.delete(id);
+ for(const id of alertLastPlayed.keys())if(!active.has(id))alertLastPlayed.delete(id);
+ const priorities={new:0,'60s':1,'180s':2};
+ const now=Date.now();
+ let highestNew=null;
+ for(const incident of unclaimed){
+  const stage=emergencyStage(incident);
+  if(!stage)continue;
+  const previous=soundedStages.get(incident.id);
+  const stageChanged=previous===undefined || priorities[previous]<priorities[stage];
+  if(stageChanged){
+   soundedStages.set(incident.id,stage);
+   if('Notification' in window && Notification.permission==='granted'){
+    try{new Notification('小照｜緊急通報尚未接手 '+shortIncidentId(incident.id),{
+     body:stage==='180s'?'已超過 180 秒；立即依值班電話升級':stage==='60s'?'已超過 60 秒；請電話催促接手':'請立即確認並依流程電話聯絡',
+     tag:'jiaan-urgent-'+incident.id+'-'+stage
+    })}catch(_){/* 瀏覽器可能拒絕通知。 */}
+   }
+  }
+  // 只在前景定期重響；升級階段縮短間隔。接手後下一次刷新即停止。
+  const cadence=stage==='180s'?8000:stage==='60s'?12000:20000;
+  const last=alertLastPlayed.get(incident.id);
+  if(stageChanged || !last || last.stage!==stage || now-last.at>=cadence){
+   alertLastPlayed.set(incident.id,{stage,at:now});
+   if(highestNew===null || priorities[stage]>priorities[highestNew])highestNew=stage;
+  }
+ }
+ if(highestNew!==null)beepForeground(highestNew);
+}
+
+function elapsedSeconds(iso){const n=Date.parse(iso);return Number.isFinite(n)?Math.max(0,Math.floor((Date.now()-n)/1000)):0}
+function unattendedLabel(x){
+ if(x.status!=='open')return '';
+ const secs=elapsedSeconds(x.created_at);
+ if(secs>=180)return '已等待超過 3 分鐘：請立即電話聯絡值班居督／主任，確認有人接手';
+ if(secs>=60)return '已等待超過 1 分鐘：請直接電話催促接手';
+ return '';
+}
+async function refresh(){if(!me||busy)return;
+ try{const o=await api(base+'/emergencies?status=active');
+  if(me.role==='caregiver'){
+   state(o.items.length?('我的未結束通報：'+o.items.length+' 筆（送出≠已接手）'):'目前沒有未結束的通報');
+   renderMyList(o.items);
+  }else{
+   const openParent=$('openList'),ackParent=$('ackList');openParent.replaceChildren();ackParent.replaceChildren();
+   const unclaimed=o.items.filter(x=>x.status==='open');const assigned=o.items.filter(x=>x.status==='acknowledged');$('openCount').textContent=String(unclaimed.length);$('ackCount').textContent=String(assigned.length);
+   document.title=unclaimed.length?'【'+unclaimed.length+'筆未接手】'+originalTitle:originalTitle;
+   // Sound and browser notification are foreground-only, user-opt-in warnings.
+   notifyVisibleUnclaimed(unclaimed);
+   lastUnclaimed=new Set(unclaimed.map(x=>x.id));
+   if(!o.items.length){openParent.innerHTML='<p class="muted">目前沒有尚未接手通報</p>';ackParent.innerHTML='<p class="muted">目前沒有已接手待結案通報</p>';await showResolved();return;}
+   if(!unclaimed.length)openParent.innerHTML='<p class="muted">目前沒有尚未接手通報</p>';
+   if(!assigned.length)ackParent.innerHTML='<p class="muted">目前沒有已接手待結案通報</p>';
+   for(const x of unclaimed)openParent.append(evCard(x,{late:elapsedSeconds(x.created_at)>=60}));
+   for(const x of assigned)ackParent.append(evCard(x));
+  }
+  await showResolved();
+ }catch(e){state('讀取通報失敗：'+e.message+'；請直接電話聯絡居督。')}
+}
+async function change(id,what){if(busy)return;busy=true;
+ try{if(what==='resolve'&&!confirm('只有真正完成處理才能解除警示。確定已完成？'))return;
+ const v=await api(base+'/emergencies/'+encodeURIComponent(id)+'/'+what,{method:'POST',body:JSON.stringify({client_request_id:crypto.randomUUID()})});
+ state('成功更新：'+(statusNames[v.status]||'狀態已更新'));await new Promise(r=>setTimeout(r,100));
+ }catch(e){state('操作失敗：'+e.message)}finally{busy=false;refresh()}}
+$('refresh').onclick=()=>{refresh();if(me&&me.role!=='caregiver')showReadiness()};connect();setInterval(()=>{if(me)refresh()},5000);
+</script></body></html>

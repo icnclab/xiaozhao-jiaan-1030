@@ -77,6 +77,9 @@ async def security_headers(request: Request, call_next):  # type: ignore[no-unty
 for module in (auth_routes, caregiver_routes, admin_routes, line_routes, quality_routes):
     app.include_router(module.router, prefix="/api")
 
+from app.api import jiaan1030_emergency_routes as _jiaan1030_emergency
+app.include_router(_jiaan1030_emergency.router, prefix="/api")
+
 
 @app.get("/api/healthz")
 def healthz() -> dict:
