@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>嘉安 47 人場測管理</title>
+<style>
+:root{font-family:system-ui,-apple-system,'Microsoft JhengHei',sans-serif;color:#17304a;background:#f5f8fb}body{margin:0}header{background:#155e75;color:white;padding:22px max(18px,calc((100vw - 1120px)/2))}h1{font-size:23px;margin:0 0 4px}header p{margin:0;color:#d7eef4}main{max-width:1120px;margin:28px auto;padding:0 18px}button,input{font:inherit}button{padding:10px 16px;background:#156b83;color:white;border:0;border-radius:9px;cursor:pointer}button:disabled{opacity:.5}button.secondary{background:white;color:#155e75;border:1px solid #d2e1e7}.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}.metric,.panel{background:white;border:1px solid #d9e3ea;border-radius:12px;padding:18px;box-shadow:0 2px 8px #1e48670b}.metric strong{display:block;font-size:31px;margin-top:6px}.metric span,.hint{color:#576d7d}.panel{overflow:auto}.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}input{padding:10px;border:1px solid #cbd9e0;border-radius:8px;min-width:200px}table{width:100%;border-collapse:collapse;white-space:nowrap}th,td{text-align:left;padding:11px;border-bottom:1px solid #e6edf2;font-size:14px}th{background:#edf6f9}tr:hover{background:#f7fbfc}.status{padding:6px 9px;background:#edf3f7;border-radius:30px;font-size:12px}#notice{white-space:pre-wrap;margin:12px 0;color:#9b3c22}.auth{padding:16px;margin-bottom:16px;background:#fffcf3;border:1px solid #ead8a1;border-radius:10px}.auth input{width:min(600px,90%)}.hidden{display:none}.small{font-size:13px;color:#5b6d7d}</style>
+</head><body>
+<header><h1>嘉安場測｜47 人進度</h1><p>40 位照服員＋7 位督導 · 管理員專用 · 真實操作紀錄</p></header>
+<main>
+<div class="toolbar"><button id="refresh">重新整理統計</button><button id="export">匯出最新 Excel（5 張工作表）</button><button class="secondary" id="authToggle">登入狀態／授權設定</button></div>
+<div id="notice" role="status"></div>
+<div id="auth" class="auth"><p><b>管理員登入</b>：使用嘉安管理員帳號與密碼。只呼叫本站的登入 API，密碼不會寫入瀏覽器儲存空間。</p>
+<form id="loginForm" autocomplete="on"><label for="username">管理員帳號</label><input id="username" name="username" autocomplete="username" value="jiaan_admin" required><label for="password">密碼</label><input type="password" id="password" name="password" autocomplete="current-password" required><button type="submit" id="loginButton">登入並載入統計</button></form>
+<p id="loginStatus" class="small" role="status"></p><p class="small">只用正式管理員帳號登入。請勿使用照服員的 LINE 綁定碼。</p></div>
+<section class="summary"><div class="metric"><span>預計受測</span><strong id="total">—</strong></div><div class="metric"><span>已對應帳號</span><strong id="mapped">—</strong></div><div class="metric"><span>有操作紀錄</span><strong id="records">—</strong></div><div class="metric"><span>AI 問答筆數</span><strong id="qa">—</strong></div><div class="metric"><span>系統錯誤紀錄</span><strong id="errors">—</strong></div><div class="metric"><span>案件筆數</span><strong id="cases">—</strong></div></section>
+<div class="panel"><div class="filters"><input id="filter" type="search" placeholder="搜尋 A01、S01 或狀態"></div><table><thead><tr><th>編號</th><th>身分</th><th>帳號對應</th><th>操作事件</th><th>AI 問答</th><th>案件</th><th>測試狀態</th></tr></thead><tbody id="body"><tr><td colspan="7">正在載入，請確認已使用管理員登入</td></tr></tbody></table><p class="hint">「有紀錄」不等於測試通過；尚無紀錄不等於失敗。STT 錯誤、回答耗時與引用忠實度未完整埋點，不能從空值推定結果。</p></div>
+</main>
+<script>
+(()=>{'use strict';
+let data=null;let manuallyProvided='';const $=id=>document.getElementById(id);const set=id=>v=>$(id).textContent=String(v);
+const apiRoot=()=>window.location.origin;
+const endpoints=['/api/fieldtest/summary','/api/fieldtest/export.xlsx'];
+function getToken(){if(manuallyProvided)return manuallyProvided;for(const store of [localStorage,sessionStorage]){for(let i=0;i<store.length;i++){const k=store.key(i);if(!/token|auth|session/i.test(k||''))continue;const raw=store.getItem(k)||'';if(!raw)continue;if(raw.split('.').length===3&&raw.length>50)return raw;try{const obj=JSON.parse(raw);for(const key of ['access_token','accessToken','token','jwt']){if(typeof obj?.[key]==='string'&&obj[key].length>25)return obj[key];if(typeof obj?.state?.[key]==='string'&&obj.state[key].length>25)return obj.state[key];}}catch{}}}return ''}
+async function request(which){const headers={};const token=getToken();if(token)headers.Authorization='Bearer '+token;const resp=await fetch(apiRoot()+endpoints[which],{headers,credentials:'include',cache:'no-store'});if(!resp.ok)throw Error('HTTP '+resp.status+(resp.status===401||resp.status===403?'：請使用具有嘉安機構權限的管理員登入':'：系統讀取失敗'));return resp}
+function render(){if(!data)return;const q=$('filter').value.trim().toLowerCase();const rows=(data.participants||[]).filter(p=>[p.code,p.role,p.status,p.mapping_status].join(' ').toLowerCase().includes(q));$('body').replaceChildren();if(!rows.length){const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=7;td.textContent='沒有符合條件的紀錄';tr.append(td);$('body').append(tr);return;}for(const p of rows){const tr=document.createElement('tr');for(const field of [p.code,p.role,p.mapping_status,p.audit_event_count,p.qa_count,p.case_count,p.status]){const td=document.createElement('td');td.textContent=field==null?'':String(field);tr.append(td)}$('body').append(tr)}}
+async function load(){set('notice')('');$('refresh').disabled=true;try{const r=await request(0);data=await r.json();[['total','total'],['mapped','mapped'],['records','with_records'],['qa','qa_records'],['errors','error_records'],['cases','case_records']].forEach(([id,k])=>set(id)(data[k]??0));render();}catch(e){set('notice')(e.message+'。請按「登入狀態／授權設定」確認登入。');$('auth').classList.remove('hidden')}finally{$('refresh').disabled=false}}
+async function download(){set('notice')('');$('export').disabled=true;try{const r=await request(1);const blob=await r.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='嘉安47人場測_'+new Date().toISOString().slice(0,10)+'.xlsx';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}catch(e){set('notice')(e.message);$('auth').classList.remove('hidden')}finally{$('export').disabled=false}}
+$('refresh').onclick=load;$('export').onclick=download;$('filter').oninput=render;$('authToggle').onclick=()=>$('auth').classList.toggle('hidden');
+$('loginForm').onsubmit=async e=>{
+ e.preventDefault(); const user=$('username').value.trim();const pass=$('password').value;
+ $('loginButton').disabled=true; $('loginStatus').textContent='正在登入…';
+ try{
+  const response=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',cache:'no-store',body:JSON.stringify({username:user,password:pass})});
+  if(!response.ok){throw new Error(response.status===401?'帳號或密碼不正確':response.status===422?'登入欄位格式與後端不相符（HTTP 422）':'登入失敗（HTTP '+response.status+'）')}
+  const result=await response.json().catch(()=>({}));
+  const token=result.session_token||result.access_token||result.accessToken||result.token||result.jwt||result.data?.access_token||result.data?.token||'';
+  manuallyProvided=(typeof token==='string'?token:'');
+  $('password').value='';
+  $('loginStatus').textContent='登入已送出，正在載入管理統計…';
+  await load();
+  if(data){$('auth').classList.add('hidden');$('loginStatus').textContent='管理統計已載入';}
+ }catch(err){$('password').value='';$('loginStatus').textContent=err.message}
+ finally{$('loginButton').disabled=false}
+};load();
+})();
+</script></body></html>
