@@ -85,6 +85,9 @@ app.include_router(_jiaan1030_service_catalog.router, prefix="/api")
 from app.api import jiaan1030_service_drafts as _jiaan1030_service_drafts
 app.include_router(_jiaan1030_service_drafts.router, prefix="/api")
 
+from app.api import jiaan_webpush_routes as _jiaan_webpush
+app.include_router(_jiaan_webpush.router, prefix="/api")
+
 
 @app.get("/api/healthz")
 def healthz() -> dict:

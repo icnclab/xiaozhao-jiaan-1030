@@ -1,0 +1,23 @@
+{
+  "name": "小照 CareGuard｜督導緊急通知",
+  "short_name": "小照督導",
+  "start_url": "/api/jiaan1030/alert-app",
+  "scope": "/api/jiaan1030/",
+  "display": "standalone",
+  "background_color": "#f3f7fb",
+  "theme_color": "#16486c",
+  "icons": [
+    {
+      "src": "/api/jiaan1030/alert-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/api/jiaan1030/alert-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
