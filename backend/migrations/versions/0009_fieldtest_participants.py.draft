@@ -1,0 +1,41 @@
+"""PROPOSAL ONLY -- not committed, not applied, NOT verified against a real
+database this round (database-credential exposure incident means no new DB
+connections were made while preparing this draft). Rename to .py and verify
+in an isolated database only after the credential rotation is confirmed.
+
+Backs app/api/fieldtest_routes.py's `fieldtest_participants` mapping table
+(47-person field-test code <-> user_id mapping). No existing migration or
+schema file defines this table anywhere in the repository -- this is a
+genuine gap, not a deliberate policy exclusion like 0007/Web Push.
+
+Fully additive (CREATE TABLE IF NOT EXISTS), no ALTER of any existing table,
+no data deletion. Chains after 0006 for the same reason as the Web Push
+draft: stays isolated from the unconfirmed 0007 embedding-model branch.
+"""
+from alembic import op
+
+revision = "0009_fieldtest_participants"
+down_revision = "0006_jiaan1030_emergency"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS fieldtest_participants (
+            org_id uuid NOT NULL REFERENCES organizations(id),
+            code varchar(10) NOT NULL,
+            user_id uuid NOT NULL REFERENCES users(id),
+            assigned_by uuid NOT NULL REFERENCES users(id),
+            assigned_at timestamptz NOT NULL DEFAULT now(),
+            PRIMARY KEY (org_id, code)
+        )
+    """)
+    op.execute("""
+        CREATE INDEX IF NOT EXISTS ix_fieldtest_participants_user
+            ON fieldtest_participants(user_id)
+    """)
+
+
+def downgrade() -> None:
+    op.drop_table("fieldtest_participants")
