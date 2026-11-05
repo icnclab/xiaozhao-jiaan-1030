@@ -136,11 +136,21 @@ export function TranscriptPage() {
               <h3>說話者對應的角色</h3>
               {usedSpeakers.length === 0 && <p className="muted small">先在上方為片段指定「說話者 1、2…」，再對應角色；分不出來就維持未辨識。</p>}
               {usedSpeakers.map((sp) => (
-                <div key={sp} className="row">
-                  <span>{sp.replace("speaker_", "說話者 ")}＝</span>
-                  <select value={roles[sp] ?? "unknown"} onChange={(e) => setRoles({ ...roles, [sp]: e.target.value })} style={{ width: "auto" }}>
-                    {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                  </select>
+                <div key={sp} className="stack">
+                  <span className="small">{sp.replace("speaker_", "說話者 ")}</span>
+                  <div className="role-grid">
+                    {Object.entries(ROLE_LABELS).map(([k, v]) => (
+                      <button
+                        key={k}
+                        type="button"
+                        className={`btn role-btn ${(roles[sp] ?? "unknown") === k ? "primary" : ""}`}
+                        aria-pressed={(roles[sp] ?? "unknown") === k}
+                        onClick={() => setRoles({ ...roles, [sp]: k })}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ))}
               <h3>摘要（選填，會一併送交督導）</h3>
@@ -160,7 +170,12 @@ export function TranscriptPage() {
               >
                 💬 用選取的片段／摘要向小照提問
               </button>
-              <button className="btn block" onClick={() => navigate("/liff/report", { state: { transcript_id: t.id, summary: t.summary_masked ?? "" } })}>📋 分類回報並送交督導</button>
+              <button
+                className="btn block"
+                onClick={() => navigate("/liff/report", { state: { transcript_id: t.id, summary: t.segments.filter((s) => s.selected).map((s) => s.text).join("\n") || t.summary_masked || "" } })}
+              >
+                📋 分類回報並送交督導
+              </button>
             </div>
           )}
         </>

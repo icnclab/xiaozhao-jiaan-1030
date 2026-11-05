@@ -74,6 +74,9 @@ textarea { min-height: 88px; resize: vertical; }
 .seg .time { font-size: 12px; color: var(--muted); }
 .seg textarea { min-height: 56px; }
 .seg.uncertain { background: var(--warn-bg); }
+.role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.role-btn { min-height: 48px; font-size: 15px; padding: 10px 8px; }
+@media (min-width: 480px) { .role-grid { grid-template-columns: repeat(3, 1fr); } }
 .claim { padding: 8px 0; border-top: 1px solid var(--line); }
 .cite { border-left: 3px solid var(--brand); padding: 8px 10px; background: #f8fafc; border-radius: 6px; }
 .cite .title { font-weight: 700; }
