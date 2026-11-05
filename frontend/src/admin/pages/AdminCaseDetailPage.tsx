@@ -9,6 +9,19 @@ interface UserRow { id: string; display_name: string; role: string; is_active: b
 
 const NOTIFY_LABEL: Record<string, string> = { queued: "通知待送", sending: "送出中", accepted: "LINE 已受理（不代表送達）", failed: "通知失敗", skipped: "略過（無 LINE 或已封鎖）" };
 
+const EVENT_LABELS: Record<string, string> = {
+  created: "建立案件", taken: "督導接手", assigned: "指派案件",
+  replied: "已回覆案件", closed: "已完成結案", reopened: "重新開啟案件",
+};
+const STATUS_LABELS: Record<string, string> = {
+  pending: "待處理", in_progress: "處理中", replied: "已回覆", closed: "已結案",
+};
+function eventDescription(kind: string, data: unknown): string {
+  const details = data && typeof data === "object" ? data as Record<string, unknown> : {};
+  const reason = typeof details.reason === "string" ? details.reason.trim() : "";
+  return (EVENT_LABELS[kind] ?? "案件操作") + (kind === "closed" && reason ? `：${reason}` : "");
+}
+
 export function AdminCaseDetailPage() {
   const { id } = useParams();
   const { user } = useAdmin();
@@ -51,6 +64,7 @@ export function AdminCaseDetailPage() {
   return (
     <div className="stack">
       <Link to="/admin/cases">← 案件列表</Link>
+      <p>待確認案件編號（非政府個案案號）</p>
       <h1>{c.number} <span className={`tag ${c.status === "replied" ? "ok" : "warn"}`}>{c.status_label}</span></h1>
       <div className="row small muted">
         <span>{c.source_label}</span>｜<span>{c.category?.name ?? "未分類"}</span>｜<span>提交：{c.creator?.display_name}</span>｜<span>建立 {formatTime(c.created_at)}</span>｜<span>督導：{c.assignee?.display_name ?? "未指派"}</span>
@@ -151,11 +165,12 @@ export function AdminCaseDetailPage() {
       </div>
       {c.events && (
         <details className="card">
-          <summary>狀態歷程（{c.events.length}）</summary>
+          <summary>查看處理歷程（{c.events.length} 筆）</summary>
+          {c.events.length === 0 && <p className="muted">目前沒有操作歷程。</p>}
           <table>
             <tbody>
               {c.events.map((e, i) => (
-                <tr key={i}><td>{formatTime(e.created_at)}</td><td>{e.actor}</td><td>{e.kind}</td><td>{e.from_status ?? ""} → {e.to_status ?? ""}</td><td className="small muted">{JSON.stringify(e.data)}</td></tr>
+                <tr key={i}><td>{formatTime(e.created_at)}</td><td>{e.actor}</td><td>{eventDescription(e.kind, e.data)}</td><td className="small muted">{STATUS_LABELS[e.to_status ?? ""] ?? ""}</td></tr>
               ))}
             </tbody>
           </table>
