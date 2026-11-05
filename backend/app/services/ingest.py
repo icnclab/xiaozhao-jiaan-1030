@@ -16,7 +16,22 @@ MAX_CHUNK_CHARS = 700
 TARGET_PARA_CHUNK = 400
 
 _ARTICLE_RE = re.compile(r"^\s*(第\s*[0-9一二三四五六七八九十百零〇]+(?:(?:\s*之\s*|\s*-\s*)[0-9一二三四五六七八九十百零〇]+)?\s*條)\s*(.*)$")
-_HEADING_RE = re.compile(r"^\s*(?:#{1,4}\s+|[一二三四五六七八九十]+、|第[一二三四五六七八九十]+[章節篇]|[（(][一二三四五六七八九十]+[）)])")
+# 結構性標題：markdown 標號或「第…章/節/篇」，文件結構上不會是條列內文本身，一律視為標題。
+_STRUCTURAL_HEADING_RE = re.compile(r"^\s*(?:#{1,4}\s+|第[一二三四五六七八九十百零〇]+[章節篇])")
+# 條列標記：可能是短標題標籤（如「一、服務範圍」），也可能是條列內文本身已是完整句子
+# （如「一、記錄當次血糖數值…。」）。兩者都以同一標記開頭，必須依內容判斷，不能一律當標題。
+_LIST_MARKER_RE = re.compile(r"^\s*(?:[一二三四五六七八九十]+、|[（(][一二三四五六七八九十]+[）)])")
+_SENTENCE_END_RE = re.compile(r"[。！？!?；;]\s*$")
+
+
+def _is_heading_label(stripped: str) -> bool:
+    """條列開頭是否為短標籤標題，而非完整條列內文。
+
+    真正的章節標題通常是簡短名詞片語、沒有句尾標點；條列內文若本身已是完整句子
+    （以句尾標點結束），代表這一行是實際內容，應保留為內文，否則會被當成標題
+    覆蓋掉，使原文遺失（見 2026-11 嘉安血糖示範案例回歸測試）。
+    """
+    return len(stripped) < 40 and not _SENTENCE_END_RE.search(stripped)
 
 
 class ParseError(Exception):
@@ -239,7 +254,11 @@ def _chunk_paragraphs(flat: list[tuple[int | None, str]]) -> list[ChunkDraft]:
             if sum(len(b) for b in buffer) >= TARGET_PARA_CHUNK:
                 flush()
             continue
-        if _HEADING_RE.match(stripped) and len(stripped) < 40:
+        if _STRUCTURAL_HEADING_RE.match(stripped) and len(stripped) < 40:
+            flush()
+            heading = stripped.lstrip("# ").strip()
+            continue
+        if _LIST_MARKER_RE.match(stripped) and _is_heading_label(stripped):
             flush()
             heading = stripped.lstrip("# ").strip()
             continue
