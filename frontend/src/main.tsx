@@ -16,6 +16,7 @@ import { CasesPage } from "./liff/pages/CasesPage";
 import { CaseDetailPage } from "./liff/pages/CaseDetailPage";
 import { HelpPage } from "./liff/pages/HelpPage";
 import { BindPage } from "./liff/pages/BindPage";
+import { MpcReviewPage } from "./liff/pages/MpcReviewPage";
 import { AdminLoginPage } from "./admin/pages/AdminLoginPage";
 import { AdminCasesPage } from "./admin/pages/AdminCasesPage";
 import { AdminCaseDetailPage } from "./admin/pages/AdminCaseDetailPage";
@@ -46,6 +47,7 @@ const router = createBrowserRouter([
       { path: "cases/:id", element: <CaseDetailPage /> },
       { path: "help", element: <HelpPage /> },
       { path: "bind", element: <BindPage /> },
+      { path: "mpc-review", element: <MpcReviewPage /> },
     ],
   },
   {

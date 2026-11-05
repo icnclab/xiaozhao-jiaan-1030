@@ -37,9 +37,27 @@ from app.services import audit, cases, qa_service, source_downloads, transcripts
 from app.services.deid import deidentify
 from app.services.documents import current_versions
 from app.services.source_access import visible_version
+from app.services.jiaan1030_official_source import get_reviewed_official_source
 
 router = APIRouter()
-ANY_ROLE = ("caregiver", "supervisor", "admin")
+ANY_ROLE = ("caregiver", "supervisor", "director", "admin")
+
+# MPC review-only API. No database writes or outgoing notifications.
+from app.services.mpc_handover import MpcPayloadError, build_preview, build_review_draft
+
+@router.post("/mpc/preview")
+def mpc_preview_v2(body: dict, user: User = Depends(require_roles(*ANY_ROLE))) -> dict:
+    try:
+        return build_preview(body)
+    except MpcPayloadError as exc:
+        raise _err(422, "mpc_payload_invalid", str(exc)) from exc
+
+@router.post("/mpc/review-draft")
+def mpc_review_draft(body: dict, user: User = Depends(require_roles(*ANY_ROLE))) -> dict:
+    try:
+        return build_review_draft(body.get("payload"), body.get("review"))
+    except MpcPayloadError as exc:
+        raise _err(422, "mpc_review_invalid", str(exc)) from exc
 
 
 def _err(status: int, code: str, message: str) -> HTTPException:
@@ -57,7 +75,7 @@ def _own_qa(db: Session, user: User, qa_id: str) -> QaItem:
     item = db.get(QaItem, _parse_uuid(qa_id))
     if item is None:
         raise _err(404, "not_found", "找不到資料")
-    allowed = item.user_id == user.id or (user.role in {"supervisor", "admin"} and item.org_id == user.org_id)
+    allowed = item.user_id == user.id or (user.role in {"supervisor", "director", "admin"} and item.org_id == user.org_id)
     if not allowed:
         raise deny_not_found(db, user, "qa_item", qa_id)
     return item
@@ -387,7 +405,7 @@ def _visible_case(db: Session, user: User, case_id: str) -> Case:
     case = db.get(Case, _parse_uuid(case_id))
     if case is None:
         raise _err(404, "not_found", "找不到資料")
-    if case.created_by != user.id and not (user.role in {"supervisor", "admin"} and case.org_id == user.org_id):
+    if case.created_by != user.id and not (user.role in {"supervisor", "director", "admin"} and case.org_id == user.org_id):
         raise deny_not_found(db, user, "case", case_id)
     return case
 
@@ -396,7 +414,7 @@ def _visible_case(db: Session, user: User, case_id: str) -> Case:
 def case_detail(case_id: str, user: User = Depends(require_roles(*ANY_ROLE)), db: Session = Depends(get_db)) -> dict:
     """案件詳情（照服員看自己的；督導看同機構的）。"""
     case = _visible_case(db, user, case_id)
-    return case_out(db, case, include_internal=user.role in {"supervisor", "admin"})
+    return case_out(db, case, include_internal=user.role in {"supervisor", "director", "admin"})
 
 
 class MessageIn(BaseModel):
@@ -469,6 +487,7 @@ def source_chunk(chunk_id: str, user: User = Depends(require_roles(*ANY_ROLE)), 
                     "effective_to": version.effective_to.isoformat() if version.effective_to else None,
                     "source": version.source, "source_url": version.source_url,
                     "file_url": f"/api/sources/versions/{version.id}/file"},
+        "official_source": get_reviewed_official_source(str(version.id), version.source_url, document.title),
     }
 
 
@@ -544,4 +563,25 @@ def my_stats(user: User = Depends(current_user), db: Session = Depends(get_db)) 
     replied = db.scalar(select(func.count()).select_from(Case).where(Case.created_by == user.id,
                                                                      Case.status == "replied")) or 0
     return {"open_cases": open_cases, "replied_cases": replied}
+
+
+# MPC V6: explicit, server-reviewed ordinary-case submission. No emergency side effects.
+@router.post("/mpc/submit-case")
+def mpc_submit_case_v6(body: dict, user: User = Depends(require_roles("caregiver")), db: Session = Depends(get_db)) -> dict:
+    from app.services.mpc_submission_guard import MpcSubmissionBlocked, validated_ordinary_summary
+    if not isinstance(body, dict):
+        raise _err(422, "mpc_invalid", "資料格式錯誤")
+    payload = body.get("payload")
+    review = body.get("review")
+    category_id = body.get("category_id")
+    request_id = body.get("client_request_id")
+    if not isinstance(category_id, str) or not isinstance(request_id, str):
+        raise _err(422, "mpc_invalid", "缺少分類或請求識別碼")
+    try:
+        text = validated_ordinary_summary(payload, review)
+    except MpcSubmissionBlocked as exc:
+        raise _err(422, "mpc_submission_blocked", str(exc)) from exc
+    # Existing case endpoint enforces current organization category and idempotency.
+    validated = CaseIn(category_id=category_id, text=text, client_request_id=request_id)
+    return create_case(validated, user=user, db=db)
 
