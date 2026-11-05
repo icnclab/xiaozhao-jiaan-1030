@@ -47,6 +47,11 @@ export function AdminApp() {
   }
   if (location.pathname === "/admin/login") return <Navigate to="/admin/cases" replace />;
 
+  // 主任（director）後端目前僅有「案件監督（唯讀）」「治理指標」「人員查看」權限
+  // （見 backend/app/api/admin_routes.py 的 CASE_OVERSIGHT／GOVERNANCE／STAFF_VIEW）；
+  // 文件管理、問題分類設定、回答回饋未經會議紀錄確認，不在側邊選單提供入口，避免
+  // 點擊後才被後端 403 擋下、誤以為系統故障。
+  const DIRECTOR_HIDDEN_LINKS = new Set(["/admin/documents", "/admin/categories", "/admin/feedback"]);
   const links = [
     ["/admin/cases", "待確認案件"],
     ["/admin/documents", "知識庫文件"],
@@ -54,8 +59,9 @@ export function AdminApp() {
     ["/admin/feedback", "回答回饋"],
     ["/admin/metrics", "治理指標"],
     ["/admin/users", "帳號與綁定"],
-  ];
+  ].filter(([to]) => user.role !== "director" || !DIRECTOR_HIDDEN_LINKS.has(to));
   if (config.dev_features) links.push(["/admin/simulator", "LINE 模擬器"]);
+  const roleLabel = user.role === "admin" ? "管理員" : user.role === "director" ? "主任" : "督導";
   const logout = () => {
     api("/api/auth/logout", { method: "POST" }).catch(() => undefined);
     setToken(null);
@@ -67,7 +73,7 @@ export function AdminApp() {
       <div className="admin">
         <nav>
           <div style={{ padding: "0 10px 12px", fontWeight: 700 }}>督導後台</div>
-          <div className="small" style={{ padding: "0 10px 12px", color: "#cfe8e5" }}>{user.display_name}（{user.role === "admin" ? "管理員" : "督導"}）<br />{user.org?.name}</div>
+          <div className="small" style={{ padding: "0 10px 12px", color: "#cfe8e5" }}>{user.display_name}（{roleLabel}）<br />{user.org?.name}</div>
           {links.map(([to, label]) => (
             <NavLink key={to} to={to} className={({ isActive }) => (isActive ? "active" : "")}>{label}</NavLink>
           ))}

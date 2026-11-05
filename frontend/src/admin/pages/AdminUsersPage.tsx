@@ -4,7 +4,7 @@ import { ErrorBox } from "../../liff/components";
 import { useAdmin } from "../AdminApp";
 
 interface Row { id: string; username: string; original_username?: string | null; is_deleted?: boolean; display_name: string; role: string; is_active: boolean; line_bound: boolean; line_blocked: boolean }
-const ROLE: Record<string, string> = { caregiver: "照服員", supervisor: "督導", admin: "管理員" };
+const ROLE: Record<string, string> = { caregiver: "照服員", supervisor: "督導", director: "主任", admin: "管理員" };
 const GROUPS = [
   { key: "jiaan", title: "嘉安正式帳號", label: "嘉安場測" },
   { key: "test", title: "內部測試帳號", label: "內部測試" },
@@ -71,8 +71,9 @@ export function AdminUsersPage() {
               <td><span className={`tag ${r.is_active ? "ok" : "warn"}`}>{r.is_deleted ? "已刪除" : r.is_active ? "啟用" : "停用"}</span></td>
               <td>{r.line_bound ? (r.line_blocked ? <span className="tag danger">已封鎖／取消好友</span> : <span className="tag ok">已綁定</span>) : <span className="tag warn">未綁定</span>}</td>
               <td>{r.is_deleted ? <span className="muted">歷史帳號</span> : <>
-                {r.role === "caregiver" && <button className="btn" disabled={busy || !r.is_active} onClick={() => void run(async () => { const c = await post<{ code: string }>(`/api/admin/users/${r.id}/binding-code`, {}); setCode({ user: r.username, code: c.code }); })}>產生綁定碼</button>}
-                {(user.role === "admin" || (r.role === "caregiver" && r.line_bound)) && <span style={{ display: "inline-block", position: "relative" }} onKeyDown={e => { if (e.key === "Escape") setOpenMenu(null); }}>
+                {/* 主任目前尚未取得綁定碼／解除 LINE 綁定的後端權限，前端不提供入口，避免點擊後才被 403 擋下。 */}
+                {user.role !== "director" && r.role === "caregiver" && <button className="btn" disabled={busy || !r.is_active} onClick={() => void run(async () => { const c = await post<{ code: string }>(`/api/admin/users/${r.id}/binding-code`, {}); setCode({ user: r.username, code: c.code }); })}>產生綁定碼</button>}
+                {user.role !== "director" && (user.role === "admin" || (r.role === "caregiver" && r.line_bound)) && <span style={{ display: "inline-block", position: "relative" }} onKeyDown={e => { if (e.key === "Escape") setOpenMenu(null); }}>
                 <button className="btn" disabled={busy} aria-label={`${username(r)} 更多`} aria-expanded={openMenu === r.id} aria-controls={`account-menu-${r.id}`} onClick={() => setOpenMenu(openMenu === r.id ? null : r.id)}>更多 ▾</button>
                 {openMenu === r.id && <div id={`account-menu-${r.id}`} className="card stack" style={{ minWidth: 160 }}>
                 {r.line_bound && (user.role === "admin" || r.role === "caregiver") && <button className="btn danger" disabled={busy} onClick={() => window.confirm(`解除 ${r.username} 的 LINE 綁定？目前 LINE 登入及未使用綁定碼會失效，帳號與歷史資料保留。`) && void run(() => api(`/api/admin/users/${r.id}/line-binding`, { method: "DELETE" }))}>解除 LINE 綁定</button>}
