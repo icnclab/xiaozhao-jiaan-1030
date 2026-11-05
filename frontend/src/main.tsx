@@ -16,6 +16,8 @@ import { CasesPage } from "./liff/pages/CasesPage";
 import { CaseDetailPage } from "./liff/pages/CaseDetailPage";
 import { HelpPage } from "./liff/pages/HelpPage";
 import { BindPage } from "./liff/pages/BindPage";
+import { ServiceClientsPage } from "./liff/pages/ServiceClientsPage";
+import { ServiceFormPage } from "./liff/pages/ServiceFormPage";
 import { MpcReviewPage } from "./liff/pages/MpcReviewPage";
 import { AdminLoginPage } from "./admin/pages/AdminLoginPage";
 import { AdminCasesPage } from "./admin/pages/AdminCasesPage";
@@ -48,7 +50,9 @@ const router = createBrowserRouter([
       { path: "cases/:id", element: <CaseDetailPage /> },
       { path: "help", element: <HelpPage /> },
       { path: "bind", element: <BindPage /> },
+      { path: "service-clients", element: <ServiceClientsPage /> },
       { path: "mpc-review", element: <MpcReviewPage /> },
+      { path: "service-clients/:serviceClientId/service-forms/:code", element: <ServiceFormPage /> },
     ],
   },
   {
