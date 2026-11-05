@@ -240,3 +240,53 @@ export function formatMs(ms: number): string {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
+
+// ── GA09/SC09 服務紀錄表單 ──────────────────────────────────────────────
+
+export interface Jiaan1030FormField {
+  key: string;
+  label: string;
+  type: "text" | "textarea" | "select" | "radio" | "checkbox" | "checkbox_group" | "date" | "time" | "number" | "signature_placeholder";
+  required?: boolean;
+  options?: string[];
+  max_length?: number | null;
+}
+
+export interface Jiaan1030FormSection {
+  key: string;
+  label: string;
+  fields: Jiaan1030FormField[];
+}
+
+export interface Jiaan1030ServiceForm {
+  code: string;
+  title: string;
+  fields: { version: number; sections: Jiaan1030FormSection[] } | Record<string, never>;
+  reviewed: boolean;
+  schema_status?: "draft_unverified" | "verified_pending_approval" | "approved";
+}
+
+export interface Jiaan1030Catalog {
+  ba_services: { slot: number; code: string; name: string; reviewed: boolean }[];
+  service_forms: Jiaan1030ServiceForm[];
+  notice: string;
+}
+
+export interface Jiaan1030ServiceDraft {
+  id: string;
+  service_client_id: string;
+  form_code: string;
+  payload: Record<string, unknown>;
+  status: "draft" | "submitted";
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  submitted_at: string | null;
+}
+
+export interface Jiaan1030ServiceClient {
+  id: string;
+  display_label: string;
+  created_at: string;
+  created_by: string;
+}
