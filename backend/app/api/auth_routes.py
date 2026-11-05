@@ -89,7 +89,7 @@ def web_login(body: LoginIn, request: Request, db: Session = Depends(get_db)) ->
         audit.record(db, "auth.login", outcome="denied", meta={"reason": "bad_credentials"})
         db.commit()
         raise HTTPException(status_code=401, detail={"code": "bad_credentials", "message": "帳號或密碼錯誤"})
-    if user.role not in {"supervisor", "admin"}:
+    if user.role not in {"supervisor", "director", "admin"}:
         raise HTTPException(status_code=403, detail={"code": "forbidden", "message": "後台僅限督導與管理員"})
     token = issue_session(db, user, "web")
     audit.record(db, "auth.login", actor=user)
