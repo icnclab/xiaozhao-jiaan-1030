@@ -6,7 +6,7 @@ import { AnswerCard, ErrorBox } from "../components";
 import { VoiceQuestion } from "../VoiceQuestion";
 
 export function AskPage() {
-  const { config } = useLiff();
+  const { config, user } = useLiff();
   // 從談話紀錄確認頁帶過來：已確認的逐字稿 ID 與選取的片段文字
   const preset = (useLocation().state as { transcript_id?: string; question?: string } | null) ?? null;
   const [question, setQuestion] = useState(preset?.question ?? "");
@@ -40,6 +40,7 @@ export function AskPage() {
   return (
     <div className="page stack">
       <h1>問 AI</h1>
+      <p className="small">登入身分：{{ caregiver: "照服員", supervisor: "居督", director: "主任", admin: "系統管理員" }[user.role] ?? "照服員"}</p>
       <div className="row">
         <button className={`btn ${mode === "text" ? "primary" : ""}`} onClick={() => setMode("text")}>⌨️ 文字</button>
         <button className={`btn ${mode === "voice" ? "primary" : ""}`} onClick={() => setMode("voice")}>🎙️ 語音提問</button>
