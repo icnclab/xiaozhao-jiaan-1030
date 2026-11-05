@@ -96,3 +96,74 @@ th { color: var(--muted); font-weight: 600; }
 .admin .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 10px; margin-top: 10px; }
 .admin .action-grid .btn { justify-content: flex-start; text-align: left; padding: 12px 14px; white-space: nowrap; }
 @media (max-width: 720px) { .admin { grid-template-columns: 1fr; } .admin nav { display: flex; flex-wrap: wrap; gap: 4px; } }
+
+/* Administrative accessibility only; caregiver styles remain unchanged. */
+.admin { color: #1f2933; background: #F8FAF9; }
+.admin main { min-width: 0; width: 100%; }
+.admin h1 { font-size: 24px; }
+.admin .btn, .admin nav a, .admin summary { min-height: 48px; }
+.admin .btn { font-size: 17px; }
+.admin .row { flex-wrap: wrap; }
+.admin input, .admin select { max-width: 100%; min-height: 48px; }
+.admin input[type=checkbox] { min-height: initial; }
+.admin summary { padding: 12px; cursor: pointer; font-weight: 700; }
+.admin :focus-visible { outline: 3px solid #9c4a00; outline-offset: 3px; }
+@media (max-width: 430px) { .admin main { padding: 12px; } .admin .row > label { max-width: 100%; } }
+
+/* 管理後台改版：分組側邊選單、可讀性更高的表格與工具列、桌機／手機皆可用。 */
+.admin { grid-template-columns: 240px 1fr; }
+.admin nav { background: #0c3330; padding: 18px 14px; display: flex; flex-direction: column; gap: 2px; }
+.admin nav .nav-brand { font-size: 17px; font-weight: 700; padding: 0 6px 4px; }
+.admin nav .nav-who { padding: 0 6px 16px; color: #bfe0da; line-height: 1.5; border-bottom: 1px solid rgba(255,255,255,0.12); margin-bottom: 10px; }
+.admin nav .nav-section { margin-top: 10px; }
+.admin nav .nav-section-title { padding: 4px 6px; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #7fb3a9; text-transform: uppercase; }
+.admin nav a { display: block; color: #d7ece8; text-decoration: none; padding: 10px 10px; border-radius: 8px; font-size: 15px; line-height: 1.4; }
+.admin nav a:hover { background: rgba(255,255,255,0.08); }
+.admin nav a.active { background: #16534c; color: #fff; font-weight: 700; }
+.admin nav .nav-logout { margin-top: 14px; color: #f3c9c9 !important; }
+.admin main { padding: 24px 28px; max-width: 1180px; }
+.admin h1 { font-size: 22px; margin-bottom: 4px; }
+.admin h2 { font-size: 17px; }
+
+.admin .workspace-card { padding: 18px 20px; }
+.admin .workspace-card p { max-width: 68ch; }
+.admin .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+.admin .stat-tile { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 10px; background: #f3f8f6; border: 1px solid var(--line); text-decoration: none; color: inherit; }
+.admin .stat-tile:hover { border-color: #0f766e; }
+.admin .stat-tile .stat-label { font-size: 13px; color: var(--muted); font-weight: 600; }
+.admin .stat-tile .stat-value { font-size: 26px; font-weight: 800; color: #0c3330; }
+.admin .stat-tile.urgent { background: var(--danger-bg); border-color: #fecaca; }
+.admin .stat-tile.urgent .stat-value { color: var(--danger); }
+.admin .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 10px; margin-top: 10px; }
+.admin .action-grid .btn { justify-content: flex-start; text-align: left; padding: 12px 14px; white-space: nowrap; }
+
+.admin .toolbar { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; margin-bottom: 4px; }
+.admin .toolbar .toolbar-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+.admin .toolbar .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.admin .toolbar .field label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.admin .toolbar .field.grow { flex: 1 1 220px; }
+.admin .toolbar select, .admin .toolbar input { min-width: 0; }
+.admin .toolbar .checkline { display: flex; align-items: center; gap: 6px; font-size: 14px; white-space: nowrap; }
+
+.admin table { font-size: 15px; width: 100%; }
+.admin table thead th { background: #f3f8f6; position: sticky; top: 0; white-space: nowrap; }
+.admin table tbody tr:hover { background: #f8fbfa; }
+.admin table td, .admin table th { padding: 12px 10px; vertical-align: top; }
+.admin .table-scroll { overflow-x: auto; max-width: 100%; }
+.admin .cases-table { min-width: 760px; }
+.admin .cases-table .col-summary { max-width: 360px; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+.admin .case-number { font-weight: 700; font-size: 16px; }
+.admin .nav-devinfo { margin-top: 14px; }
+.admin .nav-devinfo summary { color: #9fc9c4; font-size: 12px; padding: 6px 10px; cursor: pointer; min-height: auto; }
+.admin .nav-devinfo .small { color: #9fc9c4; padding: 6px 10px 0; }
+@media (max-width: 860px) { .admin .cases-table { min-width: 640px; } }
+
+@media (max-width: 860px) {
+  .admin { grid-template-columns: 1fr; }
+  .admin nav { position: sticky; top: 0; z-index: 20; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; padding: 10px; gap: 6px; align-items: center; }
+  .admin nav .nav-brand, .admin nav .nav-who, .admin nav .nav-section-title { display: none; }
+  .admin nav .nav-section { margin-top: 0; display: flex; gap: 6px; }
+  .admin nav a { white-space: nowrap; padding: 8px 12px; font-size: 14px; }
+  .admin nav .nav-logout { margin-top: 0; }
+  .admin main { padding: 14px; }
+}
