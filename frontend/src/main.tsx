@@ -25,6 +25,7 @@ import { AdminCategoriesPage } from "./admin/pages/AdminCategoriesPage";
 import { AdminMetricsPage } from "./admin/pages/AdminMetricsPage";
 import { AdminFeedbackPage } from "./admin/pages/AdminFeedbackPage";
 import { AdminUsersPage } from "./admin/pages/AdminUsersPage";
+import { AdminAuditPage } from "./admin/pages/AdminAuditPage";
 import { AdminCatalogPage } from "./admin/pages/AdminCatalogPage";
 import { AdminFormPreviewPage } from "./admin/pages/AdminFormPreviewPage";
 import { AdminSimulatorPage } from "./admin/pages/AdminSimulatorPage";
@@ -63,6 +64,7 @@ const router = createBrowserRouter([
       { path: "metrics", element: <AdminMetricsPage /> },
       { path: "feedback", element: <AdminFeedbackPage /> },
       { path: "users", element: <AdminUsersPage /> },
+      { path: "audit", element: <AdminAuditPage /> },
       { path: "catalog", element: <AdminCatalogPage /> },
       { path: "catalog/preview/:code", element: <AdminFormPreviewPage /> },
       { path: "simulator", element: <AdminSimulatorPage /> },
