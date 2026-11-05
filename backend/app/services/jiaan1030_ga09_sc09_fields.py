@@ -87,7 +87,10 @@ def ga09_sc09_v2_fields() -> dict[str, Any]:
                         "label": "服務類型（必填條件待確認）",
                         "type": "select",
                         "required": False,
-                        "options": ["GA09－居家喘息服務", "SC09－居家短照服務"],
+                        # 畫面顯示完整中文名稱（見 option_labels），但儲存值維持 GA09／SC09
+                        # 代碼本身，與既有 API、報表及資料查詢使用的代碼保持一致，避免混淆。
+                        "options": ["GA09", "SC09"],
+                        "option_labels": ["GA09－居家喘息服務", "SC09－居家短照服務"],
                     },
                     {
                         "key": "service_date",

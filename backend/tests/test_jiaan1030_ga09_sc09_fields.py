@@ -54,7 +54,8 @@ def test_v2_fields_match_paper_form_and_keep_safe_defaults():
     signature_field = next(f for s in spec["sections"] for f in s["fields"] if f["key"] == "signature")
     assert signature_field["type"] == "signature_placeholder"
     service_type_field = next(f for s in spec["sections"] for f in s["fields"] if f["key"] == "service_type")
-    assert service_type_field["options"] == ["GA09－居家喘息服務", "SC09－居家短照服務"]
+    assert service_type_field["options"] == ["GA09", "SC09"], "儲存值須維持代碼，與既有 API/報表一致"
+    assert service_type_field["option_labels"] == ["GA09－居家喘息服務", "SC09－居家短照服務"]
     service_items_field = next(f for s in spec["sections"] for f in s["fields"] if f["key"] == "service_items")
     assert service_items_field["type"] == "checkbox_group"
     assert service_items_field["options"] == list(SERVICE_CONTENT_ITEMS)
@@ -134,7 +135,7 @@ def test_draft_with_v2_fields_still_blocked_from_submit(client, world):
         "district": "測試區測試里（假資料）",
         "ltc_level": "5",
         "welfare_status": "一般",
-        "service_type": "GA09－居家喘息服務",
+        "service_type": "GA09",
         "service_date": "2026-11-01",
         "start_time": "14:00",
         "end_time": "16:00",

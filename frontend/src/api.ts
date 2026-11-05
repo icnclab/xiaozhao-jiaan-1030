@@ -249,6 +249,8 @@ export interface Jiaan1030FormField {
   type: "text" | "textarea" | "select" | "radio" | "checkbox" | "checkbox_group" | "date" | "time" | "number" | "signature_placeholder";
   required?: boolean;
   options?: string[];
+  /** 與 options 一一對應的顯示用完整名稱；儲存值仍用 options（如 GA09/SC09 代碼）。 */
+  option_labels?: string[];
   max_length?: number | null;
 }
 

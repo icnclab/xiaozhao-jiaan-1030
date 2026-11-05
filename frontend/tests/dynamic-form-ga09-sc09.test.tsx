@@ -14,7 +14,7 @@ const GA09_SC09_V2_SECTIONS: Jiaan1030FormSection[] = [
       { key: 'district', label: '區別（里別／轄區，必填條件待確認）', type: 'text', required: false, max_length: 50 },
       { key: 'ltc_level', label: '長照等級（必填條件待確認）', type: 'radio', required: false, options: ['1', '2', '3', '4', '5', '6', '7', '8'] },
       { key: 'welfare_status', label: '福利身分（必填條件待確認）', type: 'radio', required: false, options: ['一般', '中低收入', '低收入'] },
-      { key: 'service_type', label: '服務類型（必填條件待確認）', type: 'select', required: false, options: ['GA09－居家喘息服務', 'SC09－居家短照服務'] },
+      { key: 'service_type', label: '服務類型（必填條件待確認）', type: 'select', required: false, options: ['GA09', 'SC09'], option_labels: ['GA09－居家喘息服務', 'SC09－居家短照服務'] },
       { key: 'service_date', label: '服務日期（必填條件待確認）', type: 'date', required: false },
       { key: 'start_time', label: '開始時間（24小時制，必填條件待確認）', type: 'time', required: false },
       { key: 'end_time', label: '結束時間（24小時制，必填條件待確認）', type: 'time', required: false },
@@ -89,9 +89,9 @@ it('selects a radio-button field by clicking a large tap target', () => {
 });
 
 it('calls onChange with the field key when a value changes, without losing other fields', () => {
-  const onChange = renderForm({ service_type: 'GA09－居家喘息服務' });
+  const onChange = renderForm({ service_type: 'GA09' });
   fireEvent.change(document.querySelector('input[type="date"]')!, { target: { value: '2026-11-01' } });
-  expect(onChange).toHaveBeenCalledWith({ service_type: 'GA09－居家喘息服務', service_date: '2026-11-01' });
+  expect(onChange).toHaveBeenCalledWith({ service_type: 'GA09', service_date: '2026-11-01' });
 });
 
 it('disables inputs when the draft is already submitted', () => {

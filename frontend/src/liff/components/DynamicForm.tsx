@@ -62,7 +62,9 @@ function FormField({
           {label}
           <select value={(value as string) ?? ""} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
             <option value="">請選擇</option>
-            {(field.options ?? []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            {(field.options ?? []).map((opt, i) => (
+              <option key={opt} value={opt}>{field.option_labels?.[i] ?? opt}</option>
+            ))}
           </select>
         </div>
       );
