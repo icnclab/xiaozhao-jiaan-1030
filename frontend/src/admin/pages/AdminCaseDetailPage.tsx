@@ -45,6 +45,9 @@ export function AdminCaseDetailPage() {
 
   if (!c) return <div><ErrorBox error={error} />{!error && <p className="muted">載入中…</p>}</div>;
   const open = c.status !== "closed";
+  // 主任目前僅有案件監督（唯讀）權限，接手／指派／回覆／結案／通知重送屬督導或管理員操作，
+  // 後端已限制；前端不提供入口，避免點擊後才被 403 擋下。
+  const canProcess = user.role !== "director";
   return (
     <div className="stack">
       <Link to="/admin/cases">← 案件列表</Link>
@@ -105,7 +108,7 @@ export function AdminCaseDetailPage() {
                   <td>{n.attempts}</td>
                   <td>{n.last_error_code ?? "—"}</td>
                   <td>{formatTime(n.accepted_at)}</td>
-                  <td>{(n.status === "failed" || n.status === "skipped") && <button className="btn" disabled={busy} onClick={() => act(() => post(`/api/admin/notifications/${n.id}/retry`, {}))}>重送</button>}</td>
+                  <td>{canProcess && (n.status === "failed" || n.status === "skipped") && <button className="btn" disabled={busy} onClick={() => act(() => post(`/api/admin/notifications/${n.id}/retry`, {}))}>重送</button>}</td>
                 </tr>
               ))}
             </tbody>
@@ -113,7 +116,10 @@ export function AdminCaseDetailPage() {
         )}
         <ErrorBox error={error} />
         {result && <div className="notice ok">{result}</div>}
-        {open && (
+        {open && !canProcess && (
+          <p className="notice info">主任目前僅能監督／查看此案件；接手、指派、回覆與結案屬居督或管理員操作權限。</p>
+        )}
+        {open && canProcess && (
           <>
             <div className="row">
               {c.assignee?.id !== user.id && <button className="btn" disabled={busy} onClick={() => act(() => post(`/api/admin/cases/${c.id}/take`, {}))}>我來處理</button>}
