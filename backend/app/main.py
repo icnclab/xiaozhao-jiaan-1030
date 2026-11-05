@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from app.api import admin_routes, auth_routes, caregiver_routes, line_routes, quality_routes
+from app.api import fieldtest_routes
 from app.config import get_settings
 from app.db import new_session
 from app.logging_setup import setup_logging
@@ -76,6 +77,7 @@ async def security_headers(request: Request, call_next):  # type: ignore[no-unty
 
 for module in (auth_routes, caregiver_routes, admin_routes, line_routes, quality_routes):
     app.include_router(module.router, prefix="/api")
+app.include_router(fieldtest_routes.router, prefix="/api")
 
 from app.api import jiaan1030_emergency_routes as _jiaan1030_emergency
 app.include_router(_jiaan1030_emergency.router, prefix="/api")
