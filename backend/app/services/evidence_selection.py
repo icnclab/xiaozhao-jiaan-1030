@@ -1,6 +1,7 @@
 """Bounded selection of admitted chunks that answer the requested fact."""
 import re
 from app.services.text import bigrams, normalize, cn_number_to_int
+from app.services.query_understanding import care_record_retention
 
 _VALUE = re.compile(r'(?:\d+(?:\.\d+)?|[一二兩三四五六七八九十百千萬]+)\s*(?:年|月|日|天|小時|分鐘|次|人|名|元|分)|每(?:年|月|日|天|週|季)')
 _TIME_VALUE = re.compile(r'(?:\d+(?:\.\d+)?|[一二兩三四五六七八九十百千萬]+)\s*(?:年|個月|月|工作天|日|天|小時|分鐘|週)')
@@ -27,7 +28,10 @@ def field_support(question, text):
     # document dates and page labels cannot fill a requested field.
     topic = set(bigrams(re.sub(r'多久|多少|幾年|幾天|幾次|幾名|幾人|幾元|年限|期限|頻率|要留|要記|重點|哪些|什麼|保存|紀錄|記錄|評估', ' ', q)))
     for sentence in re.split(r'[。；;！？!?]', body):
-        if not topic.intersection(bigrams(sentence)):
+        retention_subject = care_record_retention(question) and all(
+            re.search(pattern, sentence) for pattern in (
+                r'長照|照顧|居家服務', r'紀錄', r'保存|留存|保留'))
+        if not topic.intersection(bigrams(sentence)) and not retention_subject:
             continue
         if field == 'record_items':
             action = '家訪' if '家訪' in q else '電訪' if '電訪' in q else None

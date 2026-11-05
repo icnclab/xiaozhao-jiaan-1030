@@ -36,7 +36,10 @@ CONSENT_TEXT = (
     "原始錄音在轉成文字後即刪除，未確認的逐字稿最多暫存 24 小時。"
     "（本同意確認為 MVP 流程，機構正式同意書另依機構規定辦理。）"
 )
-ROLES = {"caregiver": "照服員", "resident": "長輩", "family": "家屬", "staff": "其他工作人員", "unknown": "未辨識"}
+ROLES = {
+    "caregiver": "照服員", "supervisor": "居督", "resident": "長輩",
+    "family": "家屬", "staff": "其他", "unknown": "未辨識",
+}
 MODES = {"question", "conversation"}
 
 

@@ -13,7 +13,7 @@ from app.services.retrieval import RetrievedChunk, _PERMISSION_RE, _topic_match,
 from app.services.text import bigrams, normalize
 from app.services.evidence_text import substantive_body
 from app.services.care_query import care_reporting, reporting_duty, meal_cough
-from app.services.query_understanding import medication_admin_intent, purchasing_rule_intent, PURCHASE_FIELDS
+from app.services.query_understanding import care_record_retention, medication_admin_intent, purchasing_rule_intent, PURCHASE_FIELDS
 from app.services.query_understanding import permission_intent, reporting_intent, boundary_intent, boundary_support, title_token_groups, clarification_reason, record_intent, record_support
 
 # A scope label alone is not a rule. Both a normative predicate and a scope
@@ -114,6 +114,13 @@ def assess_evidence(question: str, chunk: RetrievedChunk, policy: QaPolicy, *, c
         admitted, route, reason = False, 'reject', 'food_purchase_not_medication_scope'
     elif record_intent(question) and not record_support(body):
         admitted, route, reason = False, 'reject', 'record_evidence_missing'
+    elif care_record_retention(question) and not any(
+        re.search(r'長照|照顧|居家服務', sentence)
+        and re.search(r'紀錄', sentence)
+        and re.search(r'保存|留存|保留', sentence)
+        for sentence in re.split(r'[。！？!?；;]', body)
+    ):
+        admitted, route, reason = False, 'reject', 'body_topic_missing'
     elif not substantive:
         admitted, route, reason = False, 'reject', 'body_topic_missing'
     elif reporting and procedure_topic < policy.min_gate_rule_topic:

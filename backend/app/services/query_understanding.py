@@ -141,7 +141,31 @@ def _legacy_topic_token_groups(question: str) -> list[tuple[set[str], ...]]:
     return groups
 
 
+
+def care_record_retention(question: str) -> bool:
+    """Only an explicit general care-record retention question, no extra scope.
+
+    This recognizes wording, never inserts an answer, title or numeric value.
+    Narrow full match keeps minors, closing institutions and other conditions
+    in the ordinary full-context path rather than silently discarding them.
+    """
+    clauses = [part.strip() for part in re.split(r'[,，。？！?!]', normalize(question)) if part.strip()]
+    framing = re.compile(
+        r'我想請問|想請問|請問|'
+        r'我是(?:一名)?(?:居家服務的)?照服員|'
+        r'完成(?:居家)?服務(?:之)?後(?:要)?整理(?:照顧|服務)紀錄|'
+        r'為了確認(?:文件|紀錄)(?:保存)?規定')
+    if not clauses or any(not framing.fullmatch(part) for part in clauses[:-1]):
+        return False
+    q = re.sub(r'\s', '', clauses[-1])
+    return bool(re.fullmatch(
+        r'(?:我想請問|想請問|請問|想知道|想確認)?(?:照顧|照顧服務|居家服務|服務)紀錄'
+        r'(?:要|應|應該|需要)?(?:保存|留存|保留)(?:多久|多長時間|幾年|多少年)', q))
+
 def topic_token_groups(question: str) -> list[tuple[set[str], ...]]:
+    if care_record_retention(question):
+        return [tuple(set(bigrams(alias)) for alias in aliases) for aliases in (
+            ('長照', '照顧', '居家服務'), ('紀錄',), ('保存', '留存', '保留'))]
     if medication_admin_intent(question) and purchasing_rule_intent(question) == 'medicine':
         return [tuple(set(bigrams(alias)) for alias in ACTION_ALIASES[8] + ACTION_ALIASES[9])]
     purchase_field = purchasing_rule_intent(question)
