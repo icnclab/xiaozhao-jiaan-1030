@@ -80,6 +80,11 @@ for module in (auth_routes, caregiver_routes, admin_routes, line_routes, quality
 from app.api import jiaan1030_emergency_routes as _jiaan1030_emergency
 app.include_router(_jiaan1030_emergency.router, prefix="/api")
 
+from app.api import jiaan1030_service_catalog as _jiaan1030_service_catalog
+app.include_router(_jiaan1030_service_catalog.router, prefix="/api")
+from app.api import jiaan1030_service_drafts as _jiaan1030_service_drafts
+app.include_router(_jiaan1030_service_drafts.router, prefix="/api")
+
 
 @app.get("/api/healthz")
 def healthz() -> dict:
