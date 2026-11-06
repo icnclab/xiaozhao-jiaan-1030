@@ -204,6 +204,51 @@ def test_lookup_user_resolves_username_to_uuid_and_role(mock_inspect):
     assert out == {"user_id": CAREGIVER_UUID, "role": "caregiver"}
 
 
+def test_lookup_user_requires_admin_role_before_any_db_access():
+    db = MagicMock()
+    non_admin = SimpleNamespace(role="supervisor", org_id="org-1", id="sup-1")
+    with pytest.raises(HTTPException) as exc:
+        ft.lookup_user(username="cg_happy_1", db=db, user=non_admin)
+    assert exc.value.status_code == 403
+    db.execute.assert_not_called()
+
+
+@patch.object(ft, "inspect")
+def test_lookup_user_query_is_scoped_to_caller_org_not_just_username(mock_inspect):
+    # Mock-DB proof of cross-org isolation: the same username existing in a
+    # *different* org (org-2) must never be returned to an org-1 admin. The
+    # fake DB only "finds" a row when the bound :org param matches org-1,
+    # mirroring what the real `WHERE username=:u AND org_id=:org` enforces.
+    mock_inspect.return_value = _fake_inspector(
+        ["users"], {"users": ["id", "org_id", "role", "username"]}
+    )
+    seen_params = []
+
+    def execute_side_effect(stmt, params=None):
+        seen_params.append(params)
+        sql = str(stmt)
+        assert "org_id" in sql or ":org" in sql, "查詢必須包含機構過濾條件"
+        result = MagicMock()
+        if params and params.get("org") == "org-1":
+            result.mappings.return_value.all.return_value = [{"id": CAREGIVER_UUID, "role": "caregiver"}]
+        else:
+            result.mappings.return_value.all.return_value = []
+        return result
+
+    db = MagicMock()
+    db.execute.side_effect = execute_side_effect
+
+    out = ft.lookup_user(username="cg_happy_1", db=db, user=_admin_user(org_id="org-1"))
+    assert out == {"user_id": CAREGIVER_UUID, "role": "caregiver"}
+
+    # Same username, but the caller is an admin of a *different* org.
+    with pytest.raises(HTTPException) as exc:
+        ft.lookup_user(username="cg_happy_1", db=db, user=_admin_user(org_id="org-2"))
+    assert exc.value.status_code == 404
+    assert any(p.get("org") == "org-1" for p in seen_params)
+    assert any(p.get("org") == "org-2" for p in seen_params)
+
+
 @patch.object(ft, "inspect")
 def test_lookup_user_404_when_not_found_in_this_org(mock_inspect):
     mock_inspect.return_value = _fake_inspector(
