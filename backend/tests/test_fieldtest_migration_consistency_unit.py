@@ -43,10 +43,12 @@ def test_draft_has_conflict_target_matching_on_conflict_clause():
     assert draft_pk_cols == target_cols
 
 
-def test_draft_chains_after_webpush_draft_in_single_linear_order():
-    # Chain re-integrated this round: 0006 -> 0007 -> 0008 (webpush) -> 0009,
-    # instead of 0007/0008/0009 all forking independently off 0006.
-    assert 'down_revision = "0008_jiaan_webpush"' in DRAFT_SQL
+def test_draft_chains_directly_after_0007_independent_of_webpush_draft():
+    # Chain reordered this round: 0006 -> 0007 -> 0009 (fieldtest) -> 0008
+    # (webpush), so fieldtest can be activated without first activating
+    # Web Push. Still a single linear chain, just fieldtest and webpush
+    # swapped order relative to an earlier round.
+    assert 'down_revision = "0007_embedding_gemma_768"' in DRAFT_SQL
 
 
 def test_draft_upgrade_has_no_destructive_statement():

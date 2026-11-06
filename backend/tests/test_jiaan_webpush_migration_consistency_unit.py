@@ -83,9 +83,11 @@ def test_deliveries_table_unique_constraint_matches_sweep_on_conflict_target():
     assert draft_cols == target_cols
 
 
-def test_draft_chains_after_0007_not_0006_directly():
-    # Single linear chain this round: 0006 -> 0007 -> 0008 -> 0009.
-    assert 'down_revision = "0007_embedding_gemma_768"' in DRAFT
+def test_draft_chains_after_fieldtest_draft_not_0007_directly():
+    # Chain reordered this round: 0006 -> 0007 -> 0009 (fieldtest) -> 0008
+    # (webpush), so fieldtest can be activated without first activating
+    # Web Push. Still a single linear chain.
+    assert 'down_revision = "0009_fieldtest_participants"' in DRAFT
 
 
 def test_draft_upgrade_has_no_destructive_statement():

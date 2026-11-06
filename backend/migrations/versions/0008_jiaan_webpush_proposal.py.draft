@@ -2,11 +2,15 @@
 Kept as .draft so Alembic never auto-loads it; rename to .py and get sign-off,
 then re-verify in an isolated database, before activation.
 
-Chain position updated this round: now rebases onto 0007 (embedding dim
-switch, committed as a real migration in Git but NOT YET applied to any
-database) instead of 0006, so that if/when both are eventually applied there
-is a single linear chain (0006 -> 0007 -> 0008 -> 0009) instead of three
-siblings forking off 0006.
+Chain position changed again this round: now rebases onto 0009 (field-test
+participants draft) instead of 0007 directly, so that field-test can be
+activated and applied on its own without requiring Web Push -- the two
+drafts have no DB-content dependency on each other; this was purely a
+chain-ordering coupling from an earlier round. The three proposals still
+form a single linear chain, just reordered: 0006 -> 0007 -> 0009 -> 0008,
+with no new Alembic heads. If/when Web Push is activated it will still
+require 0009 to be applied first (chain-wise), independent of the
+credential-rotation question below.
 
 Schema fixed this round: the already-committed app/api/jiaan_webpush_routes.py
 and app/services/jiaan_webpush.py (commit 0a3d16a) insert/lookup/ON CONFLICT
@@ -88,7 +92,7 @@ def _verify_or_fail(conn, table: str, required_columns: set[str], required_uniqu
 
 
 revision = "0008_jiaan_webpush"
-down_revision = "0007_embedding_gemma_768"
+down_revision = "0009_fieldtest_participants"
 branch_labels = None
 depends_on = None
 

@@ -9,14 +9,18 @@ schema file defines this table anywhere in the repository -- this is a
 genuine gap, not a deliberate policy exclusion like 0007/Web Push.
 
 Fully additive (CREATE TABLE IF NOT EXISTS), no ALTER of any existing table,
-no data deletion. Chain position updated this round: rebased onto 0008
-(Web Push draft, itself rebased onto 0007) instead of 0006, so the three
-proposals form a single linear chain (0006 -> 0007 -> 0008 -> 0009) instead
-of forking off 0006 independently. Still a draft because it has not been
-verified against a real database this round (platform blocked a prior
-attempt to connect to an isolated throwaway DB -- see migration-chain
-report); verification is still required before activation, independent of
-the credential-rotation question that currently blocks 0007/0008.
+no data deletion. Chain position changed again this round: rebased onto
+0007 directly (was onto 0008) so field-test can be activated without first
+activating Web Push -- field-test has no DB-content dependency on Web Push,
+only a prior-round chain-ordering coupling. 0008's down_revision was moved
+to point at this revision instead (0007 -> 0009 -> 0008), keeping a single
+linear chain with no new Alembic heads. A prior round reported this table
+verified end-to-end in an isolated DB, but that was with the OLD chain
+order (0007 -> 0008 -> 0009, with 0008's DDL applied first); the DDL here
+is unchanged, but the chain position is not, so that prior verification
+must be treated as not yet re-confirmed under this new ordering until an
+isolated DB run applies 0007 -> 0009 directly (skipping 0008) and checks
+`fieldtest_participants` end-to-end again.
 
 CREATE TABLE IF NOT EXISTS safety gap fixed this round: if a table named
 fieldtest_participants already exists with some other, incomplete
@@ -54,7 +58,7 @@ def _primary_key_columns(conn) -> set[str]:
 
 
 revision = "0009_fieldtest_participants"
-down_revision = "0008_jiaan_webpush"
+down_revision = "0007_embedding_gemma_768"
 branch_labels = None
 depends_on = None
 
