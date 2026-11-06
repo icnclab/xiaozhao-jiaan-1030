@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, errorMessage, formatMs, post, ROLE_LABELS, type Segment, type Transcript } from "../../api";
 import { ErrorBox } from "../components";
 
-const SPEAKERS = ["unknown", "speaker_1", "speaker_2", "speaker_3", "speaker_4"];
+const SPEAKERS = ["unknown", "speaker_1", "speaker_2", "speaker_3", "speaker_4", "speaker_5", "speaker_6", "speaker_7", "speaker_8"];
 
 /**
  * 轉錄確認頁：顯示分段文字、起訖時間、說話者標記；照服員修正文字、指定 speaker 與角色、
@@ -19,6 +19,15 @@ export function TranscriptPage() {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [summary, setSummary] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const hasUnsavedEdits = Object.keys(edits).length > 0 || Object.keys(roles).length > 0 || summary.trim() !== "";
+
+  useEffect(() => {
+    if (t?.status !== "draft" || !hasUnsavedEdits) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [t?.status, hasUnsavedEdits]);
 
   useEffect(() => {
     let timer: number | null = null;
@@ -101,7 +110,12 @@ export function TranscriptPage() {
           {t.status === "draft" && (
             <div className="notice warn small">
               以下是未遮罩的辨識草稿，只有您看得到，逾時未確認會自動清除（{t.draft_expires_at ? new Date(t.draft_expires_at).toLocaleString("zh-TW") : ""}）。
-              說話者預設「未辨識」；系統不會憑聲音猜誰是長輩或家屬，請您指定。
+              說話者預設「未辨識」；系統不會憑聲音猜誰是長輩、家屬或居督，請您指定。
+            </div>
+          )}
+          {t.status === "draft" && hasUnsavedEdits && (
+            <div className="notice danger small" role="alert">
+              ⚠️ 修改尚未儲存：目前的文字、說話者與角色修正只存在這個畫面，離開或重新整理會遺失，請按下方「確認送出」保存。
             </div>
           )}
           <div className="card">
@@ -110,9 +124,14 @@ export function TranscriptPage() {
                 <div>
                   <div className="time">{formatMs(s.start_ms)}–{formatMs(s.end_ms)}</div>
                   {t.status === "draft" ? (
-                    <select value={s.speaker} onChange={(e) => setEdits({ ...edits, [s.idx]: { ...edits[s.idx], speaker: e.target.value } })}>
-                      {SPEAKERS.map((sp) => <option key={sp} value={sp}>{sp === "unknown" ? "未辨識" : sp.replace("speaker_", "說話者 ")}</option>)}
-                    </select>
+                    <>
+                      <select value={s.speaker} onChange={(e) => setEdits({ ...edits, [s.idx]: { ...edits[s.idx], speaker: e.target.value } })}>
+                        {SPEAKERS.map((sp) => <option key={sp} value={sp}>{sp === "unknown" ? "未辨識" : sp.replace("speaker_", "說話者 ")}</option>)}
+                      </select>
+                      {s.speaker !== "unknown" && roles[s.speaker] && (
+                        <span className="small muted">（{ROLE_LABELS[roles[s.speaker]]}）</span>
+                      )}
+                    </>
                   ) : (
                     <div className="small">{s.speaker === "unknown" ? "未辨識" : `${s.speaker.replace("speaker_", "說話者 ")}${t.roles[s.speaker] ? `（${ROLE_LABELS[t.roles[s.speaker]]}）` : ""}`}</div>
                   )}

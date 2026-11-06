@@ -101,7 +101,7 @@ export interface PublicConfig {
 export interface User {
   id: string;
   display_name: string;
-  role: "caregiver" | "supervisor" | "admin";
+  role: "caregiver" | "supervisor" | "director" | "admin";
   username: string;
   org: { id: string; name: string; facility_type: string } | null;
 }
@@ -224,9 +224,10 @@ export interface CaseDetail {
 
 export const ROLE_LABELS: Record<string, string> = {
   caregiver: "照服員",
+  supervisor: "居督",
   resident: "長輩",
   family: "家屬",
-  staff: "其他工作人員",
+  staff: "其他",
   unknown: "未辨識",
 };
 
