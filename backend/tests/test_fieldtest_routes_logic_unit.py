@@ -190,6 +190,45 @@ def test_set_mapping_raises_clear_503_when_table_missing(mock_inspect):
 
 
 @patch.object(ft, "inspect")
+def test_lookup_user_resolves_username_to_uuid_and_role(mock_inspect):
+    # AdminUsersPage never displays a UUID -- the mapping form must be
+    # usable from a username, which an admin actually sees in the UI.
+    mock_inspect.return_value = _fake_inspector(
+        ["users"], {"users": ["id", "org_id", "role", "username"]}
+    )
+    db = MagicMock()
+    db.execute.return_value.mappings.return_value.all.return_value = [
+        {"id": CAREGIVER_UUID, "role": "caregiver"}
+    ]
+    out = ft.lookup_user(username="cg_happy_1", db=db, user=_admin_user())
+    assert out == {"user_id": CAREGIVER_UUID, "role": "caregiver"}
+
+
+@patch.object(ft, "inspect")
+def test_lookup_user_404_when_not_found_in_this_org(mock_inspect):
+    mock_inspect.return_value = _fake_inspector(
+        ["users"], {"users": ["id", "org_id", "role", "username"]}
+    )
+    db = MagicMock()
+    db.execute.return_value.mappings.return_value.all.return_value = []
+    with pytest.raises(HTTPException) as exc:
+        ft.lookup_user(username="no_such_user", db=db, user=_admin_user())
+    assert exc.value.status_code == 404
+
+
+@patch.object(ft, "inspect")
+def test_lookup_user_422_on_blank_username(mock_inspect):
+    mock_inspect.return_value = _fake_inspector(
+        ["users"], {"users": ["id", "org_id", "role", "username"]}
+    )
+    db = MagicMock()
+    with pytest.raises(HTTPException) as exc:
+        ft.lookup_user(username="   ", db=db, user=_admin_user())
+    assert exc.value.status_code == 422
+    db.execute.assert_not_called()
+
+
+@patch.object(ft, "inspect")
 def test_participant_rows_mark_unset_codes_as_pending_not_participated(mock_inspect):
     """If no mapping rows exist at all, every one of the 47 codes must show
     as "待核對", never implied as already having 47 real participants."""

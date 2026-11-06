@@ -142,6 +142,28 @@ class MappingInput(BaseModel):
     user_id: str
 
 
+@router.get("/lookup")
+def lookup_user(username: str, db: Session = Depends(get_db), user=Depends(current_user)):
+    """依帳號名稱查詢使用者 UUID 與角色，限本機構。
+
+    管理員介面（帳號管理頁）從未顯示使用者 UUID，場測對應表單若只收 UUID，
+    管理員實際上無法操作；本端點讓儀表板改收使用者名稱，再自行解析成 UUID。
+    """
+    org = _admin(user)
+    uc = _cols(db, "users")
+    if not {"id", "org_id", "role", "username"}.issubset(uc):
+        raise HTTPException(503, "無法安全查詢使用者")
+    name = username.strip()
+    if not name:
+        raise HTTPException(422, "請輸入帳號名稱")
+    rows = _rows(db, "SELECT CAST(id AS TEXT) AS id, CAST(role AS TEXT) AS role "
+                      "FROM users WHERE username=:u AND CAST(org_id AS TEXT)=:org",
+                 {"u": name, "org": org})
+    if not rows:
+        raise HTTPException(404, f"此機構找不到帳號「{name}」")
+    return {"user_id": rows[0]["id"], "role": rows[0]["role"]}
+
+
 @router.get("/summary")
 def summary(db: Session = Depends(get_db), user=Depends(current_user)):
     org = _admin(user)

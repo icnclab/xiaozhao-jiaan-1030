@@ -25,11 +25,24 @@ def test_mapping_form_posts_code_and_user_id_as_json():
     assert "JSON.stringify({code,user_id:userId})" in HTML
 
 
+def test_lookup_endpoint_is_registered():
+    assert "'/api/fieldtest/lookup'" in HTML
+
+
+def test_mapping_form_resolves_username_to_uuid_before_posting():
+    # AdminUsersPage never displays a UUID, so the dashboard must accept a
+    # username and resolve it server-side via GET /lookup before calling
+    # POST /mappings -- never ask the admin to paste a raw UUID.
+    assert "async function lookupUser(username)" in HTML
+    submit_handler = HTML.split("$('mapForm').onsubmit=async e=>{")[1].split("};")[0]
+    assert "lookupUser(username)" in submit_handler
+    assert "submitMapping(code,found.user_id)" in submit_handler
+
+
 def test_mapping_form_inputs_and_submit_handler_exist():
     assert 'id="mapCode"' in HTML
-    assert 'id="mapUserId"' in HTML
+    assert 'id="mapUsername"' in HTML
     assert "$('mapForm').onsubmit" in HTML
-    assert "submitMapping(code,userId)" in HTML
 
 
 def test_error_messages_surface_backend_detail_text_not_only_generic_text():

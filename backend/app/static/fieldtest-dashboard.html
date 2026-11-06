@@ -11,10 +11,10 @@
 <div class="toolbar"><button id="refresh">重新整理統計</button><button id="export">匯出最新 Excel（5 張工作表）</button><button class="secondary" id="mapToggle">受測者編號對應</button><button class="secondary" id="authToggle">登入狀態／授權設定</button></div>
 <div id="notice" role="status"></div>
 <div id="mapPanel" class="panel hidden" style="margin-bottom:16px">
-<p><b>受測者編號對應</b>：將既有帳號對應到 A01–A40（照服員）或 S01–S07（居督）其中一個測試編號；角色必須與編號類型一致，後端會拒絕不符者。</p>
+<p><b>受測者編號對應</b>：將既有帳號對應到 A01–A40（照服員）或 S01–S07（居督）其中一個測試編號；角色必須與編號類型一致，後端會拒絕不符者。請先在「帳號與綁定」頁建立好帳號，再於此處輸入帳號名稱（不是 UUID，系統會自動查詢）。</p>
 <form id="mapForm" class="filters">
 <label for="mapCode" class="small">編號（A01–A40／S01–S07）</label><input id="mapCode" name="code" placeholder="例如 A01" required pattern="[A-Sa-s][0-9]{2}" maxlength="3">
-<label for="mapUserId" class="small">帳號 UUID</label><input id="mapUserId" name="user_id" placeholder="既有使用者的 UUID" required minlength="36" maxlength="36">
+<label for="mapUsername" class="small">帳號名稱</label><input id="mapUsername" name="username" placeholder="例如 cg_happy_1" required maxlength="64">
 <button type="submit" id="mapSubmit">儲存對應</button>
 </form>
 <p id="mapStatus" class="small" role="status"></p>
@@ -29,10 +29,11 @@
 (()=>{'use strict';
 let data=null;let manuallyProvided='';const $=id=>document.getElementById(id);const set=id=>v=>$(id).textContent=String(v);
 const apiRoot=()=>window.location.origin;
-const endpoints=['/api/fieldtest/summary','/api/fieldtest/export.xlsx','/api/fieldtest/mappings'];
+const endpoints=['/api/fieldtest/summary','/api/fieldtest/export.xlsx','/api/fieldtest/mappings','/api/fieldtest/lookup'];
 function getToken(){if(manuallyProvided)return manuallyProvided;for(const store of [localStorage,sessionStorage]){for(let i=0;i<store.length;i++){const k=store.key(i);if(!/token|auth|session/i.test(k||''))continue;const raw=store.getItem(k)||'';if(!raw)continue;if(raw.split('.').length===3&&raw.length>50)return raw;try{const obj=JSON.parse(raw);for(const key of ['access_token','accessToken','token','jwt']){if(typeof obj?.[key]==='string'&&obj[key].length>25)return obj[key];if(typeof obj?.state?.[key]==='string'&&obj.state[key].length>25)return obj.state[key];}}catch{}}}return ''}
 async function detailOf(resp){try{const body=await resp.json();const d=body&&body.detail;return typeof d==='string'?d:(d&&typeof d.message==='string'?d.message:'')}catch{return ''}}
 async function request(which){const headers={};const token=getToken();if(token)headers.Authorization='Bearer '+token;const resp=await fetch(apiRoot()+endpoints[which],{headers,credentials:'include',cache:'no-store'});if(!resp.ok){const detail=await detailOf(resp);throw Error('HTTP '+resp.status+'：'+(detail||(resp.status===401||resp.status===403?'請使用具有嘉安機構權限的管理員登入':'系統讀取失敗')))}return resp}
+async function lookupUser(username){const headers={};const token=getToken();if(token)headers.Authorization='Bearer '+token;const resp=await fetch(apiRoot()+endpoints[3]+'?username='+encodeURIComponent(username),{headers,credentials:'include',cache:'no-store'});if(!resp.ok){const detail=await detailOf(resp);throw Error('HTTP '+resp.status+'：'+(detail||'查無此帳號'))}return resp.json()}
 async function submitMapping(code,userId){const headers={'Content-Type':'application/json'};const token=getToken();if(token)headers.Authorization='Bearer '+token;const resp=await fetch(apiRoot()+endpoints[2],{method:'POST',headers,credentials:'include',cache:'no-store',body:JSON.stringify({code,user_id:userId})});if(!resp.ok){const detail=await detailOf(resp);throw Error('HTTP '+resp.status+'：'+(detail||'對應失敗'))}return resp.json()}
 function render(){if(!data)return;const q=$('filter').value.trim().toLowerCase();const rows=(data.participants||[]).filter(p=>[p.code,p.role,p.status,p.mapping_status].join(' ').toLowerCase().includes(q));$('body').replaceChildren();if(!rows.length){const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=7;td.textContent='沒有符合條件的紀錄';tr.append(td);$('body').append(tr);return;}for(const p of rows){const tr=document.createElement('tr');for(const field of [p.code,p.role,p.mapping_status,p.audit_event_count,p.qa_count,p.case_count,p.status]){const td=document.createElement('td');td.textContent=field==null?'':String(field);tr.append(td)}$('body').append(tr)}}
 async function load(){set('notice')('');$('refresh').disabled=true;try{const r=await request(0);data=await r.json();[['total','total'],['mapped','mapped'],['records','with_records'],['qa','qa_records'],['errors','error_records'],['cases','case_records']].forEach(([id,k])=>set(id)(data[k]??0));render();}catch(e){set('notice')(e.message+'。請按「登入狀態／授權設定」確認登入。');$('auth').classList.remove('hidden')}finally{$('refresh').disabled=false}}
@@ -41,12 +42,14 @@ $('refresh').onclick=load;$('export').onclick=download;$('filter').oninput=rende
 $('mapToggle').onclick=()=>$('mapPanel').classList.toggle('hidden');
 $('mapForm').onsubmit=async e=>{
  e.preventDefault();
- const code=$('mapCode').value.trim().toUpperCase();const userId=$('mapUserId').value.trim();
- $('mapSubmit').disabled=true;$('mapStatus').textContent='正在儲存對應…';
+ const code=$('mapCode').value.trim().toUpperCase();const username=$('mapUsername').value.trim();
+ $('mapSubmit').disabled=true;$('mapStatus').textContent='正在查詢帳號…';
  try{
-  await submitMapping(code,userId);
-  $('mapStatus').textContent='已儲存對應：'+code;
-  $('mapUserId').value='';
+  const found=await lookupUser(username);
+  $('mapStatus').textContent='正在儲存對應…';
+  await submitMapping(code,found.user_id);
+  $('mapStatus').textContent='已儲存對應：'+code+'＝'+username;
+  $('mapUsername').value='';
   await load();
  }catch(err){$('mapStatus').textContent=err.message}
  finally{$('mapSubmit').disabled=false}

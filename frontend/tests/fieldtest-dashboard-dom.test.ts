@@ -94,33 +94,57 @@ describe("fieldtest dashboard: mapping form", () => {
     }
   });
 
-  it("on 200: saves, shows confirmation, and reloads the summary", async () => {
+  it("on 200: looks up the username, saves, shows confirmation, and reloads the summary", async () => {
+    // AdminUsersPage never shows a UUID -- the form must accept a username
+    // and resolve it via GET /lookup before posting to /mappings.
     const calls: string[] = [];
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
       calls.push(`${init?.method ?? "GET"} ${url}`);
-      if (init?.method === "POST") return jsonResponse({ ok: true, code: "A01", user_id: "x" });
+      if (String(url).includes("/lookup")) return jsonResponse({ user_id: "11111111-1111-1111-1111-111111111111", role: "caregiver" });
+      if (init?.method === "POST") return jsonResponse({ ok: true, code: "A01", user_id: "11111111-1111-1111-1111-111111111111" });
       return jsonResponse(EMPTY_SUMMARY);
     }));
     mount();
     await flush();
     (document.getElementById("mapCode") as HTMLInputElement).value = "A01";
-    (document.getElementById("mapUserId") as HTMLInputElement).value = "11111111-1111-1111-1111-111111111111";
+    (document.getElementById("mapUsername") as HTMLInputElement).value = "cg_happy_1";
     document.getElementById("mapForm")!.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
     await flush();
     expect(document.getElementById("mapStatus")!.textContent).toContain("A01");
-    // reload after success: at least one GET to summary happened after the POST.
+    expect(calls.some((c) => c.includes("/lookup?username=cg_happy_1"))).toBe(true);
     const postIndex = calls.findIndex((c) => c.startsWith("POST"));
     expect(postIndex).toBeGreaterThanOrEqual(0);
+    // the body sent to /mappings must be the looked-up UUID, not the raw username
+    expect(String((vi.mocked(fetch).mock.calls[postIndex]![1] as RequestInit).body)).toContain("11111111-1111-1111-1111-111111111111");
     expect(calls.slice(postIndex + 1).some((c) => c.includes("summary"))).toBe(true);
   });
 
-  it("on 422: shows the backend's role/code-mismatch detail, not a generic message", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) =>
-      init?.method === "POST" ? jsonResponse({ detail: "帳號角色 supervisor 與編號類型不一致，未建立對應" }, 422) : jsonResponse(EMPTY_SUMMARY)));
+  it("on lookup 404: shows a clear 'account not found' message, never a raw UUID prompt", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (String(url).includes("/lookup")) return jsonResponse({ detail: "此機構找不到帳號「no_such_user」" }, 404);
+      return jsonResponse(EMPTY_SUMMARY);
+    }));
     mount();
     await flush();
     (document.getElementById("mapCode") as HTMLInputElement).value = "A01";
-    (document.getElementById("mapUserId") as HTMLInputElement).value = "22222222-2222-2222-2222-222222222222";
+    (document.getElementById("mapUsername") as HTMLInputElement).value = "no_such_user";
+    document.getElementById("mapForm")!.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+    await flush();
+    const status = document.getElementById("mapStatus")!.textContent!;
+    expect(status).toContain("404");
+    expect(status).toContain("找不到帳號");
+  });
+
+  it("on 422: shows the backend's role/code-mismatch detail, not a generic message", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url).includes("/lookup")) return jsonResponse({ user_id: "22222222-2222-2222-2222-222222222222", role: "supervisor" });
+      if (init?.method === "POST") return jsonResponse({ detail: "帳號角色 supervisor 與編號類型不一致，未建立對應" }, 422);
+      return jsonResponse(EMPTY_SUMMARY);
+    }));
+    mount();
+    await flush();
+    (document.getElementById("mapCode") as HTMLInputElement).value = "A01";
+    (document.getElementById("mapUsername") as HTMLInputElement).value = "sup_happy_a";
     document.getElementById("mapForm")!.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
     await flush();
     const status = document.getElementById("mapStatus")!.textContent!;
@@ -128,27 +152,28 @@ describe("fieldtest dashboard: mapping form", () => {
     expect(status).toContain("與編號類型不一致");
   });
 
-  it("on 403: shows a clear authorization message", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) =>
-      init?.method === "POST" ? jsonResponse({ detail: "僅管理員可存取場測資料" }, 403) : jsonResponse(EMPTY_SUMMARY)));
+  it("on 403: shows a clear authorization message when even the lookup is refused", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) =>
+      String(url).includes("/lookup") ? jsonResponse({ detail: "僅管理員可存取場測資料" }, 403) : jsonResponse(EMPTY_SUMMARY)));
     mount();
     await flush();
     (document.getElementById("mapCode") as HTMLInputElement).value = "A01";
-    (document.getElementById("mapUserId") as HTMLInputElement).value = "33333333-3333-3333-3333-333333333333";
+    (document.getElementById("mapUsername") as HTMLInputElement).value = "cg_happy_1";
     document.getElementById("mapForm")!.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
     await flush();
     expect(document.getElementById("mapStatus")!.textContent).toContain("僅管理員可存取場測資料");
   });
 
-  it("on 503 (table missing): shows the table-missing detail, not a blank/generic failure", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) =>
-      init?.method === "POST"
-        ? jsonResponse({ detail: "場測資料表（fieldtest_participants）尚未建立，請管理員完成資料庫設定後再使用本功能" }, 503)
-        : jsonResponse(EMPTY_SUMMARY)));
+  it("on 503 (table missing): the lookup still succeeds, but saving the mapping shows the table-missing detail", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url).includes("/lookup")) return jsonResponse({ user_id: "44444444-4444-4444-4444-444444444444", role: "caregiver" });
+      if (init?.method === "POST") return jsonResponse({ detail: "場測資料表（fieldtest_participants）尚未建立，請管理員完成資料庫設定後再使用本功能" }, 503);
+      return jsonResponse(EMPTY_SUMMARY);
+    }));
     mount();
     await flush();
     (document.getElementById("mapCode") as HTMLInputElement).value = "A01";
-    (document.getElementById("mapUserId") as HTMLInputElement).value = "44444444-4444-4444-4444-444444444444";
+    (document.getElementById("mapUsername") as HTMLInputElement).value = "cg_happy_1";
     document.getElementById("mapForm")!.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
     await flush();
     const status = document.getElementById("mapStatus")!.textContent!;
