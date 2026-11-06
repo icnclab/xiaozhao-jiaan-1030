@@ -40,7 +40,7 @@ SUPERVISOR_UUID = "22222222-2222-2222-2222-222222222222"
 @patch.object(ft, "inspect")
 def test_set_mapping_rejects_role_code_mismatch(mock_inspect):
     mock_inspect.return_value = _fake_inspector(
-        ["users"], {"users": ["id", "org_id", "role"]}
+        ["users", "fieldtest_participants"], {"users": ["id", "org_id", "role"]}
     )
     db = MagicMock()
     # person exists but is a supervisor, not eligible for an A-code (caregiver) slot
@@ -56,7 +56,7 @@ def test_set_mapping_rejects_role_code_mismatch(mock_inspect):
 
 @patch.object(ft, "inspect")
 def test_set_mapping_rejects_invalid_code_format(mock_inspect):
-    mock_inspect.return_value = _fake_inspector(["users"], {"users": ["id", "org_id", "role"]})
+    mock_inspect.return_value = _fake_inspector(["users", "fieldtest_participants"], {"users": ["id", "org_id", "role"]})
     db = MagicMock()
     body = ft.MappingInput(code="Z99", user_id=CAREGIVER_UUID)
     with pytest.raises(HTTPException) as exc:
@@ -66,7 +66,7 @@ def test_set_mapping_rejects_invalid_code_format(mock_inspect):
 
 @patch.object(ft, "inspect")
 def test_set_mapping_rejects_user_already_mapped_to_different_code(mock_inspect):
-    mock_inspect.return_value = _fake_inspector(["users"], {"users": ["id", "org_id", "role"]})
+    mock_inspect.return_value = _fake_inspector(["users", "fieldtest_participants"], {"users": ["id", "org_id", "role"]})
     db = MagicMock()
 
     def execute_side_effect(stmt, params=None):
@@ -92,7 +92,7 @@ def test_set_mapping_rejects_user_already_mapped_to_different_code(mock_inspect)
 
 @patch.object(ft, "inspect")
 def test_set_mapping_accepts_matching_caregiver_a_code(mock_inspect):
-    mock_inspect.return_value = _fake_inspector(["users"], {"users": ["id", "org_id", "role"]})
+    mock_inspect.return_value = _fake_inspector(["users", "fieldtest_participants"], {"users": ["id", "org_id", "role"]})
     db = MagicMock()
 
     def execute_side_effect(stmt, params=None):
@@ -162,9 +162,40 @@ def test_export_xlsx_columns_contain_no_free_text_or_names():
     assert "A01" in joined  # whitelisted fields are present
 
 
-def test_participant_rows_mark_unset_codes_as_pending_not_participated():
+@patch.object(ft, "inspect")
+def test_participant_rows_raises_clear_503_when_table_missing(mock_inspect):
+    # Before the dashboard/table exists, calling summary()/export must not
+    # surface a raw, unhandled DB exception (generic HTTP 500, blank page).
+    mock_inspect.return_value = _fake_inspector(["users"], {"users": ["id", "org_id", "role"]})
+    db = MagicMock()
+    with pytest.raises(HTTPException) as exc:
+        ft._participant_rows(db, "org-1")
+    assert exc.value.status_code == 503
+    assert "fieldtest_participants" in exc.value.detail
+    assert "尚未建立" in exc.value.detail
+    db.execute.assert_not_called()
+
+
+@patch.object(ft, "inspect")
+def test_set_mapping_raises_clear_503_when_table_missing(mock_inspect):
+    mock_inspect.return_value = _fake_inspector(["users"], {"users": ["id", "org_id", "role"]})
+    db = MagicMock()
+    body = ft.MappingInput(code="A01", user_id=CAREGIVER_UUID)
+    with pytest.raises(HTTPException) as exc:
+        ft.set_mapping(body, db=db, user=_admin_user())
+    assert exc.value.status_code == 503
+    assert "尚未建立" in exc.value.detail
+    db.execute.assert_not_called()
+    db.commit.assert_not_called()
+
+
+@patch.object(ft, "inspect")
+def test_participant_rows_mark_unset_codes_as_pending_not_participated(mock_inspect):
     """If no mapping rows exist at all, every one of the 47 codes must show
     as "待核對", never implied as already having 47 real participants."""
+    mock_inspect.return_value = _fake_inspector(
+        ["users", "fieldtest_participants"], {"users": ["id", "org_id", "role"]}
+    )
     db = MagicMock()
     db.execute.return_value.mappings.return_value.all.return_value = []
     rows = ft._participant_rows(db, "org-1")

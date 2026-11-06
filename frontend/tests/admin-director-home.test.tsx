@@ -65,5 +65,7 @@ describe('director sees only authorized nav links and home content', () => {
     mount('/admin/cases');
     await screen.findByText('系統管理導覽');
     expect(screen.getByText('知識庫文件')).not.toBeNull();
+    const fieldtestLink = screen.getByText(/47 人場測管理/) as HTMLAnchorElement;
+    expect(fieldtestLink.getAttribute('href')).toBe('/api/fieldtest/dashboard');
   });
 });

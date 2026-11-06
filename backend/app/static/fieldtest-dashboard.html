@@ -8,8 +8,17 @@
 </head><body>
 <header><h1>嘉安場測｜47 人進度</h1><p>40 位照服員＋7 位督導 · 管理員專用 · 真實操作紀錄</p></header>
 <main>
-<div class="toolbar"><button id="refresh">重新整理統計</button><button id="export">匯出最新 Excel（5 張工作表）</button><button class="secondary" id="authToggle">登入狀態／授權設定</button></div>
+<div class="toolbar"><button id="refresh">重新整理統計</button><button id="export">匯出最新 Excel（5 張工作表）</button><button class="secondary" id="mapToggle">受測者編號對應</button><button class="secondary" id="authToggle">登入狀態／授權設定</button></div>
 <div id="notice" role="status"></div>
+<div id="mapPanel" class="panel hidden" style="margin-bottom:16px">
+<p><b>受測者編號對應</b>：將既有帳號對應到 A01–A40（照服員）或 S01–S07（居督）其中一個測試編號；角色必須與編號類型一致，後端會拒絕不符者。</p>
+<form id="mapForm" class="filters">
+<label for="mapCode" class="small">編號（A01–A40／S01–S07）</label><input id="mapCode" name="code" placeholder="例如 A01" required pattern="[A-Sa-s][0-9]{2}" maxlength="3">
+<label for="mapUserId" class="small">帳號 UUID</label><input id="mapUserId" name="user_id" placeholder="既有使用者的 UUID" required minlength="36" maxlength="36">
+<button type="submit" id="mapSubmit">儲存對應</button>
+</form>
+<p id="mapStatus" class="small" role="status"></p>
+</div>
 <div id="auth" class="auth"><p><b>管理員登入</b>：使用嘉安管理員帳號與密碼。只呼叫本站的登入 API，密碼不會寫入瀏覽器儲存空間。</p>
 <form id="loginForm" autocomplete="on"><label for="username">管理員帳號</label><input id="username" name="username" autocomplete="username" value="jiaan_admin" required><label for="password">密碼</label><input type="password" id="password" name="password" autocomplete="current-password" required><button type="submit" id="loginButton">登入並載入統計</button></form>
 <p id="loginStatus" class="small" role="status"></p><p class="small">只用正式管理員帳號登入。請勿使用照服員的 LINE 綁定碼。</p></div>
@@ -20,13 +29,28 @@
 (()=>{'use strict';
 let data=null;let manuallyProvided='';const $=id=>document.getElementById(id);const set=id=>v=>$(id).textContent=String(v);
 const apiRoot=()=>window.location.origin;
-const endpoints=['/api/fieldtest/summary','/api/fieldtest/export.xlsx'];
+const endpoints=['/api/fieldtest/summary','/api/fieldtest/export.xlsx','/api/fieldtest/mappings'];
 function getToken(){if(manuallyProvided)return manuallyProvided;for(const store of [localStorage,sessionStorage]){for(let i=0;i<store.length;i++){const k=store.key(i);if(!/token|auth|session/i.test(k||''))continue;const raw=store.getItem(k)||'';if(!raw)continue;if(raw.split('.').length===3&&raw.length>50)return raw;try{const obj=JSON.parse(raw);for(const key of ['access_token','accessToken','token','jwt']){if(typeof obj?.[key]==='string'&&obj[key].length>25)return obj[key];if(typeof obj?.state?.[key]==='string'&&obj.state[key].length>25)return obj.state[key];}}catch{}}}return ''}
-async function request(which){const headers={};const token=getToken();if(token)headers.Authorization='Bearer '+token;const resp=await fetch(apiRoot()+endpoints[which],{headers,credentials:'include',cache:'no-store'});if(!resp.ok)throw Error('HTTP '+resp.status+(resp.status===401||resp.status===403?'：請使用具有嘉安機構權限的管理員登入':'：系統讀取失敗'));return resp}
+async function detailOf(resp){try{const body=await resp.json();const d=body&&body.detail;return typeof d==='string'?d:(d&&typeof d.message==='string'?d.message:'')}catch{return ''}}
+async function request(which){const headers={};const token=getToken();if(token)headers.Authorization='Bearer '+token;const resp=await fetch(apiRoot()+endpoints[which],{headers,credentials:'include',cache:'no-store'});if(!resp.ok){const detail=await detailOf(resp);throw Error('HTTP '+resp.status+'：'+(detail||(resp.status===401||resp.status===403?'請使用具有嘉安機構權限的管理員登入':'系統讀取失敗')))}return resp}
+async function submitMapping(code,userId){const headers={'Content-Type':'application/json'};const token=getToken();if(token)headers.Authorization='Bearer '+token;const resp=await fetch(apiRoot()+endpoints[2],{method:'POST',headers,credentials:'include',cache:'no-store',body:JSON.stringify({code,user_id:userId})});if(!resp.ok){const detail=await detailOf(resp);throw Error('HTTP '+resp.status+'：'+(detail||'對應失敗'))}return resp.json()}
 function render(){if(!data)return;const q=$('filter').value.trim().toLowerCase();const rows=(data.participants||[]).filter(p=>[p.code,p.role,p.status,p.mapping_status].join(' ').toLowerCase().includes(q));$('body').replaceChildren();if(!rows.length){const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=7;td.textContent='沒有符合條件的紀錄';tr.append(td);$('body').append(tr);return;}for(const p of rows){const tr=document.createElement('tr');for(const field of [p.code,p.role,p.mapping_status,p.audit_event_count,p.qa_count,p.case_count,p.status]){const td=document.createElement('td');td.textContent=field==null?'':String(field);tr.append(td)}$('body').append(tr)}}
 async function load(){set('notice')('');$('refresh').disabled=true;try{const r=await request(0);data=await r.json();[['total','total'],['mapped','mapped'],['records','with_records'],['qa','qa_records'],['errors','error_records'],['cases','case_records']].forEach(([id,k])=>set(id)(data[k]??0));render();}catch(e){set('notice')(e.message+'。請按「登入狀態／授權設定」確認登入。');$('auth').classList.remove('hidden')}finally{$('refresh').disabled=false}}
 async function download(){set('notice')('');$('export').disabled=true;try{const r=await request(1);const blob=await r.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='嘉安47人場測_'+new Date().toISOString().slice(0,10)+'.xlsx';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}catch(e){set('notice')(e.message);$('auth').classList.remove('hidden')}finally{$('export').disabled=false}}
 $('refresh').onclick=load;$('export').onclick=download;$('filter').oninput=render;$('authToggle').onclick=()=>$('auth').classList.toggle('hidden');
+$('mapToggle').onclick=()=>$('mapPanel').classList.toggle('hidden');
+$('mapForm').onsubmit=async e=>{
+ e.preventDefault();
+ const code=$('mapCode').value.trim().toUpperCase();const userId=$('mapUserId').value.trim();
+ $('mapSubmit').disabled=true;$('mapStatus').textContent='正在儲存對應…';
+ try{
+  await submitMapping(code,userId);
+  $('mapStatus').textContent='已儲存對應：'+code;
+  $('mapUserId').value='';
+  await load();
+ }catch(err){$('mapStatus').textContent=err.message}
+ finally{$('mapSubmit').disabled=false}
+};
 $('loginForm').onsubmit=async e=>{
  e.preventDefault(); const user=$('username').value.trim();const pass=$('password').value;
  $('loginButton').disabled=true; $('loginStatus').textContent='正在登入…';

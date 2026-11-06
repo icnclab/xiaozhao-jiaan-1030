@@ -47,7 +47,16 @@ def _rows(db, stmt, params=None):
     return [dict(row) for row in db.execute(text(stmt), params or {}).mappings().all()]
 
 
+def _require_fieldtest_table(db):
+    # Without this guard, a missing table surfaces as an unhandled
+    # ProgrammingError -> generic HTTP 500 with no actionable message.
+    if "fieldtest_participants" not in _tables(db):
+        raise HTTPException(503, "場測資料表（fieldtest_participants）尚未建立，"
+                                  "請管理員完成資料庫設定後再使用本功能；統計與匯出目前無法使用")
+
+
 def _participant_rows(db, org):
+    _require_fieldtest_table(db)
     rows = {r["code"]: r for r in _rows(db,
         "SELECT code, user_id, assigned_at FROM fieldtest_participants WHERE org_id = :org",
         {"org": org})}
@@ -146,6 +155,7 @@ def summary(db: Session = Depends(get_db), user=Depends(current_user)):
 @router.post("/mappings")
 def set_mapping(body: MappingInput, db: Session = Depends(get_db), user=Depends(current_user)):
     org = _admin(user)
+    _require_fieldtest_table(db)
     code = body.code.strip().upper()
     if code not in CODES:
         raise HTTPException(422, "受測編號必須為 A01–A40 或 S01–S07")

@@ -243,8 +243,9 @@ function AdminHome() {
           ["/admin/metrics", "治理指標與系統紀錄"], ["/admin/audit", "稽核紀錄"]].map(([to, label]) => (
           <NavLink className="btn" key={to} to={to}>{label}</NavLink>
         ))}
+        <a className="btn" href="/api/fieldtest/dashboard">47 人場測管理（受測者對應／統計／匯出）</a>
       </div>
-      <p className="small">系統即時健康資訊未由此頁提供。回饋須經人工審核，不會自動訓練 AI。</p>
+      <p className="small">系統即時健康資訊未由此頁提供。回饋須經人工審核，不會自動訓練 AI。場測資料表尚未建立前，場測頁會顯示明確提示，不是系統故障。</p>
     </details>
   );
 }
