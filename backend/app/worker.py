@@ -21,6 +21,7 @@ from app.line import service as line_service
 from app.logging_setup import setup_logging
 from app.services import documents, jobs, notifications, retention, transcripts, tts_service
 from app.services import jiaan_emergency_dispatch
+from app.services import jiaan_webpush
 
 logger = logging.getLogger("worker")
 SWEEP_INTERVAL_SEC = 300
@@ -195,7 +196,7 @@ def main() -> None:
     signal.signal(signal.SIGINT, _stop)
     signal.signal(signal.SIGTERM, _stop)
     logger.info("worker %s started", worker_id)
-    last_sweep, last_beat, last_emergency = 0.0, 0.0, 0.0
+    last_sweep, last_beat, last_emergency, last_webpush = 0.0, 0.0, 0.0, 0.0
     while running:
         now = time.monotonic()
         if now - last_beat > 15:
@@ -223,6 +224,22 @@ def main() -> None:
             finally:
                 session.close()
             last_emergency = now
+        # Separate web-push pipeline. Disabled by default; does not affect LINE.
+        if jiaan_webpush.enabled() and now - last_webpush >= EMERGENCY_SWEEP_INTERVAL_SEC:
+            session = new_session()
+            try:
+                staged = jiaan_webpush.sweep(session)
+                session.commit()
+                sent = jiaan_webpush.dispatch_due(session)
+                session.commit()
+                if staged or sent:
+                    logger.info('webpush staged=%d attempted=%d', staged, sent)
+            except Exception as exc:
+                session.rollback()
+                logger.warning('webpush cycle failed: %s', type(exc).__name__)
+            finally:
+                session.close()
+            last_webpush = now
         try:
             worked = run_one(worker_id)
         except Exception as exc:  # 資料庫暫時不可用等
