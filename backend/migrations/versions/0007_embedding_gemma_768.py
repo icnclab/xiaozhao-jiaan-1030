@@ -38,6 +38,11 @@ from __future__ import annotations
 from alembic import op
 import sqlalchemy as sa
 
+revision = "0007_embedding_gemma_768"
+down_revision = "0006_jiaan1030_emergency"
+branch_labels = None
+depends_on = None
+
 _TARGET_TYPE = "vector(768)"
 _SOURCE_TYPE = "vector(1024)"
 
