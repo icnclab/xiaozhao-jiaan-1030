@@ -1,0 +1,73 @@
+#!/bin/sh
+# 小照／嘉安專題：Commit 前輕量級檢查。
+#
+# 只做「不需要資料庫連線」的檢查：
+#   1. 一批已確認不會連資料庫的後端純邏輯／Mock 測試（直接 import 執行，
+#      繞開會連資料庫的 backend/tests/conftest.py，不是跑 pytest）。
+#   2. 前端 TypeScript 型別檢查（tsc --noEmit）。
+#   3. 前端完整測試（vitest + jsdom，全部是 Mock／jsdom，不連真實資料庫）。
+#
+# 絕對不做：連線資料庫、執行 Migration、部署正式環境、git push、
+# 發送真實 LINE／Web Push。任何一步失敗就中止 Commit（exit 1）。
+#
+# 這個腳本本身會被版本控制（在 .githooks/ 目錄下），但 Git 預設不會自動
+# 使用它 —— 每台電腦 clone 後要自己執行一次（這個設定只存在本機
+# .git/config，不會被提交，也不會影響其他專案）：
+#   git config core.hooksPath .githooks
+
+REPO_ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$REPO_ROOT" || exit 1
+
+echo "[pre-commit] 開始輕量級檢查（不連資料庫）..."
+
+BACKEND_PY="$REPO_ROOT/backend/.venv/Scripts/python.exe"
+if [ ! -x "$BACKEND_PY" ]; then
+  BACKEND_PY="$REPO_ROOT/backend/.venv/bin/python"
+fi
+
+# 目前已確認、不會連資料庫的純邏輯／Mock 測試檔（模組名，不含 .py）。
+# 新增同類型的測試檔後，請把檔名加進這個清單；不在清單裡的測試不會被
+# 這個 Hook 執行，不代表它們不重要，只代表還沒被確認是否會連資料庫。
+SAFE_BACKEND_TESTS="test_care_record_retention_unit test_embedding_gemma_compat_unit test_fieldtest_routes_logic_unit test_fieldtest_dashboard_html_consistency_unit test_fieldtest_migration_consistency_unit test_jiaan_webpush_migration_consistency_unit test_0007_migration_idempotency_unit test_0008_0009_existing_table_safety_unit test_jiaan_webpush_worker_default_off_unit"
+
+if [ -x "$BACKEND_PY" ] && [ -d "$REPO_ROOT/backend/tests" ]; then
+  (
+    cd "$REPO_ROOT/backend" || exit 1
+    for modname in $SAFE_BACKEND_TESTS; do
+      if [ -f "tests/$modname.py" ]; then
+        "$BACKEND_PY" -c "
+import sys, inspect
+sys.path.insert(0, 'tests')
+mod = __import__('$modname')
+for n in dir(mod):
+    if n.startswith('test_'):
+        fn = getattr(mod, n)
+        if 'monkeypatch' in inspect.signature(fn).parameters:
+            continue
+        fn()
+"
+        if [ $? -ne 0 ]; then
+          echo "[pre-commit] 後端純邏輯測試失敗：$modname"
+          exit 1
+        fi
+      fi
+    done
+  ) || { echo "[pre-commit] 中止 Commit：後端測試未通過"; exit 1; }
+  echo "[pre-commit] 後端純邏輯測試通過"
+else
+  echo "[pre-commit] 找不到 backend/.venv，略過後端測試（請確認環境是否正常）"
+fi
+
+if [ -d "$REPO_ROOT/frontend/node_modules" ]; then
+  (
+    cd "$REPO_ROOT/frontend" || exit 1
+    npx tsc --noEmit || exit 1
+    npx vitest run --environment jsdom || exit 1
+  ) || { echo "[pre-commit] 中止 Commit：前端型別檢查或測試未通過"; exit 1; }
+  echo "[pre-commit] 前端型別檢查與測試通過"
+else
+  echo "[pre-commit] 找不到 frontend/node_modules，略過前端檢查"
+fi
+
+echo "[pre-commit] 輕量級檢查全部通過，允許 Commit"
+exit 0
