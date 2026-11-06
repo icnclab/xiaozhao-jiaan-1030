@@ -61,7 +61,12 @@ def test_get_embedding_provider_raises_if_settings_dim_drifts_from_models_consta
 def test_get_embedding_provider_builds_ollama_with_settings_batch_and_timeout(monkeypatch):
     import app.providers.embedding as embedding_module
 
-    settings = _settings(embedding_timeout_sec=99.0, embedding_batch_size=4)
+    # embedding_provider must be pinned explicitly: tests/conftest.py (auto-loaded
+    # for any test under tests/) sets os.environ["EMBEDDING_PROVIDER"]="hash" at
+    # import time so DB-touching tests never call real Ollama; Settings(_env_file=
+    # None) only skips the .env FILE, not os.environ, so relying on the field's own
+    # "ollama" default here would silently pick up that ambient "hash" instead.
+    settings = _settings(embedding_timeout_sec=99.0, embedding_batch_size=4, embedding_provider="ollama")
     monkeypatch.setattr(embedding_module, "get_settings", lambda: settings)
     provider = get_embedding_provider()
     assert isinstance(provider, OllamaEmbedding)
