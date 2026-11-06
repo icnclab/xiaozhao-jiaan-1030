@@ -1,8 +1,10 @@
 """Pure control-flow tests for the post-CREATE-TABLE structural verification
-added to the 0008 (Web Push) and 0009 (field-test) migration drafts this
-round. No database connection -- `alembic.op` is replaced with a MagicMock
-before loading each draft module, so none of their SQL ever actually runs;
-`conn.execute(...)` is faked per-query by inspecting the SQL text.
+in the 0008 (Web Push, still .draft) and 0009 (field-test, activated as a
+real migration) migration files. No database connection -- `alembic.op` is
+replaced with a MagicMock before loading each module, so none of their SQL
+ever actually runs; `conn.execute(...)` is faked per-query by inspecting the
+SQL text. The loader uses an explicit SourceFileLoader so it works the same
+way regardless of the `.py` vs `.py.draft` extension.
 
 Why this matters: `CREATE TABLE IF NOT EXISTS` silently does nothing if a
 table with that name already exists -- including an incomplete, leftover
@@ -11,7 +13,7 @@ references "the successful one-device test", which this session could
 not confirm or rule out ran the pre-fix deploy/fieldtest/
 jiaan_webpush_schema.sql against some real database). Without a check
 *after* the CREATE statement, Alembic would still mark the revision as
-"applied" while the actual table stays broken. Both drafts now re-read the
+"applied" while the actual table stays broken. Both files re-read the
 actual columns/constraints and raise instead of silently succeeding.
 """
 import importlib.machinery
@@ -118,7 +120,7 @@ def test_0008_raises_when_endpoint_hash_column_exists_but_has_no_unique_constrai
 
 
 def test_0009_passes_when_table_has_the_complete_structure():
-    module, mock_op = _load_draft_with_mock_op("0009_fieldtest_participants.py.draft")
+    module, mock_op = _load_draft_with_mock_op("0009_fieldtest_participants.py")
     conn = mock_op.get_bind.return_value
     _rows_query(
         conn.execute,
@@ -129,7 +131,7 @@ def test_0009_passes_when_table_has_the_complete_structure():
 
 
 def test_0009_raises_when_a_preexisting_table_is_missing_a_required_column():
-    module, mock_op = _load_draft_with_mock_op("0009_fieldtest_participants.py.draft")
+    module, mock_op = _load_draft_with_mock_op("0009_fieldtest_participants.py")
     conn = mock_op.get_bind.return_value
     _rows_query(
         conn.execute,
@@ -140,7 +142,7 @@ def test_0009_raises_when_a_preexisting_table_is_missing_a_required_column():
 
 
 def test_0009_raises_when_primary_key_does_not_match():
-    module, mock_op = _load_draft_with_mock_op("0009_fieldtest_participants.py.draft")
+    module, mock_op = _load_draft_with_mock_op("0009_fieldtest_participants.py")
     conn = mock_op.get_bind.return_value
     _rows_query(
         conn.execute,

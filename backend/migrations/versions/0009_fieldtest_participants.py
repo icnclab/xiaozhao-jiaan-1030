@@ -1,37 +1,36 @@
-"""PROPOSAL ONLY -- not committed, not applied, NOT verified against a real
-database this round (database-credential exposure incident means no new DB
-connections were made while preparing this draft). Rename to .py and verify
-in an isolated database only after the credential rotation is confirmed.
-
-Backs app/api/fieldtest_routes.py's `fieldtest_participants` mapping table
+"""Backs app/api/fieldtest_routes.py's `fieldtest_participants` mapping table
 (47-person field-test code <-> user_id mapping). No existing migration or
 schema file defines this table anywhere in the repository -- this is a
 genuine gap, not a deliberate policy exclusion like 0007/Web Push.
 
 Fully additive (CREATE TABLE IF NOT EXISTS), no ALTER of any existing table,
-no data deletion. Chain position changed again this round: rebased onto
-0007 directly (was onto 0008) so field-test can be activated without first
-activating Web Push -- field-test has no DB-content dependency on Web Push,
-only a prior-round chain-ordering coupling. 0008's down_revision was moved
-to point at this revision instead (0007 -> 0009 -> 0008), keeping a single
-linear chain with no new Alembic heads. A prior round reported this table
-verified end-to-end in an isolated DB, but that was with the OLD chain
-order (0007 -> 0008 -> 0009, with 0008's DDL applied first); the DDL here
-is unchanged, but the chain position is not, so that prior verification
-must be treated as not yet re-confirmed under this new ordering until an
-isolated DB run applies 0007 -> 0009 directly (skipping 0008) and checks
-`fieldtest_participants` end-to-end again.
+no data deletion. Chain position: rebased directly onto 0007 (not onto 0008)
+so field-test can be activated without first activating Web Push --
+field-test has no DB-content dependency on Web Push, only a prior-round
+chain-ordering coupling. 0008 (Web Push, still kept as .draft, not activated
+by this change) chains after this revision instead (0007 -> 0009 -> 0008),
+keeping a single linear chain with no new Alembic heads.
 
-CREATE TABLE IF NOT EXISTS safety gap fixed this round: if a table named
-fieldtest_participants already exists with some other, incomplete
-structure (nothing currently suggests this has happened, unlike 0008's
-Web Push tables, but there is no way to rule it out without a database
-connection), IF NOT EXISTS would silently skip creation and leave it in
-place while Alembic still marks this revision as applied. upgrade() now
-re-reads the table's actual columns and primary key after the CREATE
-statement and raises immediately if they don't match what
-app/api/fieldtest_routes.py requires. It never DROPs, ALTERs, or overwrites
-anything itself.
+Activated (renamed from .draft to .py) only after end-to-end verification in
+a brand-new, fully isolated Docker Postgres instance (fresh container/
+volume/port/credentials, never touching ltc_clean/ltc_demo/ltc_test): 0001-
+0007 applied cleanly, then this revision alone applied directly on top of
+0007 with 0008 never loaded (its tables provably absent), the full
+47-participant mapping/role-check/summary/Excel-export flow passed against
+the real FastAPI app, and 0009 -> 0008 still upgraded cleanly afterward with
+a single alembic_version row and this table's data untouched. NOT yet
+applied to any real (dev/demo/production) database -- activation here is
+a code/version-control change only.
+
+CREATE TABLE IF NOT EXISTS safety gap: if a table named fieldtest_participants
+already exists with some other, incomplete structure (nothing currently
+suggests this has happened, unlike 0008's Web Push tables, but there is no
+way to rule it out without a database connection), IF NOT EXISTS would
+silently skip creation and leave it in place while Alembic still marks this
+revision as applied. upgrade() now re-reads the table's actual columns and
+primary key after the CREATE statement and raises immediately if they don't
+match what app/api/fieldtest_routes.py requires. It never DROPs, ALTERs, or
+overwrites anything itself.
 """
 from alembic import op
 import sqlalchemy as sa

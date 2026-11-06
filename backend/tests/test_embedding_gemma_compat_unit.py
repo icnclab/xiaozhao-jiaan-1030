@@ -112,15 +112,18 @@ def test_migration_0007_chains_after_0006_and_targets_vector_768():
     assert "vector(1024)" in source  # present only in downgrade()
     # Chain reordered in a later round (see
     # test_fieldtest_migration_consistency_unit.py /
-    # test_jiaan_webpush_migration_consistency_unit.py): the fieldtest draft
-    # 0009 chains directly after 0007 so it can be activated without first
-    # activating Web Push; 0008 (Web Push) now chains after 0009 instead.
-    # Still a single linear chain -- 0006 -> 0007 -> 0009 -> 0008 -- with
-    # exactly one draft chaining after 0007, never a fork into siblings.
+    # test_jiaan_webpush_migration_consistency_unit.py): fieldtest 0009
+    # chains directly after 0007 so it can be activated without first
+    # activating Web Push; 0008 (Web Push, still .draft) now chains after
+    # 0009 instead. Still a single linear chain -- 0006 -> 0007 -> 0009 ->
+    # 0008 -- with exactly one migration chaining after 0007, never a fork
+    # into siblings. 0009 is now a real, activated .py migration (no longer
+    # .draft) -- see tests/test_fieldtest_migration_consistency_unit.py and
+    # tests/test_0008_0009_existing_table_safety_unit.py for its own checks.
     other_versions = (REPO_ROOT / "backend" / "migrations" / "versions").glob("*.py*")
     chained_after_0007 = [
         p for p in other_versions
         if p.name != "0007_embedding_gemma_768.py"
         and 'down_revision = "0007_embedding_gemma_768"' in p.read_text(encoding="utf-8")
     ]
-    assert [p.name for p in chained_after_0007] == ["0009_fieldtest_participants.py.draft"]
+    assert [p.name for p in chained_after_0007] == ["0009_fieldtest_participants.py"]

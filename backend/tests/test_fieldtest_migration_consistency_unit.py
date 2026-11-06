@@ -1,14 +1,14 @@
 """Pure static consistency check between fieldtest_routes.py's SQL and the
-0009 migration draft's CREATE TABLE columns. No database connection; just
-text parsing. The draft is not a real .py module (kept as .draft so Alembic
-never auto-loads it), so it is read as plain text, not imported.
+0009 migration's CREATE TABLE columns. No database connection; just text
+parsing (kept as a text read rather than an import to match the sibling
+0008 webpush check, which still reads its own file as a .draft).
 """
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ROUTES_SQL = (ROOT / "app" / "api" / "fieldtest_routes.py").read_text(encoding="utf-8")
-DRAFT_SQL = (ROOT / "migrations" / "versions" / "0009_fieldtest_participants.py.draft").read_text(encoding="utf-8")
+DRAFT_SQL = (ROOT / "migrations" / "versions" / "0009_fieldtest_participants.py").read_text(encoding="utf-8")
 
 EXPECTED_COLUMNS = {"org_id", "code", "user_id", "assigned_by", "assigned_at"}
 
