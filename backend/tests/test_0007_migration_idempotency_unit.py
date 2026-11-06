@@ -19,6 +19,8 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
+
 MIGRATION_PATH = (
     Path(__file__).resolve().parents[1] / "migrations" / "versions" / "0007_embedding_gemma_768.py"
 )
@@ -56,14 +58,25 @@ def test_upgrade_runs_full_sequence_when_still_vector_1024():
     assert any("CREATE INDEX ix_chunks_embedding" in c for c in calls)
 
 
-def test_upgrade_runs_full_sequence_on_a_brand_new_empty_database():
-    # No chunks table/column yet (fresh db before 0001 ran, or the column
-    # query genuinely finds nothing) -- must not mistake "unknown" for
-    # "already migrated" and must still proceed with the normal upgrade.
+def test_upgrade_refuses_and_raises_when_column_is_missing_or_table_absent():
+    # chunks.embedding not found (table/column missing) is ANOMALOUS at this
+    # point in the chain -- 0001-0006 must already have created it. Treating
+    # "can't tell" as "needs migration" would let a destructive UPDATE run
+    # against an unexpected schema; it must raise instead, never proceed.
     module, mock_op = _load_migration_with_mock_op()
     mock_op.get_bind.return_value.execute.return_value.scalar_one_or_none.return_value = None
-    module.upgrade()
-    assert mock_op.execute.call_count == 4
+    with pytest.raises(RuntimeError, match="狀態無法判定"):
+        module.upgrade()
+    assert mock_op.execute.call_count == 0
+
+
+def test_upgrade_refuses_and_raises_on_an_unexpected_column_type():
+    # e.g. someone manually altered the column to something else entirely.
+    module, mock_op = _load_migration_with_mock_op()
+    mock_op.get_bind.return_value.execute.return_value.scalar_one_or_none.return_value = "text"
+    with pytest.raises(RuntimeError, match="狀態無法判定"):
+        module.upgrade()
+    assert mock_op.execute.call_count == 0
 
 
 def test_downgrade_skips_destructive_steps_when_already_vector_1024():
@@ -80,3 +93,11 @@ def test_downgrade_runs_full_sequence_when_still_vector_768():
     calls = _destructive_calls(mock_op)
     assert any("vector(1024)" in c for c in calls)
     assert mock_op.execute.call_count == 4
+
+
+def test_downgrade_refuses_and_raises_when_state_cannot_be_determined():
+    module, mock_op = _load_migration_with_mock_op()
+    mock_op.get_bind.return_value.execute.return_value.scalar_one_or_none.return_value = None
+    with pytest.raises(RuntimeError, match="狀態無法判定"):
+        module.downgrade()
+    assert mock_op.execute.call_count == 0
