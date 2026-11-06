@@ -378,7 +378,7 @@ def retrieve(
             candidates.setdefault(row.id, 0.0)
 
     provider = get_embedding_provider()
-    query_vector = provider.embed([expanded_question])[0]
+    query_vector = provider.embed_query(expanded_question)
     vector_rows = session.execute(
         text(
             """

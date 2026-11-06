@@ -1,4 +1,5 @@
-"""集中式設定：所有外部服務、限制與密鑰都從環境變數（.env）讀取。"""
+
+"""集中式設定：外部服務、限制與密鑰皆由環境變數讀取。"""
 
 from __future__ import annotations
 
@@ -12,17 +13,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-    """應用程式設定。
-
-    Attributes:
-        app_env: dev、test 或 production；production 會關閉 dev-login 與模擬端點。
-        database_url: SQLAlchemy 連線字串（psycopg3）。
-        data_dir: 音訊暫存、TTS 快取、上傳原檔的根目錄。
-        line_mode: mock 或 real。mock 模式仍會真實驗證 webhook 簽章。
-    """
+    """小照系統設定。"""
 
     model_config = SettingsConfigDict(
-        env_file=str(REPO_ROOT / ".env"), env_file_encoding="utf-8", extra="ignore", hide_input_in_errors=True
+        env_file=str(REPO_ROOT / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
     app_env: str = "dev"
@@ -41,15 +38,20 @@ class Settings(BaseSettings):
     line_login_channel_id: str = ""
     liff_id: str = ""
 
-    llm_provider: str = "extractive"
+    # Google Gemma 4 文字生成
+    llm_provider: str = "ollama"
     llm_model: str = "gemma4:e4b"
     ollama_base_url: str = "http://127.0.0.1:11434"
     llm_timeout_sec: float = 60.0
 
-    embedding_provider: str = "hash"
-    embedding_model: str = "bge-m3"
-    embedding_dim: int = 1024
+    # Google EmbeddingGemma 2
+    embedding_provider: str = "ollama"
+    embedding_model: str = "embeddinggemma-2:270m"
+    embedding_dim: int = 768
+    embedding_timeout_sec: float = Field(default=120.0, gt=0)
+    embedding_batch_size: int = Field(default=8, ge=1, le=32)
 
+    # 語音辨識與合成
     stt_provider: str = "mock"
     stt_base_url: str = "http://127.0.0.1:8147"
     stt_model: str = "large-v3"
@@ -64,8 +66,12 @@ class Settings(BaseSettings):
     cht_api_key: str = ""
 
     bot_name: str = "小照"
-    # 含 STT 常見同音誤辨（小昭、小趙；實測 faster-whisper medium 會把「小照」聽成「小趙」）
-    wake_words: str = "小照你好,小照您好,小照妳好,小昭你好,小昭您好,小趙你好,小趙您好,小照,小昭,小趙"
+    wake_words: str = (
+        "小照你好,小照您好,小照妳好,"
+        "小昭你好,小昭您好,"
+        "小趙你好,小趙您好,"
+        "小照,小昭,小趙"
+    )
 
     question_max_sec: int = 60
     conversation_max_sec: int = 600
@@ -76,7 +82,36 @@ class Settings(BaseSettings):
     session_ttl_hours: int = 12
 
     log_level: str = "INFO"
-    ffmpeg_dir: str = ""  # 內建 ffmpeg/ffprobe 所在目錄（安裝包 bin\）；空則用 PATH
+    ffmpeg_dir: str = ""
+
+    @field_validator("llm_model")
+    @classmethod
+    def _only_gemma_llm(cls, value: str) -> str:
+        if value != "gemma4:e4b":
+            raise ValueError(
+                "AgeTech 參賽版只允許 LLM_MODEL=gemma4:e4b"
+            )
+        return value
+
+    @field_validator("embedding_model")
+    @classmethod
+    def _only_gemma_embedding(cls, value: str) -> str:
+        if value != "embeddinggemma-2:270m":
+            raise ValueError(
+                "AgeTech 參賽版只允許 "
+                "EMBEDDING_MODEL=embeddinggemma-2:270m"
+            )
+        return value
+
+    @field_validator("embedding_dim")
+    @classmethod
+    def _check_embedding_dim(cls, value: int) -> int:
+        if value != 768:
+            raise ValueError(
+                "Embedding 維度必須為 768；"
+                "請同步執行資料庫 Migration"
+            )
+        return value
 
     @field_validator("database_url")
     @classmethod
@@ -94,16 +129,16 @@ class Settings(BaseSettings):
 
     @property
     def is_production(self) -> bool:
-        """是否為正式環境。"""
         return self.app_env == "production"
 
     @property
     def dev_features_enabled(self) -> bool:
-        """dev-login 與 LINE 模擬端點只在非正式環境＋mock 模式開放。"""
-        return (not self.is_production) and self.line_mode == "mock"
+        return (
+            not self.is_production
+            and self.line_mode == "mock"
+        )
 
     def provider_modes(self) -> dict[str, str]:
-        """回報各 provider 的實際模式，供 API 回應與畫面標示。"""
         return {
             "llm": self.llm_provider,
             "embedding": self.embedding_provider,
@@ -116,14 +151,23 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """取得（快取的）設定物件。"""
     settings = Settings()
+
     if settings.is_production:
         missing = [
             name
-            for name in ("secret_key", "data_encryption_key", "line_channel_secret")
+            for name in (
+                "secret_key",
+                "data_encryption_key",
+                "line_channel_secret",
+            )
             if not getattr(settings, name)
         ]
+
         if missing:
-            raise RuntimeError(f"正式環境缺少必要設定：{', '.join(missing)}")
+            raise RuntimeError(
+                "正式環境缺少必要設定："
+                + ", ".join(missing)
+            )
+
     return settings

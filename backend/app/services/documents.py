@@ -203,7 +203,7 @@ def ingest_version(session: Session, version_id: uuid.UUID) -> DocumentVersion:
         return version
     session.execute(text("DELETE FROM chunks WHERE version_id = :v"), {"v": version.id})
     provider = get_embedding_provider()
-    vectors = provider.embed([d.text for d in drafts])
+    vectors = provider.embed_documents([d.text for d in drafts])
     for draft, vector in zip(drafts, vectors, strict=True):
         chunk_row = Chunk(
             version_id=version.id,

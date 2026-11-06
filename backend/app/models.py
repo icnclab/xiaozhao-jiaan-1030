@@ -30,7 +30,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
 
-EMBEDDING_DIM = 1024
+EMBEDDING_DIM = 768
 
 
 def _uuid() -> uuid.UUID:
