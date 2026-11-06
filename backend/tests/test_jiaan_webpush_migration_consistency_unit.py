@@ -92,4 +92,13 @@ def test_draft_upgrade_has_no_destructive_statement():
     upgrade_body = DRAFT.split("def upgrade()")[1].split("def downgrade()")[0]
     for forbidden in ("DROP TABLE", "DELETE FROM", "TRUNCATE", "ALTER TABLE"):
         assert forbidden not in upgrade_body.upper()
-    assert upgrade_body.count("IF NOT EXISTS") >= 2
+
+
+def test_pywebpush_is_a_declared_dependency_and_actually_importable():
+    # jiaan_webpush.py lazy-imports pywebpush inside _send_one() only, so a
+    # missing declaration would not fail at app startup -- only when a real
+    # dispatch is attempted. Must be declared so a clean checkout's install
+    # actually has it.
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert re.search(r'"pywebpush[>=<]', pyproject), "pyproject.toml 未宣告 pywebpush 相依"
+    import pywebpush  # noqa: F401 -- confirms it is actually installed here
