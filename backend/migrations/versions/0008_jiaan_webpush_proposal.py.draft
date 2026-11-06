@@ -1,0 +1,83 @@
+"""PROPOSAL ONLY -- not committed as an active migration, not applied anywhere.
+Kept as .draft so Alembic never auto-loads it; rename to .py and get sign-off,
+then re-verify in an isolated database, before activation.
+
+Chain position updated this round: now rebases onto 0007 (embedding dim
+switch, committed as a real migration in Git but NOT YET applied to any
+database) instead of 0006, so that if/when both are eventually applied there
+is a single linear chain (0006 -> 0007 -> 0008 -> 0009) instead of three
+siblings forking off 0006.
+
+Schema fixed this round: the already-committed app/api/jiaan_webpush_routes.py
+and app/services/jiaan_webpush.py (commit 0a3d16a) insert/lookup/ON CONFLICT
+against an `endpoint_hash` column on jiaan_webpush_subscriptions that this
+draft's CREATE TABLE never declared, and ON CONFLICT (endpoint_hash) has no
+matching UNIQUE constraint to target -- applying the old draft as-is would
+make `subscribe()` fail at runtime with "no unique or exclusion constraint
+matching the ON CONFLICT specification" (or "column endpoint_hash does not
+exist"). Also, `endpoint` is stored encrypted (Fernet, non-deterministic per
+call) by the committed code, so UNIQUE on the ciphertext column was never
+meaningful; uniqueness must live on the deterministic HMAC `endpoint_hash`
+instead. Both are fixed in the DDL below. See
+tests/test_jiaan_webpush_migration_consistency_unit.py for the static check
+that keeps this draft in sync with the committed call sites going forward.
+
+Fully additive (CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS), no
+ALTER of any existing table, no data deletion. NOT re-verified in a database
+this round (no new DB connections made while the credential-rotation status
+is unconfirmed); an earlier round reported verifying an isolated-DB draft,
+but that was before this schema fix, so the earlier verification no longer
+applies to the current DDL and must be redone once activated.
+"""
+from alembic import op
+
+revision = "0008_jiaan_webpush"
+down_revision = "0007_embedding_gemma_768"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS jiaan_webpush_subscriptions (
+            id uuid PRIMARY KEY,
+            user_id uuid NOT NULL REFERENCES users(id),
+            org_id uuid NOT NULL REFERENCES organizations(id),
+            endpoint text NOT NULL,
+            endpoint_hash text NOT NULL UNIQUE,
+            p256dh text NOT NULL,
+            auth text NOT NULL,
+            is_active boolean NOT NULL DEFAULT true,
+            created_at timestamptz NOT NULL DEFAULT now(),
+            updated_at timestamptz NOT NULL DEFAULT now()
+        )
+    """)
+    op.execute("""
+        CREATE INDEX IF NOT EXISTS ix_jiaan_webpush_subs_org
+            ON jiaan_webpush_subscriptions(org_id, is_active)
+    """)
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS jiaan_webpush_deliveries (
+            id uuid PRIMARY KEY,
+            emergency_id uuid NOT NULL REFERENCES jiaan1030_emergencies(id),
+            subscription_id uuid NOT NULL REFERENCES jiaan_webpush_subscriptions(id),
+            stage text NOT NULL CHECK (stage IN ('new','unacknowledged_60s','unacknowledged_180s')),
+            status text NOT NULL DEFAULT 'queued',
+            attempts int NOT NULL DEFAULT 0,
+            created_at timestamptz NOT NULL DEFAULT now(),
+            attempted_at timestamptz,
+            UNIQUE (emergency_id, subscription_id, stage)
+        )
+    """)
+    op.execute("""
+        CREATE INDEX IF NOT EXISTS ix_jiaan_webpush_delivery_q
+            ON jiaan_webpush_deliveries(status, created_at)
+    """)
+
+
+def downgrade() -> None:
+    # Both tables are fully new (never existed before this migration in any
+    # environment per the schema audit in this round's report), so a clean
+    # drop is safe -- but still requires human confirmation before running.
+    op.drop_table("jiaan_webpush_deliveries")
+    op.drop_table("jiaan_webpush_subscriptions")

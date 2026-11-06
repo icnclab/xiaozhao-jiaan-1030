@@ -9,13 +9,19 @@ schema file defines this table anywhere in the repository -- this is a
 genuine gap, not a deliberate policy exclusion like 0007/Web Push.
 
 Fully additive (CREATE TABLE IF NOT EXISTS), no ALTER of any existing table,
-no data deletion. Chains after 0006 for the same reason as the Web Push
-draft: stays isolated from the unconfirmed 0007 embedding-model branch.
+no data deletion. Chain position updated this round: rebased onto 0008
+(Web Push draft, itself rebased onto 0007) instead of 0006, so the three
+proposals form a single linear chain (0006 -> 0007 -> 0008 -> 0009) instead
+of forking off 0006 independently. Still a draft because it has not been
+verified against a real database this round (platform blocked a prior
+attempt to connect to an isolated throwaway DB -- see migration-chain
+report); verification is still required before activation, independent of
+the credential-rotation question that currently blocks 0007/0008.
 """
 from alembic import op
 
 revision = "0009_fieldtest_participants"
-down_revision = "0006_jiaan1030_emergency"
+down_revision = "0008_jiaan_webpush"
 branch_labels = None
 depends_on = None
 

@@ -43,8 +43,10 @@ def test_draft_has_conflict_target_matching_on_conflict_clause():
     assert draft_pk_cols == target_cols
 
 
-def test_draft_chains_after_0006_not_0007_or_webpush():
-    assert 'down_revision = "0006_jiaan1030_emergency"' in DRAFT_SQL
+def test_draft_chains_after_webpush_draft_in_single_linear_order():
+    # Chain re-integrated this round: 0006 -> 0007 -> 0008 (webpush) -> 0009,
+    # instead of 0007/0008/0009 all forking independently off 0006.
+    assert 'down_revision = "0008_jiaan_webpush"' in DRAFT_SQL
 
 
 def test_draft_upgrade_has_no_destructive_statement():
