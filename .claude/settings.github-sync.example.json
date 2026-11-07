@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& '.\\deploy\\fieldtest\\github_sync_check.ps1' -RepoRoot '.'",
+            "shell": "powershell",
+            "async": true,
+            "timeout": 600,
+            "statusMessage": "Check explicitly tagged stable commits for GitHub backup."
+          }
+        ]
+      }
+    ]
+  }
+}

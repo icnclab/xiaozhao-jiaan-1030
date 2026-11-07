@@ -16,6 +16,8 @@
 - 本機 API `http://127.0.0.1:8140`；正式 DB `ltc_clean`；健康檢查 `/api/healthz`。
 - 遠端透過經授權的 Tailscale/SSH；不要自行開放公網 22/3389 或變更防火牆。
 - GitHub private repo `icnclab/xiaozhao-jiaan-1030`；本地工作目錄與正式部署目錄未必相同。禁止自動 push，禁止 `git add .`，僅挑選已審核的明確檔案。
+- GitHub `main` 目前與本機開發歷史無共同祖先（兩條獨立歷史），同步一律走新分支，不直接動 `main`。固定同步流程見 `.claude/skills/github-sync/SKILL.md`（檢查修改 → 測試 → 敏感資訊掃描 → Commit → Push 新分支 → 遠端確認），測試失敗或敏感資訊未排除時不得 Push。
+- GitHub 同步已自動化（2026-11-07）：Claude Code `SessionEnd` hook ＋ Windows 工作排程器 `XiaoZhao-GitHubSyncDaily`（每天 09:00，僅限本機已登入時），共用 `deploy/fieldtest/github_sync_check.ps1`。只會同步 HEAD 上有 `stable-ready-*` tag、工作目錄乾淨、且測試全過的 commit；不自動 commit、不 force push、不猜測「穩不穩定」。要讓某次改動被自動同步，必須明確下 `git tag stable-ready-<說明>`。詳見 Skill 文件。
 
 ## 已驗證進度（2026-11-01，需再與 live 狀態交叉確認）
 - 角色安全提示與網頁緊急通報已在正式環境部署；不是背景推播或鎖屏持續響鈴。
