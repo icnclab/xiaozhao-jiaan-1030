@@ -1,0 +1,15 @@
+
+Item                        API Migration Match
+----                        --- --------- -----
+jiaan1030_emergencies      True      True  True
+jiaan1030_emergency_events True      True  True
+client_request_id          True      True  True
+category                   True      True  True
+status                     True      True  True
+acknowledged_by            True      True  True
+resolved_by                True      True  True
+event_type                 True      True  True
+from_status                True      True  True
+to_status                  True      True  True
+
+

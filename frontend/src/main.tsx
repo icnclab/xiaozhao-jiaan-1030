@@ -9,15 +9,15 @@ import { AskPage } from "./liff/pages/AskPage";
 import { AnswerPage } from "./liff/pages/AnswerPage";
 import { RecordPage } from "./liff/pages/RecordPage";
 import { TranscriptPage } from "./liff/pages/TranscriptPage";
-import { ReportPage } from "./liff/pages/ReportPage";
-import { ReportEntryPage } from "./liff/pages/ReportEntryPage";
 import { ReportPreviewPage } from "./liff/pages/ReportPreviewPage";
+import { ReportEntryPage } from "./liff/pages/ReportEntryPage";
+import { ReportPage } from "./liff/pages/ReportPage";
 import { CasesPage } from "./liff/pages/CasesPage";
 import { CaseDetailPage } from "./liff/pages/CaseDetailPage";
 import { HelpPage } from "./liff/pages/HelpPage";
 import { BindPage } from "./liff/pages/BindPage";
-import { ServiceClientsPage } from "./liff/pages/ServiceClientsPage";
 import { ServiceFormPage } from "./liff/pages/ServiceFormPage";
+import { ServiceClientsPage } from "./liff/pages/ServiceClientsPage";
 import { MpcReviewPage } from "./liff/pages/MpcReviewPage";
 import { AdminLoginPage } from "./admin/pages/AdminLoginPage";
 import { AdminCasesPage } from "./admin/pages/AdminCasesPage";
@@ -36,7 +36,7 @@ const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/liff" replace /> },
   {
     path: "/liff",
-    element: <LiffApp />,
+    element: <div className="liff-shell"><LiffApp /></div>,
     children: [
       { index: true, element: <HomePage /> },
       { path: "ask", element: <AskPage /> },

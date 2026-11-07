@@ -1,0 +1,342 @@
+{
+  "CASE_01_BA16_MED": {
+    "scenario_name": "三人交錯：代購普拿疼(0s) + 排骨便當閒聊(35s~40s) + 10分鐘後跨輪指代發問(600s)",
+    "api_confirm_payload": {
+      "client_event_id": "evt-a0d635522567",
+      "fsm_state": "Waiting_LINE_Confirm",
+      "segments": [
+        {
+          "idx": 0,
+          "timestamp_sec": 0.0,
+          "speaker_cluster": "說話者一",
+          "raw_text": "阿美，陳阿嬤昨晚頭痛，妳等一下順便去仁愛路藥局幫我買盒普拿疼給她吃兩顆好不好？",
+          "masked_text": "阿美，[長輩_1]昨晚頭痛，妳等一下順[地點_1]藥局幫我買盒普拿疼給她吃兩顆好不好？",
+          "predicted_role": "FAMILY",
+          "addressee": "CAREGIVER",
+          "parent_idx": 0,
+          "thread_id": "Thread_1",
+          "safety_flag": "TIER2_MED_RISK"
+        },
+        {
+          "idx": 1,
+          "timestamp_sec": 35.0,
+          "speaker_cluster": "說話者二",
+          "raw_text": "我今天中午便當的排骨太硬了咬不動，明天中午改吃魚肚粥啦。",
+          "masked_text": "我今天中午便當的排骨太硬了咬不動，明天中午改吃魚肚粥啦。",
+          "predicted_role": "ELDER",
+          "addressee": "O",
+          "parent_idx": 1,
+          "thread_id": "Thread_2",
+          "safety_flag": "SAFE"
+        },
+        {
+          "idx": 2,
+          "timestamp_sec": 40.0,
+          "speaker_cluster": "說話者一",
+          "raw_text": "好啦媽，明天中午幫妳改買魚肚粥。",
+          "masked_text": "好啦媽，明天中午幫妳改買魚肚粥。",
+          "predicted_role": "FAMILY",
+          "addressee": "ELDER",
+          "parent_idx": 1,
+          "thread_id": "Thread_2",
+          "safety_flag": "SAFE"
+        },
+        {
+          "idx": 3,
+          "timestamp_sec": 600.0,
+          "speaker_cluster": "說話者三",
+          "raw_text": "小照，家屬剛剛說買藥的那樣，按規定可以做嗎？幫我回報給督導。",
+          "masked_text": "小照，家屬剛剛說買藥的那樣，按規定可以做嗎？幫我回報給督導。",
+          "predicted_role": "CAREGIVER",
+          "addressee": "SYSTEM",
+          "parent_idx": 0,
+          "thread_id": "Thread_1",
+          "safety_flag": "SAFE"
+        }
+      ],
+      "roles": {
+        "說話者一": "FAMILY (系統預填，可於LINE手動修改)",
+        "說話者二": "ELDER (系統預填，可於LINE手動修改)",
+        "說話者三": "CAREGIVER (系統預填，可於LINE手動修改)"
+      },
+      "selected_idx": [
+        0,
+        3
+      ],
+      "summary": "【跨輪解纏結重寫 (第1輪(FAMILY對CAREGIVER)、第4輪(CAREGIVER對SYSTEM))】於案家服務時，發生「代購藥品與協助用藥（標的：普拿疼(止痛藥)兩顆）」，涉及服務領域 BA_22（代碼：BA16）與分類「額外要求」。請問該情境之合規處置規範為何，並請同步建立紀錄或待確認案件。",
+      "active_intents": [
+        "Case_Report"
+      ],
+      "slot_state": {
+        "service_domain": "BA_22",
+        "service_code": "BA16",
+        "report_categories": [
+          "額外要求"
+        ],
+        "target_action": "代購藥品與協助用藥",
+        "target_item": "普拿疼(止痛藥)兩顆",
+        "auth_status": "無處方箋(非處方成藥-法規禁止代決定)",
+        "emotion_cue": "Neutral"
+      },
+      "work_summary_draft": {
+        "情緒狀況": "Neutral",
+        "健康狀況": "術後恢復/局部疼痛",
+        "案主自訴": "我今天中午便當的排骨太硬了咬不動，明天中午改吃魚肚粥啦。",
+        "互動摘要": "【跨輪解纏結重寫 (第1輪(FAMILY對CAREGIVER)、第4輪(CAREGIVER對SYSTEM))】於案家服務時，發生「代購藥品與協助用藥（標的：普拿疼(止痛藥)兩顆）」，涉及服務領域 BA_22（代碼：BA16）與分類「額外要求」。請問該情境之合規處置規範為何，並請同步建立紀錄或待確認案件。"
+      }
+    }
+  },
+  "CASE_02_BATH_HARASS_MULTI": {
+    "scenario_name": "沐浴性騷擾(摸大腿) + 家屬要求順便刷馬桶 (無連接詞雙意圖 + 雙異常合併)",
+    "api_confirm_payload": {
+      "client_event_id": "evt-33cb7c2b8f97",
+      "fsm_state": "Waiting_LINE_Confirm",
+      "segments": [
+        {
+          "idx": 0,
+          "timestamp_sec": 0.0,
+          "speaker_cluster": "說話者二",
+          "raw_text": "妹妹妳幫我洗澡的時候，順便幫我摸一下大腿跟洗私密部位啦。",
+          "masked_text": "妹妹妳幫我洗澡的時候，順便幫我摸一下大腿跟洗私密部位啦。",
+          "predicted_role": "FAMILY",
+          "addressee": "CAREGIVER",
+          "parent_idx": 0,
+          "thread_id": "Thread_1",
+          "safety_flag": "HARASSMENT_RISK"
+        },
+        {
+          "idx": 1,
+          "timestamp_sec": 15.0,
+          "speaker_cluster": "說話者一",
+          "raw_text": "阿美，他洗完澡之後，浴室那個馬桶順便幫我們刷一刷掃廁所喔！",
+          "masked_text": "阿美，他洗完澡之後，浴室那個馬桶順便幫我們刷一刷掃廁所喔！",
+          "predicted_role": "FAMILY",
+          "addressee": "CAREGIVER",
+          "parent_idx": 1,
+          "thread_id": "Thread_2",
+          "safety_flag": "SAFE"
+        },
+        {
+          "idx": 2,
+          "timestamp_sec": 30.0,
+          "speaker_cluster": "說話者三",
+          "raw_text": "小照，剛剛長輩摸大腿還有家屬叫我刷馬桶這兩件事怎麼辦？幫我通報督導！",
+          "masked_text": "小照，剛剛長輩摸大腿還有家屬叫我刷馬桶這兩件事怎麼辦？幫我通報督導！",
+          "predicted_role": "CAREGIVER",
+          "addressee": "SYSTEM",
+          "parent_idx": 0,
+          "thread_id": "Thread_1",
+          "safety_flag": "HARASSMENT_RISK"
+        }
+      ],
+      "roles": {
+        "說話者二": "FAMILY (系統預填，可於LINE手動修改)",
+        "說話者一": "FAMILY (系統預填，可於LINE手動修改)",
+        "說話者三": "CAREGIVER (系統預填，可於LINE手動修改)"
+      },
+      "selected_idx": [
+        0,
+        1,
+        2
+      ],
+      "summary": "【跨輪解纏結重寫 (第1輪(FAMILY對CAREGIVER)、第2輪(FAMILY對CAREGIVER)、第3輪(CAREGIVER對SYSTEM))】於案家服務時，發生「沐浴服務遭遇不當肢體接觸/性騷擾 ＋ 家屬要求額外家務清潔（標的：個案要求觸碰私密部位/摸大腿 ＋ 刷洗馬桶/高處清潔）」，涉及服務領域 BA_22（代碼：BA07+BA15）與分類「申訴處理 (職場安全/性騷擾)/額外要求/服務性問題」。請問該情境之合規處置規範為何，並請同步建立紀錄或待確認案件。",
+      "active_intents": [
+        "QA_RAG_Query",
+        "Case_Report"
+      ],
+      "slot_state": {
+        "service_domain": "BA_22",
+        "service_code": "BA07+BA15",
+        "report_categories": [
+          "申訴處理 (職場安全/性騷擾)",
+          "額外要求",
+          "服務性問題"
+        ],
+        "target_action": "沐浴服務遭遇不當肢體接觸/性騷擾 ＋ 家屬要求額外家務清潔",
+        "target_item": "個案要求觸碰私密部位/摸大腿 ＋ 刷洗馬桶/高處清潔",
+        "auth_status": "UNKNOWN",
+        "emotion_cue": "Anger/Distress"
+      },
+      "work_summary_draft": {
+        "情緒狀況": "Anger/Distress",
+        "健康狀況": "一般穩定",
+        "案主自訴": "無特殊自訴",
+        "互動摘要": "【跨輪解纏結重寫 (第1輪(FAMILY對CAREGIVER)、第2輪(FAMILY對CAREGIVER)、第3輪(CAREGIVER對SYSTEM))】於案家服務時，發生「沐浴服務遭遇不當肢體接觸/性騷擾 ＋ 家屬要求額外家務清潔（標的：個案要求觸碰私密部位/摸大腿 ＋ 刷洗馬桶/高處清潔）」，涉及服務領域 BA_22（代碼：BA07+BA15）與分類「申訴處理 (職場安全/性騷擾)/額外要求/服務性問題」。請問該情境之合規處置規範為何，並請同步建立紀錄或待確認案件。"
+      }
+    }
+  },
+  "CASE_03_OOD_MOUNTAIN_DOGS": {
+    "scenario_name": "10/30 嘉安非典型危機 (OOD)：山區四隻咬人狗與淹水",
+    "api_confirm_payload": {
+      "client_event_id": "evt-7e66e1c941a3",
+      "fsm_state": "Waiting_LINE_Confirm",
+      "segments": [
+        {
+          "idx": 0,
+          "timestamp_sec": 0.0,
+          "speaker_cluster": "說話者三",
+          "raw_text": "小照，我現在去山區案家路上遇到四隻咬人狗擋在門口，而且前面淹水過不去，這該怎麼辦？",
+          "masked_text": "小照，我現在去[地點_1]上遇到四隻咬人狗擋在門口，而且前面淹水過不去，這該怎麼辦？",
+          "predicted_role": "CAREGIVER",
+          "addressee": "SYSTEM",
+          "parent_idx": 0,
+          "thread_id": "Thread_1",
+          "safety_flag": "SAFE"
+        }
+      ],
+      "roles": {
+        "說話者三": "CAREGIVER (系統預填，可於LINE手動修改)"
+      },
+      "selected_idx": [
+        0
+      ],
+      "summary": "【跨輪解纏結重寫 (第1輪(CAREGIVER對SYSTEM))】於案家服務時，發生「遭遇非典型環境突發風險（標的：山區咬人犬隻/淹水阻斷服務）」，涉及服務領域 OOD_NOVEL_CRISIS（代碼：OOD_PENDING_SOP）與分類「服務性問題」。請問該情境之合規處置規範為何，並請同步建立紀錄或待確認案件。",
+      "active_intents": [
+        "QA_RAG_Query",
+        "Case_Report",
+        "OOD_Escalate_Supervisor"
+      ],
+      "slot_state": {
+        "service_domain": "OOD_NOVEL_CRISIS",
+        "service_code": "OOD_PENDING_SOP",
+        "report_categories": [
+          "服務性問題"
+        ],
+        "target_action": "遭遇非典型環境突發風險",
+        "target_item": "山區咬人犬隻/淹水阻斷服務",
+        "auth_status": "知識庫無標準法規依據(啟動OOD安全拒答並轉居督)",
+        "emotion_cue": "Neutral"
+      },
+      "work_summary_draft": {
+        "情緒狀況": "Neutral",
+        "健康狀況": "一般穩定",
+        "案主自訴": "無特殊自訴",
+        "互動摘要": "【跨輪解纏結重寫 (第1輪(CAREGIVER對SYSTEM))】於案家服務時，發生「遭遇非典型環境突發風險（標的：山區咬人犬隻/淹水阻斷服務）」，涉及服務領域 OOD_NOVEL_CRISIS（代碼：OOD_PENDING_SOP）與分類「服務性問題」。請問該情境之合規處置規範為何，並請同步建立紀錄或待確認案件。"
+      }
+    }
+  },
+  "CASE_04_P0_EMERGENCY_SOS": {
+    "scenario_name": "10/30 新增 P0 緊急通道：長輩跌倒流血且昏倒叫不醒",
+    "api_confirm_payload": {
+      "client_event_id": "evt-d89242bf9f06",
+      "fsm_state": "SOS_1_Alerting_All_Supervisors",
+      "segments": [
+        {
+          "idx": 0,
+          "timestamp_sec": 0.0,
+          "speaker_cluster": "說話者三",
+          "raw_text": "小照救命！王爺爺在客廳跌倒流血而且突然昏倒叫不醒了！",
+          "masked_text": "小照救命！[長輩_1]在客廳跌倒流血而且突然昏倒叫不醒了！",
+          "predicted_role": "CAREGIVER",
+          "addressee": "SYSTEM",
+          "parent_idx": 0,
+          "thread_id": "Thread_1",
+          "safety_flag": "TIER1_SOS"
+        }
+      ],
+      "roles": {
+        "說話者三": "CAREGIVER"
+      },
+      "selected_idx": [
+        0
+      ],
+      "summary": "【P0 緊急通報】現場發生危急事件：「小照救命！[長輩_1]在客廳跌倒流血而且突然昏倒叫不醒了！」，請立即接手處理並確認是否已撥打 119/110！",
+      "active_intents": [
+        "P0_Emergency_SOS",
+        "Case_Report"
+      ],
+      "slot_state": {
+        "service_domain": "SAFETY_EMERGENCY",
+        "service_code": "EMERGENCY",
+        "report_categories": [
+          "緊急事件"
+        ],
+        "target_action": "P0一鍵緊急通報與跨APP持續警報",
+        "target_item": "小照救命！[長輩_1]在客廳跌倒流血而且突然昏倒叫不醒了！",
+        "auth_status": "需居督立即接手解除",
+        "emotion_cue": "Distress"
+      },
+      "work_summary_draft": {
+        "情緒狀況": "危急/驚慌",
+        "健康狀況": "小照救命！[長輩_1]在客廳跌倒流血而且突然昏倒叫不醒了！",
+        "案主自訴": "無",
+        "互動摘要": "已觸發 P0 緊急通報"
+      }
+    }
+  },
+  "CASE_05_GA09_SC09_RESPITE": {
+    "scenario_name": "10/30 新增 GA09/SC09 喘息短照表單分流 + 長輩聊八點檔電視劇雜訊",
+    "api_confirm_payload": {
+      "client_event_id": "evt-245a1e5541d1",
+      "fsm_state": "Waiting_LINE_Confirm",
+      "segments": [
+        {
+          "idx": 0,
+          "timestamp_sec": 0.0,
+          "speaker_cluster": "說話者一",
+          "raw_text": "阿美請問一下，我們今天申請的是 GA09 居家喘息服務跟 SC09 短照服務，這要勾哪一張紀錄表？",
+          "masked_text": "阿美請問一下，我們今天申請的是 GA09 居家喘息服務跟 SC09 短照服務，這要勾哪一張紀錄表？",
+          "predicted_role": "FAMILY",
+          "addressee": "CAREGIVER",
+          "parent_idx": 0,
+          "thread_id": "Thread_1",
+          "safety_flag": "SAFE"
+        },
+        {
+          "idx": 1,
+          "timestamp_sec": 12.0,
+          "speaker_cluster": "說話者二",
+          "raw_text": "這齣八點檔電視劇昨天已經重播三次了，男主角怎麼還沒出來。",
+          "masked_text": "這齣八點檔電視劇昨天已經重播三次了，男主角怎麼還沒出來。",
+          "predicted_role": "ELDER",
+          "addressee": "O",
+          "parent_idx": 1,
+          "thread_id": "Thread_2",
+          "safety_flag": "SAFE"
+        },
+        {
+          "idx": 2,
+          "timestamp_sec": 25.0,
+          "speaker_cluster": "說話者三",
+          "raw_text": "小照，家屬剛剛問的喘息跟短照服務，要填哪一張表單？跟 BA 22項是一樣的嗎？",
+          "masked_text": "小照，家屬剛剛問的喘息跟短照服務，要填哪一張表單？跟 BA 22項是一樣的嗎？",
+          "predicted_role": "CAREGIVER",
+          "addressee": "SYSTEM",
+          "parent_idx": 0,
+          "thread_id": "Thread_1",
+          "safety_flag": "SAFE"
+        }
+      ],
+      "roles": {
+        "說話者一": "FAMILY (系統預填，可於LINE手動修改)",
+        "說話者二": "ELDER (系統預填，可於LINE手動修改)",
+        "說話者三": "CAREGIVER (系統預填，可於LINE手動修改)"
+      },
+      "selected_idx": [
+        0,
+        2
+      ],
+      "summary": "【跨輪解纏結重寫 (第1輪(FAMILY對CAREGIVER)、第3輪(CAREGIVER對SYSTEM))】於案家服務時，發生「GA09/SC09 喘息與短照服務紀錄表單分流與核對（標的：喘息/短照服務紀錄表 (獨立於 BA 22項之外)）」，涉及服務領域 GA09_SC09（代碼：GA09_SC09）與分類「服務性問題」。請問該情境之合規處置規範為何，並請同步建立紀錄或待確認案件。",
+      "active_intents": [
+        "QA_RAG_Query"
+      ],
+      "slot_state": {
+        "service_domain": "GA09_SC09",
+        "service_code": "GA09_SC09",
+        "report_categories": [
+          "服務性問題"
+        ],
+        "target_action": "GA09/SC09 喘息與短照服務紀錄表單分流與核對",
+        "target_item": "喘息/短照服務紀錄表 (獨立於 BA 22項之外)",
+        "auth_status": "僅限 GA09 與 SC09 兩項，不與 BA 22項混用",
+        "emotion_cue": "Neutral"
+      },
+      "work_summary_draft": {
+        "情緒狀況": "Neutral",
+        "健康狀況": "一般穩定",
+        "案主自訴": "這齣八點檔電視劇昨天已經重播三次了，男主角怎麼還沒出來。",
+        "互動摘要": "【跨輪解纏結重寫 (第1輪(FAMILY對CAREGIVER)、第3輪(CAREGIVER對SYSTEM))】於案家服務時，發生「GA09/SC09 喘息與短照服務紀錄表單分流與核對（標的：喘息/短照服務紀錄表 (獨立於 BA 22項之外)）」，涉及服務領域 GA09_SC09（代碼：GA09_SC09）與分類「服務性問題」。請問該情境之合規處置規範為何，並請同步建立紀錄或待確認案件。"
+      }
+    }
+  }
+}

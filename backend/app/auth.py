@@ -23,6 +23,7 @@ from app.db import get_db
 from app.models import AuthSession, BindingCode, LineAccount, User
 from app.security import hash_password, hmac_hex, new_token
 from app.services import audit, jobs
+from app.services.jiaan_line_binding_policy import BINDABLE_ROLES, requires_verified_real_line
 
 LINE_VERIFY_URL = "https://api.line.me/oauth2/v2.1/verify"
 DEV_TOKEN_PREFIX = "dev:"
@@ -110,12 +111,17 @@ def bind_line_account(session: Session, identity: LineIdentity, code: str) -> Us
         session.commit()
         raise AuthError("invalid_code", "綁定碼無效或已過期，請向督導索取新的綁定碼")
     user = session.get(User, binding.user_id)
-    if user is None or not user.is_active or user.role != "caregiver":
+    if user is None or not user.is_active or user.role not in BINDABLE_ROLES:
         raise AuthError("invalid_code", "帳號無法使用此綁定碼")
+    # XZ_MANAGER_LINE_BINDING_20261103
+    if requires_verified_real_line(user.role) and identity.dev:
+        raise AuthError("real_line_required", "督導、主任及管理員須以本人真實 LINE 完成綁定")
     existing = session.scalar(select(LineAccount).where(LineAccount.line_user_id == identity.line_user_id))
     if existing and existing.user_id != user.id:
         raise AuthError("already_bound", "這個 LINE 帳號已綁定其他人員，請聯絡管理員")
     mine = session.scalar(select(LineAccount).where(LineAccount.user_id == user.id))
+    if requires_verified_real_line(user.role) and mine and mine.line_user_id != identity.line_user_id:
+        raise AuthError("line_rebind_requires_unbind", "此人員已有 LINE 綁定，請先由授權管理者解除原綁定")
     if mine is None:
         session.add(LineAccount(user_id=user.id, line_user_id=identity.line_user_id, followed_at=jobs.utcnow()))
     else:

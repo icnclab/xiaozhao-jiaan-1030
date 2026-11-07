@@ -13,7 +13,7 @@ export function AskPage() {
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const [mode, setMode] = useState<"text" | "voice">("text");
+  const [mode, setMode] = useState<"text" | "voice">(preset?.question ? "text" : "voice");
   const requestId = useRef(newRequestId());
   const navigate = useNavigate();
 
@@ -42,12 +42,17 @@ export function AskPage() {
       <h1>問 AI</h1>
       <p className="small">登入身分：{{ caregiver: "照服員", supervisor: "居督", director: "主任", admin: "系統管理員" }[user.role] ?? "照服員"}</p>
       <div className="row">
-        <button className={`btn ${mode === "text" ? "primary" : ""}`} onClick={() => setMode("text")}>⌨️ 文字</button>
-        <button className={`btn ${mode === "voice" ? "primary" : ""}`} onClick={() => setMode("voice")}>🎙️ 語音提問</button>
+        <button className={`btn big ${mode === "voice" ? "primary" : ""}`} aria-pressed={mode === "voice"} onClick={() => setMode("voice")}>🎙️ 語音提問</button>
+        <button className={`btn ${mode === "text" ? "primary" : ""}`} aria-pressed={mode === "text"} onClick={() => setMode("text")}>⌨️ 文字</button>
       </div>
+      {mode === "voice" && <p>按語音按鈕開始提問；無法使用麥克風時，可切換「文字」。</p>}
       {mode === "text" ? (
         <div className="card stack">
+          <label htmlFor="caregiver-question">輸入想問的問題</label>
+          <p id="caregiver-question-help">先輸入問題，再按「送出問題」。請勿填寫姓名或房號。</p>
           <textarea
+            id="caregiver-question"
+            aria-describedby="caregiver-question-help"
             placeholder={`例如：${config.wake_words[0]}，家屬要我幫住民代購成藥，機構規定可以嗎？`}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}

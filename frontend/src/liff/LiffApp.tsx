@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { api, errorMessage, getToken, setToken, type PublicConfig, type User } from "../api";
-import { loginDev, loginWithLiff, type LiffSession } from "./auth";
+import { api, errorMessage, getToken, isApiError, setToken, type PublicConfig, type User } from "../api";
+import { loginDev, loginWithLiff, reopenLiff, type LiffSession } from "./auth";
 
 interface LiffContextValue {
   config: PublicConfig;
@@ -66,20 +66,30 @@ export function LiffApp() {
   // 已有 session token → 直接取 /me
   useEffect(() => {
     if (!config || session) return;
-    const token = getToken();
-    if (token) {
-      api<User>("/api/me")
-        .then((user) => setSession({ status: "ok", user, dev: config.line_mode === "mock" }))
-        .catch(() => setToken(null));
-      return;
+    let cancelled = false;
+    setBusy(true);
+    async function restore() {
+      if (getToken()) {
+        try {
+          const user = await api<User>("/api/me");
+          if (!cancelled) { setBusy(false); setSession({ status: "ok", user, dev: config!.line_mode === "mock" }); }
+          return;
+        } catch (e) {
+          // Only an expired/invalid application session may trigger fresh LINE verification.
+          if (!isApiError(e) || e.status !== 401) throw e;
+          if (cancelled) return;
+          setToken(null);
+        }
+      }
+      if (!cancelled && config!.line_mode === "real" && config!.liff_id) {
+        const next = await loginWithLiff(config!);
+        if (!cancelled) { setBusy(false); setSession(next); }
+      }
     }
-    if (config.line_mode === "real" && config.liff_id) {
-      setBusy(true);
-      loginWithLiff(config)
-        .then(setSession)
-        .catch((e) => setError(errorMessage(e)))
-        .finally(() => setBusy(false));
-    }
+    restore().catch((e) => {
+      if (!cancelled) setError(errorMessage(e));
+    }).finally(() => { if (!cancelled) setBusy(false); });
+    return () => { cancelled = true; };
   }, [config, session]);
 
   useEffect(() => {
@@ -99,6 +109,12 @@ export function LiffApp() {
       <div className="page">
         <div className="notice danger">{error}</div>
         <button className="btn block" onClick={() => window.location.reload()}>重新載入</button>
+        {config?.line_mode === "real" && config.liff_id && (
+          <button className="btn block" onClick={() => {
+            setError(null); setBusy(true);
+            reopenLiff(config).catch((e) => { setError(errorMessage(e)); setBusy(false); });
+          }}>重新進行 LINE 登入</button>
+        )}
       </div>
     );
   }
@@ -121,7 +137,7 @@ export function LiffApp() {
     { to: "/liff", label: "首頁", icon: "🏠", end: true },
     { to: "/liff/ask", label: "問 AI", icon: "💬" },
     { to: "/liff/record", label: "錄音", icon: "🎙️" },
-    { to: "/liff/report", label: "分類回報", icon: "📋" },
+    { to: "/liff/report/entry", label: "問題分類", icon: "📋" },
     { to: "/liff/cases", label: "我的案件", icon: "📂" },
   ];
   const mockModes = Object.entries(config.modes).filter(([, v]) => v === "mock" || v === "extractive");
@@ -137,10 +153,11 @@ export function LiffApp() {
         <NavLink to="/liff"><strong>{config.bot_name}｜長照 AI 照護小幫手</strong></NavLink>
         <span className="small">{session.user.display_name}</span>
       </div>
+      <div className="page"><NavLink to="/liff/mpc-review" className="btn">MPC 人工核對（測試）</NavLink></div>
       <Outlet />
       <nav className="tabbar">
         {tabs.map((t) => (
-          <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => (isActive ? "active" : "")}>
+          <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => ((t.to === "/liff/report/entry" ? location.pathname === "/liff/report" || location.pathname.startsWith("/liff/report/") : isActive) ? "active" : "")}>
             <span className="icon">{t.icon}</span>
             {t.label}
           </NavLink>

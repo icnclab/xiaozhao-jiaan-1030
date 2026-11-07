@@ -60,6 +60,7 @@ def mpc_review_draft(body: dict, user: User = Depends(require_roles(*ANY_ROLE)))
         raise _err(422, "mpc_review_invalid", str(exc)) from exc
 
 
+
 def _err(status: int, code: str, message: str) -> HTTPException:
     return HTTPException(status_code=status, detail={"code": code, "message": message})
 
@@ -565,6 +566,15 @@ def my_stats(user: User = Depends(current_user), db: Session = Depends(get_db)) 
     return {"open_cases": open_cases, "replied_cases": replied}
 
 
+
+# JIAAN1030_SERVICE_CATALOG_ROUTER_V1
+from app.api.jiaan1030_service_catalog import router as jiaan1030_service_catalog_router
+router.include_router(jiaan1030_service_catalog_router)
+
+# JIAAN1030_SERVICE_DRAFTS_ROUTER_V1
+from app.api.jiaan1030_service_drafts import router as jiaan1030_service_drafts_router
+router.include_router(jiaan1030_service_drafts_router)
+
 # MPC V6: explicit, server-reviewed ordinary-case submission. No emergency side effects.
 @router.post("/mpc/submit-case")
 def mpc_submit_case_v6(body: dict, user: User = Depends(require_roles("caregiver")), db: Session = Depends(get_db)) -> dict:
@@ -584,4 +594,3 @@ def mpc_submit_case_v6(body: dict, user: User = Depends(require_roles("caregiver
     # Existing case endpoint enforces current organization category and idempotency.
     validated = CaseIn(category_id=category_id, text=text, client_request_id=request_id)
     return create_case(validated, user=user, db=db)
-

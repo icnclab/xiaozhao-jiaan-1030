@@ -17,7 +17,9 @@ export function CaseDetailPage() {
   if (!detail) return <div className="page"><ErrorBox error={error} />{!error && <p className="muted">載入中…</p>}</div>;
   return (
     <div className="page stack">
-      <h1>{detail.number}</h1>
+      <h1>待確認案件</h1>
+      <p style={{overflowWrap:"anywhere"}}><span>待確認案件編號：</span><strong>{detail.number}</strong></p>
+      <p className="muted">此編號不是政府個案案號，也不是服務歷程編號。</p>
       <div className="row">
         <span className={`tag ${detail.status === "replied" ? "ok" : "warn"}`}>{detail.status_label}</span>
         <span className="tag">{detail.source_label}</span>

@@ -15,6 +15,10 @@ export function VoiceQuestion({ onQuestion, busy, error }: { onQuestion: (text: 
   const cap = useRef(checkCapability()).current;
   const [phase, setPhase] = useState<Phase>("idle");
   const [handsFree, setHandsFree] = useState(false);
+  const [pressToTalk, setPressToTalk] = useState(true);
+  const pressActive = useRef(false);
+  const pressCancelled = useRef(false);
+  const stopping = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [transcript, setTranscript] = useState<Transcript | null>(null);
@@ -39,26 +43,45 @@ export function VoiceQuestion({ onQuestion, busy, error }: { onQuestion: (text: 
     recorder.current?.cancel();
   }, []);
 
-  const startRecording = async (viaWake: boolean) => {
+  const startRecording = async (viaWake: boolean, held = false) => {
+    if (recorder.current) return;
+    stopping.current = false;
     if (!cap.ok || !cap.mime) return;
     try {
-      recorder.current = new Recorder(cap.mime);
-      const stream = await recorder.current.start(config.limits.question_max_sec, () => void stopRecording());
+      const activeRecorder = new Recorder(cap.mime);
+      recorder.current = activeRecorder;
+      const stream = await activeRecorder.start(config.limits.question_max_sec, () => void stopRecording());
       setPhase("recording");
       setMessage(viaWake ? "聽到喚醒詞，請說問題…（說完停頓即自動送出）" : null);
       timer.current = window.setInterval(() => setElapsed(recorder.current?.elapsedMs ?? 0), 250);
+      if (held && pressCancelled.current) {
+        activeRecorder.cancel();
+        if (recorder.current === activeRecorder) recorder.current = null;
+        cleanupListeners();
+        setPhase("idle");
+        return;
+      }
+      if (held && !pressActive.current) {
+        void stopRecording(); // released while requesting microphone permission
+        return;
+      }
       if (viaWake) {
         silence.current = new SilenceDetector();
         silence.current.start(stream, () => void stopRecording());
       }
     } catch (e) {
+      recorder.current?.cancel();
+      recorder.current = null;
+      pressActive.current = false;
       setPhase("failed");
       setMessage(`無法開始錄音：${errorMessage(e)}`);
     }
   };
 
   const stopRecording = async () => {
-    if (!recorder.current) return;
+    if (!recorder.current || stopping.current) return;
+    stopping.current = true;
+    pressActive.current = false;
     if (timer.current) window.clearInterval(timer.current);
     silence.current?.stop();
     const blob = await recorder.current.stop();
@@ -71,6 +94,42 @@ export function VoiceQuestion({ onQuestion, busy, error }: { onQuestion: (text: 
       return;
     }
     await upload(blob);
+  };
+
+  // Keep release handlers on window because the idle button is replaced while recording.
+  const endPress = () => {
+    if (!pressActive.current) return;
+    pressActive.current = false;
+    window.removeEventListener("pointerup", endPress);
+    window.removeEventListener("pointercancel", cancelPress);
+    window.removeEventListener("keyup", releaseKey);
+    if (recorder.current?.elapsedMs) void stopRecording();
+    // If mic permission is pending, startRecording() will stop when permission resolves.
+  };
+  const cancelPress = () => {
+    pressCancelled.current = true;
+    pressActive.current = false;
+    window.removeEventListener("pointerup", endPress);
+    window.removeEventListener("pointercancel", cancelPress);
+    window.removeEventListener("keyup", releaseKey);
+    recorder.current?.cancel();
+    recorder.current = null;
+    cleanupListeners();
+    setElapsed(0);
+    setPhase("idle");
+    setMessage("錄音已取消");
+  };
+  const releaseKey = (e: KeyboardEvent) => {
+    if (e.key === " " || e.key === "Enter") endPress();
+  };
+  const beginPress = () => {
+    if (phase !== "idle" || busy || pressActive.current) return;
+    pressCancelled.current = false;
+    pressActive.current = true;
+    window.addEventListener("pointerup", endPress);
+    window.addEventListener("pointercancel", cancelPress);
+    window.addEventListener("keyup", releaseKey);
+    void startRecording(false, true);
   };
 
   const upload = async (blob: Blob) => {
@@ -191,7 +250,21 @@ export function VoiceQuestion({ onQuestion, busy, error }: { onQuestion: (text: 
       </div>
       {phase === "idle" && (
         <>
-          <button className="btn primary big block" onClick={() => startRecording(false)} disabled={busy}>🎙️ 按一下開始錄音</button>
+          <div className="row">
+            <button type="button" className={`btn ${pressToTalk ? "primary" : ""}`} aria-pressed={pressToTalk} onClick={() => setPressToTalk(true)}>按住說話</button>
+            <button type="button" className={`btn ${!pressToTalk ? "primary" : ""}`} aria-pressed={!pressToTalk} onClick={() => setPressToTalk(false)}>按一下錄音</button>
+          </div>
+          {pressToTalk ? (
+            <>
+              <p className="small muted">按住下方按鈕說話，放開後自動轉文字；不必說喚醒詞。請先允許瀏覽器使用麥克風。</p>
+              <button type="button" className="btn primary big block"
+                disabled={busy}
+                style={{ touchAction: "none", userSelect: "none", minHeight: 64 }}
+                onPointerDown={(e) => { if (e.button !== 0) return; e.preventDefault(); beginPress(); }}
+                onKeyDown={(e) => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); beginPress(); } }}
+              >🎙️ 按住說話・放開辨識</button>
+            </>
+          ) : <button type="button" className="btn primary big block" onClick={() => void startRecording(false)} disabled={busy}>🎙️ 按一下開始錄音</button>}
           <button className="btn block" onClick={toggleHandsFree}>{handsFree ? "關閉免手模式" : `🗣️ 免手模式（說「${config.wake_words[0]}」）`}</button>
         </>
       )}
@@ -205,7 +278,11 @@ export function VoiceQuestion({ onQuestion, busy, error }: { onQuestion: (text: 
         <>
           <div className="row"><span className="rec-dot" /> 錄音中 {Math.floor(elapsed / 1000)} 秒／上限 {config.limits.question_max_sec} 秒</div>
           {message && <div className="muted small">{message}</div>}
-          <button className="btn danger big block" onClick={() => void stopRecording()}>⏹ 停止並送出</button>
+          {pressToTalk && pressActive.current ? (
+            <p className="notice info">🎙️ 正在錄音，放開按鈕即辨識</p>
+          ) : (
+            <button className="btn danger big block" onClick={() => void stopRecording()}>⏹ 停止並送出</button>
+          )}
           <button className="btn block" onClick={() => { recorder.current?.cancel(); recorder.current = null; cleanupListeners(); setPhase("idle"); }}>取消</button>
         </>
       )}

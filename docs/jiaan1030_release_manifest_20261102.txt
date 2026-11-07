@@ -1,0 +1,108 @@
+小照｜2026-11-02 正式發布候選清單
+狀態：尚未核准部署
+
+=== 已追蹤修改 ===
+backend/app/api/admin_routes.py
+backend/app/api/auth_routes.py
+backend/app/api/caregiver_routes.py
+backend/app/main.py
+backend/app/services/evidence_selection.py
+backend/app/services/qa_service.py
+backend/app/services/query_understanding.py
+backend/app/services/retrieval_gate.py
+backend/app/services/transcripts.py
+backend/migrations/env.py
+backend/tests/conftest.py
+backend/tests/test_transcripts.py
+frontend/src/admin/AdminApp.tsx
+frontend/src/admin/pages/AdminCaseDetailPage.tsx
+frontend/src/admin/pages/AdminCasesPage.tsx
+frontend/src/admin/pages/AdminUsersPage.tsx
+frontend/src/api.ts
+frontend/src/liff/LiffApp.tsx
+frontend/src/liff/auth.ts
+frontend/src/liff/components.tsx
+frontend/src/liff/pages/AnswerPage.tsx
+frontend/src/liff/pages/AskPage.tsx
+frontend/src/liff/pages/BindPage.tsx
+frontend/src/liff/pages/CaseDetailPage.tsx
+frontend/src/liff/pages/CasesPage.tsx
+frontend/src/liff/pages/HomePage.tsx
+frontend/src/liff/pages/RecordPage.tsx
+frontend/src/liff/pages/ReportPage.tsx
+frontend/src/liff/pages/TranscriptPage.tsx
+frontend/src/main.tsx
+frontend/src/styles.css
+
+=== 未追蹤新檔案 ===
+CLAUDE.md
+backend/app/api/fieldtest_routes.py
+backend/app/api/interaction_routes.py
+backend/app/api/jiaan1030_emergency.html
+backend/app/api/jiaan1030_emergency_launcher.js
+backend/app/api/jiaan1030_emergency_routes.py
+backend/app/api/jiaan1030_emergency_routes.py.before_uuid_fix
+backend/app/api/jiaan1030_service_catalog.py
+backend/app/api/jiaan1030_service_catalog.py.before_round10
+backend/app/api/jiaan1030_service_drafts.py
+backend/app/interaction_models.py
+backend/app/jiaan1030_client_models.py
+backend/app/jiaan1030_draft_models.py
+backend/app/roles.py
+backend/app/services/jiaan1030_ga09_sc09_fields.py
+backend/app/services/jiaan1030_official_approved.json
+backend/app/services/jiaan1030_official_source.py
+backend/app/services/jiaan1030_role_guard.py
+backend/app/static/fieldtest-dashboard.html
+backend/checks/jiaan1030_prod_migration_readonly_check.py
+backend/migrations/versions/0003_jiaan1030_catalog_schema.py
+backend/migrations/versions/0004_jiaan1030_clients.py
+backend/migrations/versions/0005_jiaan1030_drafts.py
+backend/migrations/versions/0006_jiaan1030_emergency.py
+backend/migrations/versions/0006_jiaan1030_emergency.py.before_conflict_fix
+backend/test_director_org_readonly_20261030.py
+backend/test_director_org_readonly_20261030.py.before_config_fix_20261030_103144
+backend/test_jiaan1030_catalog_gate_unit.py
+backend/test_jiaan1030_official_source_unit.py
+backend/tests/test_jiaan1030_emergency_integration.py
+backend/tests/test_jiaan1030_emergency_schema.py
+backend/tests/test_jiaan1030_ga09_sc09_fields.py
+backend/tests/test_jiaan1030_service_drafts.py
+backend/xz1030_schema_check.py
+docs/ga09_sc09_progress.md
+docs/jiaan1030_emergency_full_audit.txt
+docs/jiaan1030_emergency_integration_progress.md
+docs/jiaan1030_emergency_schema_audit.txt
+docs/jiaan1030_forms/678411_0.jpg
+docs/jiaan1030_forms/678412_0.jpg
+docs/jiaan1030_forms/678413_0.jpg
+docs/jiaan1030_official_source_progress.md
+docs/jiaan1030_release_batch_progress.md
+docs/jiaan1030_speaker_annotation_progress.md
+frontend/src/liff/bindingCode.ts
+frontend/src/liff/components/DynamicForm.tsx
+frontend/src/liff/pages/ReportEntryPage.tsx
+frontend/src/liff/pages/ReportPreviewPage.tsx
+frontend/src/liff/pages/ServiceClientsPage.tsx
+frontend/src/liff/pages/ServiceFormPage.tsx
+frontend/src/liff/reportScenarios.ts
+frontend/src/liff/reportServices.ts
+frontend/src/liff/reportSubmission.ts
+frontend/tests/dynamic-form-ga09-sc09.test.tsx
+frontend/tests/report-click.test.tsx
+frontend/tests/report-safety-event.test.tsx
+frontend/tests/speaker-annotation.test.tsx
+
+=== 前端建置 ===
+frontend/dist 已完成本機建置
+
+=== 尚未核准 ===
+0003～0006 Migration 正式環境相容性
+GA09／SC09 正式表單內容
+嘉安 SOP 正式文件
+跨 APP 背景通知
+
+=== 禁止操作 ===
+不得直接覆蓋 ltc_clean
+不得直接執行 alembic upgrade head
+不得未經確認就更新正式 API

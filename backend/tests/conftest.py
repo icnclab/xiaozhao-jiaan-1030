@@ -63,10 +63,12 @@ configure_engine(os.environ["DATABASE_URL"])
 DOCS = Path(__file__).resolve().parents[2] / "demo" / "documents"
 PASSWORD = "test-password-123"
 TABLES = (
-    "citations, feedback, tts_assets, notification_jobs, case_messages, case_events, cases, transcript_revisions, "
+    "citations, feedback, tts_assets, notification_jobs, jiaan1030_service_form_drafts, "
+    "jiaan1030_service_client_grants, jiaan1030_service_clients, case_messages, case_events, "
+    "cases, transcript_revisions, "
     "transcript_segments, qa_items, transcripts, chunks, document_versions, documents, category_templates, "
     "categories, binding_codes, sessions, line_accounts, deid_terms, users, organizations, line_events, "
-    "line_mock_outbox, jobs, audit_logs, worker_heartbeats"
+    "line_mock_outbox, jobs, audit_logs, worker_heartbeats, jiaan1030_service_forms, jiaan1030_ba_services"
 )
 
 

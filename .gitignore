@@ -110,3 +110,20 @@ frontend/dist-*/
 
 # Local environment template
 .env.example
+
+# GitHub sync exclusions (real case data / production artifacts / unknown archives)
+# 還原紀錄、正式 SQL Patch／結構審核、展示用錄音與文件、真實訪談逐字稿
+backend/restore_log.txt
+docs/jiaan1030_production_patch_*.sql
+docs/jiaan1030_production_schema_review_*.txt
+data_demo/
+docs/interviews/
+docs/jiaan1030_forms/
+# 編輯過程留下的 .before_* 備份檔，不是正式程式版本
+*.before_*
+# 工具暫存與未知來源壓縮檔
+.playwright-mcp/
+/*.zip
+/xz*.zip
+/xiaozhao_*.zip
+/AgeTech_*.zip

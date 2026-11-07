@@ -93,7 +93,7 @@ function Test-Funnel {
         foreach ($site in $cfg.Web.PSObject.Properties) {
             $allow = $cfg.AllowFunnel.PSObject.Properties[$site.Name]
             $handler = $site.Value.Handlers.PSObject.Properties['/']
-            if ($site.Name -eq 'stust.tailee6e4a.ts.net:443' -and $allow -and $allow.Value -eq $true -and
+            if ($site.Name -eq 'stust.tail379935.ts.net:443' -and $allow -and $allow.Value -eq $true -and
                 $handler -and $handler.Value.Proxy.TrimEnd('/') -eq 'http://127.0.0.1:8140') { return $true }
         }
     }
@@ -168,9 +168,11 @@ function Get-LaunchSpec([string]$Kind) {
     $command = '$ErrorActionPreference=''Continue''; $env:PYTHONUTF8=''1''; $env:PYTHONIOENCODING=''utf-8''; ' +
         'Set-Location -LiteralPath ' + (Quote-PS $cwd) + '; & ' + (Quote-PS $exe) + ' ' +
         (($args | ForEach-Object { Quote-PS $_ }) -join ' ') + ' *>> ' + (Quote-PS $log) + '; exit $LASTEXITCODE'
+    if($Kind -in @('api','worker')){ $command = '. ' + (Quote-PS (Join-Path $PSScriptRoot 'load_webpush_runtime.ps1')) + '; ' + $command }
     [pscustomobject]@{Encoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command));Exe=$exe;Kind=$Kind}
 }
 if (-not $Library) {
     try { $rows = @(Get-JiaanStatus); $rows | Format-Table -AutoSize; if (@($rows | Where-Object Result -eq 'FAIL').Count) { exit 1 }; exit 0 }
     catch { Write-Host 'FAIL: health check could not complete; check permissions and dependencies.'; exit 1 }
 }
+

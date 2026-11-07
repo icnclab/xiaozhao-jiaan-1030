@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param()
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'status_jiaan.ps1') -Library
@@ -24,19 +24,56 @@ try {
         $children += $next; $parents = @($next | ForEach-Object { [int]$_.ProcessId })
     } while ($parents.Count)
     if (-not $children.Count) { throw 'API descendants missing' }
+    # CPython on Windows venv: venv launcher -> base interpreter.
+    # Accept exactly that pair, plus at most one direct console host.
+    $cfgPath = Join-Path $script:Root 'backend\.venv\pyvenv.cfg'
+    $baseCfg = @(Get-Content -LiteralPath $cfgPath | Where-Object { $_ -match '^executable\s*=' })
+    if ($baseCfg.Count -ne 1) { throw 'Base interpreter configuration unavailable' }
+    $basePython = ($baseCfg[0] -split '=', 2)[1].Trim()
+    if (-not (Test-Path -LiteralPath $basePython -PathType Leaf)) { throw 'Base interpreter unavailable' }
+    $venvPython = $spec.Exe
+    $pythonChildren = @($children | Where-Object { $_.Name -ieq 'python.exe' })
+    $launchers = @($pythonChildren | Where-Object {
+        $_.ParentProcessId -eq $owner.ProcessId -and $_.ExecutablePath -ieq $venvPython
+    })
+    if ($launchers.Count -ne 1 -or $pythonChildren.Count -ne 2) { throw 'Unexpected API Python process tree' }
+    $launcher = $launchers[0]
+    $base = @($pythonChildren | Where-Object {
+        $_.ParentProcessId -eq $launcher.ProcessId -and $_.ExecutablePath -ieq $basePython
+    })
+    if ($base.Count -ne 1) { throw 'Unexpected API base interpreter' }
+    $consoleHosts = @($children | Where-Object { $_.Name -ieq 'conhost.exe' })
+    if ($consoleHosts.Count -gt 1) { throw 'Unexpected API console count' }
     foreach ($child in $children) {
-        if ($child.Name -eq 'conhost.exe' -and $child.ParentProcessId -eq $owner.ProcessId -and
-            $child.ExecutablePath -ieq "$env:SystemRoot\System32\conhost.exe") { continue }
-        if ($child.Name -ne 'python.exe' -or -not $child.CommandLine -or $child.CommandLine -notmatch 'uvicorn\s+app\.main:app') { throw 'Unexpected API descendant' }
+        if (-not $child.ExecutablePath -or -not $child.CommandLine -or -not $child.CreationDate) { throw 'Incomplete descendant identity' }
+        if ($child.CreationDate -lt $owner.CreationDate) { throw 'Unexpected descendant start time' }
+        if ($child.Name -ieq 'conhost.exe') {
+            if ($child.ParentProcessId -ne $owner.ProcessId -or
+                $child.ExecutablePath -ine "$env:SystemRoot\System32\conhost.exe" -or
+                @($all | Where-Object { $_.ParentProcessId -eq $child.ProcessId }).Count) {
+                throw 'Unexpected console process'
+            }
+        } elseif ($child.Name -ieq 'python.exe') {
+            if ($child.ProcessId -notin @($launcher.ProcessId, $base[0].ProcessId) -or
+                $child.CommandLine -notmatch 'uvicorn\s+app\.main:app') { throw 'Unexpected API Python arguments' }
+        } else { throw 'Unexpected descendant; refusing stop' }
     }
-    $targets = @($children | Where-Object Name -eq 'python.exe')
-    [array]::Reverse($targets)
+    if (@($all | Where-Object { $_.ParentProcessId -eq $base[0].ProcessId }).Count) {
+        throw 'Unexpected nested base interpreter descendants'
+    }
+    $targets = @($base[0], $launcher)  # base interpreter, then venv launcher
     $targets += @($owner)
     $pinned = @()
     foreach ($target in $targets) {
         $live = Get-Process -Id $target.ProcessId -ErrorAction Stop
         if ([math]::Abs(($live.StartTime.ToUniversalTime() - $target.CreationDate.ToUniversalTime()).TotalMilliseconds) -gt 1) { throw 'Process identity changed' }
         $pinned += $live
+    }
+    # Refuse if the tree changed after pinning the checked process identities.
+    $fresh = @(Get-CimInstance Win32_Process -ErrorAction Stop)
+    foreach ($node in $children) {
+        $same = @($fresh | Where-Object { $_.ProcessId -eq $node.ProcessId -and $_.ParentProcessId -eq $node.ParentProcessId -and $_.ExecutablePath -ieq $node.ExecutablePath -and $_.CommandLine -ceq $node.CommandLine })
+        if ($same.Count -ne 1) { throw 'Process tree changed before stop' }
     }
     foreach ($live in $pinned) {
         if (-not $live.HasExited) { Stop-Process -InputObject $live -ErrorAction Stop }

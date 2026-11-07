@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-from app.api import admin_routes, auth_routes, caregiver_routes, line_routes, quality_routes
+from app.api import interaction_routes, admin_routes, auth_routes, caregiver_routes, line_routes, quality_routes
 from app.api import fieldtest_routes
 from app.config import get_settings
 from app.db import new_session
@@ -75,21 +75,23 @@ async def security_headers(request: Request, call_next):  # type: ignore[no-unty
     return response
 
 
-for module in (auth_routes, caregiver_routes, admin_routes, line_routes, quality_routes):
+for module in (interaction_routes, auth_routes, caregiver_routes, admin_routes, line_routes, quality_routes):
     app.include_router(module.router, prefix="/api")
 app.include_router(fieldtest_routes.router, prefix="/api")
+
 
 from app.api import jiaan1030_emergency_routes as _jiaan1030_emergency
 app.include_router(_jiaan1030_emergency.router, prefix="/api")
 
+
+# JIAAN1030_REGISTERED_ROUTES_20261102
 from app.api import jiaan1030_service_catalog as _jiaan1030_service_catalog
-app.include_router(_jiaan1030_service_catalog.router, prefix="/api")
+app.include_router(_jiaan1030_service_catalog.router, prefix='/api')
 from app.api import jiaan1030_service_drafts as _jiaan1030_service_drafts
-app.include_router(_jiaan1030_service_drafts.router, prefix="/api")
-
+app.include_router(_jiaan1030_service_drafts.router, prefix='/api')
+# XZ_JIAAN_WEBPUSH_ROUTER
 from app.api import jiaan_webpush_routes as _jiaan_webpush
-app.include_router(_jiaan_webpush.router, prefix="/api")
-
+app.include_router(_jiaan_webpush.router, prefix='/api')
 
 @app.get("/api/healthz")
 def healthz() -> dict:
@@ -121,3 +123,4 @@ if (_DIST / "index.html").exists():
         if "." in full_path.rsplit("/", 1)[-1]:  # 像檔案的路徑（favicon.ico、x.js）找不到就 404，不回 index.html
             raise HTTPException(status_code=404, detail={"code": "not_found", "message": "not found"})
         return FileResponse(_DIST / "index.html", headers={"Cache-Control": "no-cache"})
+

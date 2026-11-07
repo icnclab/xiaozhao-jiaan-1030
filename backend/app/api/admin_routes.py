@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.api.serializers import case_out, version_out
 from app.auth import AuthError, create_binding_code, deny_not_found, require_roles, set_password
+from app.services.jiaan_line_binding_policy import can_issue_binding_code, requires_verified_real_line
 from app.config import get_settings
 from app.db import get_db
 from app.models import (
@@ -39,9 +40,8 @@ from app.services.metrics import compute_metrics
 
 router = APIRouter(prefix="/admin")
 SUP = ("supervisor", "admin")
-# 主任（director）的業務監督範圍僅限「案件監督（唯讀）」「人員查看」「治理指標」，
-# 與案件實際處理、文件發佈／下架、回饋審核、通知重送、去識別化設定、帳號建立/停用/刪除、
-# LINE 綁定碼管理等技術性或高風險操作完全分開；後者未經會議紀錄明確授權，維持原樣禁止。
+# 主任（director）的業務監督範圍僅限「案件監督（唯讀）」「人員與角色管理」「治理指標」，
+# 與案件實際處理、文件發佈／下架、回饋審核、通知重送、去識別化設定等技術/操作性權限分開。
 # 依據：frontend/src/admin/AdminApp.tsx 的 DirectorHome／AdminHome 設計註解
 # （「主任負責機構業務管理…與系統管理員的技術設定／帳號維運權限分開設計」）。
 CASE_OVERSIGHT = ("supervisor", "director", "admin")
@@ -558,13 +558,15 @@ def list_users(include_deleted: bool = False, user: User = Depends(require_roles
 class UserIn(BaseModel):
     username: str = Field(min_length=3, max_length=64, pattern=r"^[a-zA-Z0-9_.\-]+$")
     display_name: str = Field(min_length=1, max_length=100)
-    role: str = Field(pattern="^(caregiver|supervisor|admin)$")
+    role: str = Field(pattern="^(caregiver|supervisor|director|admin)$")
     password: str | None = Field(default=None, max_length=200)
 
 
 @router.post("/users")
-def create_user(body: UserIn, user: User = Depends(require_roles("admin")), db: Session = Depends(get_db)) -> dict:
+def create_user(body: UserIn, user: User = Depends(require_roles("admin", "director")), db: Session = Depends(get_db)) -> dict:
     """新增帳號（照服員不需密碼，以綁定碼連 LINE）。"""
+    if user.role == "director" and body.role not in {"caregiver", "supervisor"}:
+        raise _err(403, "director_role_restricted", "主任僅能新增照服員或督導帳號")
     if body.username.startswith(DELETED_USERNAME_PREFIX):
         raise _err(422, "reserved_username", "此帳號前綴為系統保留")
     if db.scalar(select(User.id).where(User.username == body.username)):
@@ -590,10 +592,15 @@ def binding_code(user_id: str, user: User = Depends(require_roles(*SUP)), db: Se
     target = db.scalar(select(User).where(User.id == _uuid(user_id)).with_for_update())
     if target is None or target.org_id != user.org_id:
         raise deny_not_found(db, user, "user", user_id)
-    if target.role != "caregiver":
-        raise _err(403, "caregiver_required", "僅能替照服員產生綁定碼")
+    # XZ_MANAGER_LINE_BINDING_20261103
+    if not can_issue_binding_code(user.role, user.id, target.role, target.id):
+        raise _err(403, "binding_code_forbidden", "沒有權限替此人員產生綁定碼")
     if not target.is_active:
         raise _err(409, "inactive", "帳號已停用，無法產生綁定碼")
+    if requires_verified_real_line(target.role):
+        bound = db.scalar(select(LineAccount.id).where(LineAccount.user_id == target.id))
+        if bound is not None:
+            raise _err(409, "already_bound", "這個人員已綁定 LINE，若需更換應先按權限解除原綁定")
     code = create_binding_code(db, user, target)
     db.commit()
     return {"code": code, "expires_in_days": 7}
@@ -604,12 +611,14 @@ class UserActiveIn(BaseModel):
 
 
 @router.patch("/users/{user_id}/active")
-def set_user_active(user_id: str, body: UserActiveIn, user: User = Depends(require_roles("admin")),
+def set_user_active(user_id: str, body: UserActiveIn, user: User = Depends(require_roles("admin", "director")),
                     db: Session = Depends(get_db)) -> dict:
     """啟用／停用同機構帳號；保留帳號與所有歷史資料。"""
     target = db.scalar(select(User).where(User.id == _uuid(user_id)).with_for_update())
     if target is None or target.org_id != user.org_id:
         raise deny_not_found(db, user, "user", user_id)
+    if user.role == "director" and target.role not in {"caregiver", "supervisor"}:
+        raise _err(403, "director_target_forbidden", "主任不可修改管理員或主任帳號")
     if target.username.startswith(DELETED_USERNAME_PREFIX):
         raise _err(409, "deleted_user", "已刪除帳號不可重新啟用，請建立新帳號")
     target.is_active = body.is_active
@@ -631,8 +640,8 @@ def unbind_line(user_id: str, user: User = Depends(require_roles(*SUP)), db: Ses
     target = db.scalar(select(User).where(User.id == _uuid(user_id)).with_for_update())
     if target is None or target.org_id != user.org_id:
         raise deny_not_found(db, user, "user", user_id)
-    if user.role == "supervisor" and target.role != "caregiver":
-        raise _err(403, "caregiver_required", "督導僅能解除照服員綁定")
+    if not can_issue_binding_code(user.role, user.id, target.role, target.id):
+        raise _err(403, "line_unbind_forbidden", "沒有權限解除此人員的 LINE 綁定")
     now = datetime.now(ZoneInfo("UTC"))
     db.execute(delete(LineAccount).where(LineAccount.user_id == target.id))
     db.execute(update(AuthSession).where(AuthSession.user_id == target.id,
@@ -645,11 +654,13 @@ def unbind_line(user_id: str, user: User = Depends(require_roles(*SUP)), db: Ses
 
 
 @router.delete("/users/{user_id}")
-def delete_user(user_id: str, user: User = Depends(require_roles("admin")), db: Session = Depends(get_db)) -> dict:
+def delete_user(user_id: str, user: User = Depends(require_roles("admin", "director")), db: Session = Depends(get_db)) -> dict:
     """Soft delete: keep UUID/display name/history, release username atomically."""
     target = db.scalar(select(User).where(User.id == _uuid(user_id)).with_for_update())
     if target is None or target.org_id != user.org_id:
         raise deny_not_found(db, user, "user", user_id)
+    if user.role == "director" and target.role not in {"caregiver", "supervisor"}:
+        raise _err(403, "director_target_forbidden", "主任不可刪除管理員或主任帳號")
     if target.id == user.id:
         raise _err(409, "self_delete", "不可刪除目前登入的管理員帳號")
     if target.username.startswith(DELETED_USERNAME_PREFIX):

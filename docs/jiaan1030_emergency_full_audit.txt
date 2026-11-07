@@ -1,0 +1,49 @@
+=== 小照第八輪緊急通報完整靜態稽核 ===
+Date: 2026-11-02 19:29:00
+
+=== API 相關 SQL ===
+    suffix = ' FOR UPDATE' if lock else ''
+        SELECT id, org_id, created_by, client_request_id, category, status,
+        FROM jiaan1030_emergencies WHERE id = :eid AND org_id = :org
+        INSERT INTO jiaan1030_emergency_events
+        SELECT id FROM jiaan1030_emergencies
+        WHERE created_by=:uid AND client_request_id=:req
+        INSERT INTO jiaan1030_emergencies
+        ON CONFLICT (created_by, client_request_id) DO NOTHING
+        SELECT id, category FROM jiaan1030_emergencies
+        WHERE created_by=:uid AND client_request_id=:req
+    where = "status IN ('open','acknowledged')" if status == 'active' else ("status='resolved'" if status == 'resolved' else 'TRUE')
+        SELECT id, org_id, created_by, client_request_id, category, status,
+        WHERE org_id=:org AND ''' + where + own + '''
+        SELECT e.event_type, e.actor_id, e.from_status, e.to_status, e.created_at
+        WHERE e.emergency_id=:eid AND a.org_id=:org
+            UPDATE jiaan1030_emergencies
+            WHERE id=:eid AND org_id=:org AND status='open'
+        UPDATE jiaan1030_emergencies
+        WHERE id=:eid AND org_id=:org AND status='acknowledged'
+
+=== Migration 建表及約束 ===
+        CREATE TABLE IF NOT EXISTS jiaan1030_emergencies (
+            id UUID PRIMARY KEY,
+            org_id UUID NOT NULL,
+            created_by UUID NOT NULL,
+            client_request_id VARCHAR(100) NOT NULL,
+            category VARCHAR(50) NOT NULL,
+            status VARCHAR(30) NOT NULL DEFAULT 'open',
+            acknowledged_by UUID,
+            resolved_by UUID,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE (org_id, client_request_id)
+        CREATE TABLE IF NOT EXISTS jiaan1030_emergency_events (
+            id UUID PRIMARY KEY,
+            emergency_id UUID NOT NULL,
+            actor_id UUID NOT NULL,
+            event_type VARCHAR(50) NOT NULL,
+            from_status VARCHAR(30),
+            to_status VARCHAR(30),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+
+=== 注意事項 ===
+本報告只檢查原始碼，不代表 PostgreSQL 已成功執行 SQL。
+不能直接對 ltc_clean 執行 alembic upgrade head。
