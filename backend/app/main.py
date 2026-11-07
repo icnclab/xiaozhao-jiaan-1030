@@ -19,7 +19,7 @@ from app.config import get_settings
 from app.db import new_session
 from app.logging_setup import setup_logging
 from app.providers.llm import warmup as llm_warmup
-from app.services.health import collect_health_for_request
+from app.services.health import collect_health_for_request, ensure_internal_health_token
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -27,7 +27,13 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    """啟動時在背景預熱本機 LLM（不阻塞啟動）。"""
+    """啟動時在背景預熱本機 LLM（不阻塞啟動）；同時初始化本機健康檢查 Token。
+
+    Token 初始化要在這裡（啟動時、受控、跟任何 HTTP 請求無關），不能放進
+    /api/healthz 的請求處理路徑——否則會變成「要先有人帶對 Token 來才生得出
+    Token」的先有雞先有蛋問題，也可能被未授權的公開請求間接觸發。
+    """
+    ensure_internal_health_token()
     if get_settings().app_env != "test":
         threading.Thread(target=llm_warmup, daemon=True).start()
     yield

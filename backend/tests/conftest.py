@@ -58,6 +58,12 @@ from app.providers.llm import MockLlm  # noqa: E402
 from app.providers.stt import MockStt  # noqa: E402
 from app.providers.tts import MockTts  # noqa: E402
 from app.services import cases as case_service  # noqa: E402
+from app.services.health import ensure_internal_health_token  # noqa: E402
+
+# TestClient(app)（非 context manager 用法，見下方 client fixture）不會觸發 FastAPI
+# 的 lifespan；正式環境是 uvicorn 在接受連線前跑過 lifespan 才初始化本機健康檢查
+# Token，測試這裡用同一個函式補做這一步，行為才跟正式環境一致。
+ensure_internal_health_token()
 from app.services import documents as doc_service  # noqa: E402
 
 configure_engine(os.environ["DATABASE_URL"])
