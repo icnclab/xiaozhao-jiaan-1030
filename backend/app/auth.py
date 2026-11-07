@@ -78,11 +78,17 @@ def verify_liff_id_token(id_token: str) -> LineIdentity:
     claims = response.json()
     if str(claims.get("aud")) != settings.line_login_channel_id or int(claims.get("exp", 0)) < time.time():
         raise AuthError("invalid_token", "LINE 身分驗證失敗")
+    from app.uat import identity_allowed
+    if not identity_allowed(settings, str(claims["sub"])):
+        raise AuthError("uat_identity_not_allowed", "UAT identity not permitted")
     return LineIdentity(line_user_id=str(claims["sub"]), display_name=claims.get("name"), dev=False)
 
 
 def issue_session(session: Session, user: User, kind: str) -> str:
     """發 session token（回傳明文一次，DB 只存雜湊）。"""
+    from app.uat import account_allowed
+    if not account_allowed(get_settings(), user):
+        raise AuthError("uat_account_not_allowed", "UAT account not permitted")
     token = new_token(32)
     session.add(AuthSession(user_id=user.id, token_hash=hmac_hex(token, "session"), kind=kind,
                             expires_at=jobs.utcnow() + timedelta(hours=get_settings().session_ttl_hours)))
@@ -95,6 +101,9 @@ def find_line_user(session: Session, identity: LineIdentity) -> User | None:
     if account is None:
         return None
     user = session.get(User, account.user_id)
+    from app.uat import account_allowed
+    if user and not account_allowed(get_settings(), user):
+        raise AuthError("uat_account_not_allowed", "UAT account not permitted")
     return user if user and user.is_active else None
 
 
@@ -113,6 +122,9 @@ def bind_line_account(session: Session, identity: LineIdentity, code: str) -> Us
     user = session.get(User, binding.user_id)
     if user is None or not user.is_active or user.role not in BINDABLE_ROLES:
         raise AuthError("invalid_code", "帳號無法使用此綁定碼")
+    from app.uat import account_allowed
+    if not account_allowed(get_settings(), user):
+        raise AuthError("uat_account_not_allowed", "UAT account not permitted")
     # XZ_MANAGER_LINE_BINDING_20261103
     if requires_verified_real_line(user.role) and identity.dev:
         raise AuthError("real_line_required", "督導、主任及管理員須以本人真實 LINE 完成綁定")
@@ -134,6 +146,9 @@ def bind_line_account(session: Session, identity: LineIdentity, code: str) -> Us
 
 def create_binding_code(session: Session, actor: User, user: User) -> str:
     """產生綁定碼（8 碼，易輸入；DB 只存雜湊，7 天有效）。"""
+    from app.uat import account_allowed
+    if not account_allowed(get_settings(), user):
+        raise AuthError("uat_account_not_allowed", "UAT account not permitted")
     alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     import secrets
 
@@ -163,6 +178,9 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> User:
     if user is None or not user.is_active:
         raise HTTPException(status_code=401, detail={"code": "inactive", "message": "帳號已停用"})
     request.state.auth_session_id = auth_session.id
+    from app.uat import account_allowed
+    if not account_allowed(get_settings(), user):
+        raise HTTPException(status_code=403, detail={"code": "uat_account_not_allowed", "message": "UAT account not permitted"})
     return user
 
 

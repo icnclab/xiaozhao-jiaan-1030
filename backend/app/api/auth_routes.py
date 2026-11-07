@@ -58,7 +58,10 @@ def liff_login(body: LiffLoginIn, db: Session = Depends(get_db)) -> dict:
         identity = verify_liff_id_token(body.id_token)
     except AuthError as exc:
         raise _auth_http(exc) from exc
-    user = find_line_user(db, identity)
+    try:
+        user = find_line_user(db, identity)
+    except AuthError as exc:
+        raise _auth_http(exc, 403) from exc
     if user is None:
         return {"status": "needs_binding", "dev": identity.dev}
     token = issue_session(db, user, "dev" if identity.dev else "liff")
@@ -91,6 +94,9 @@ def web_login(body: LoginIn, request: Request, db: Session = Depends(get_db)) ->
         raise HTTPException(status_code=401, detail={"code": "bad_credentials", "message": "帳號或密碼錯誤"})
     if user.role not in {"supervisor", "director", "admin"}:
         raise HTTPException(status_code=403, detail={"code": "forbidden", "message": "後台僅限督導與管理員"})
+    from app.uat import account_allowed
+    if not account_allowed(get_settings(), user):
+        raise HTTPException(status_code=403, detail={"code": "uat_account_not_allowed", "message": "UAT account not permitted"})
     token = issue_session(db, user, "web")
     audit.record(db, "auth.login", actor=user)
     db.commit()

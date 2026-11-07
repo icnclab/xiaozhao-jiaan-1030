@@ -100,6 +100,9 @@ def send(session: Session, notification_id: uuid.UUID) -> tuple[bool, bool]:
     notification = session.get(NotificationJob, notification_id)
     if notification is None or notification.status in {"accepted", "skipped"}:
         return True, False
+    if get_settings().is_uat and notification.payload.get("kind") == "jiaan_emergency_alert":
+        notification.status, notification.last_error_code = "skipped", "uat_emergency_disabled"
+        return True, False
     if notification.payload.get("kind") == "jiaan_emergency_alert":
         # Fail closed even for jobs queued before the feature flag was disabled.
         # The flag must be enabled in the ACTUAL worker process, not only the shell.
@@ -141,6 +144,13 @@ def send(session: Session, notification_id: uuid.UUID) -> tuple[bool, bool]:
         if (not recipient or not recipient.is_active or recipient.org_id != notification.org_id
                 or recipient.role not in permitted):
             notification.status, notification.last_error_code = "skipped", "recipient_not_authorized"
+            return True, False
+    if get_settings().is_uat:
+        from app.models import User
+        from app.uat import account_allowed
+        recipient = session.get(User, notification.recipient_id)
+        if not recipient or not account_allowed(get_settings(), recipient):
+            notification.status, notification.last_error_code = "skipped", "uat_account_not_allowed"
             return True, False
     account = session.scalar(select(LineAccount).where(LineAccount.user_id == notification.recipient_id))
     if account is None or account.linked_at is None:

@@ -19,6 +19,9 @@ STAGES = (("new", 0, ("supervisor",)),
 
 
 def is_enabled() -> bool:
+    from app.config import get_settings
+    if get_settings().is_uat:
+        return False
     return os.environ.get("JIAAN_EMERGENCY_LINE_DISPATCH", "off").strip().lower() == "on"
 
 

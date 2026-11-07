@@ -603,6 +603,9 @@ def binding_code(user_id: str, user: User = Depends(require_roles(*SUP)), db: Se
     target = db.scalar(select(User).where(User.id == _uuid(user_id)).with_for_update())
     if target is None or target.org_id != user.org_id:
         raise deny_not_found(db, user, "user", user_id)
+    from app.uat import account_allowed
+    if not account_allowed(get_settings(), target):
+        raise _err(403, "uat_account_not_allowed", "UAT account not permitted")
     # XZ_MANAGER_LINE_BINDING_20261103
     if not can_issue_binding_code(user.role, user.id, target.role, target.id):
         raise _err(403, "binding_code_forbidden", "沒有權限替此人員產生綁定碼")

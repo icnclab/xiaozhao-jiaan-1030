@@ -94,6 +94,8 @@ class RealLineClient:
 
     def reply(self, reply_token: str, messages: list[dict[str, Any]]) -> SendResult:
         """見 `LineClient.reply`。"""
+        if get_settings().is_uat:
+            return SendResult(False, 403, "uat_reply_disabled", False)
         try:
             response = httpx.post(f"{API_BASE}/v2/bot/message/reply", headers=self._headers,
                                   json={"replyToken": reply_token, "messages": messages}, timeout=10)
@@ -103,6 +105,9 @@ class RealLineClient:
 
     def push(self, to: str, messages: list[dict[str, Any]], retry_key: str) -> SendResult:
         """見 `LineClient.push`。"""
+        from app.uat import push_allowed, messages_allowed
+        if not push_allowed(get_settings(), to) or not messages_allowed(get_settings(), messages):
+            return SendResult(False, 403, "uat_push_blocked", False)
         headers = dict(self._headers, **{"X-Line-Retry-Key": retry_key})
         try:
             response = httpx.post(f"{API_BASE}/v2/bot/message/push", headers=headers,
@@ -113,6 +118,8 @@ class RealLineClient:
 
     def get_content(self, message_id: str) -> bytes:
         """見 `LineClient.get_content`。只打官方內容端點，限制大小。"""
+        if get_settings().is_uat:
+            raise ContentUnavailable("uat_line_download_disabled", "Use LIFF upload in UAT")
         if not _MESSAGE_ID_RE.match(message_id):
             raise ContentUnavailable("invalid_id", "訊息 ID 格式不正確")
         with httpx.stream("GET", f"{DATA_API_BASE}/v2/bot/message/{message_id}/content",

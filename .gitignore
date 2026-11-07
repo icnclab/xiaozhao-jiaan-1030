@@ -127,3 +127,11 @@ docs/jiaan1030_forms/
 /xz*.zip
 /xiaozhao_*.zip
 /AgeTech_*.zip
+
+# UAT local secrets / private fingerprints are never source artifacts
+*.local.env
+/deploy/uat/private/
+*production-fingerprints*.json
+
+# Explicitly reviewed credential-free UAT template only
+!/deploy/uat/uat.env.example

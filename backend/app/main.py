@@ -82,6 +82,9 @@ async def unhandled_error(request: Request, exc: Exception) -> JSONResponse:
 @app.middleware("http")
 async def security_headers(request: Request, call_next):  # type: ignore[no-untyped-def]
     """基本安全標頭；API 回應一律不快取。"""
+    from app.uat import request_allowed
+    if not request_allowed(get_settings(), request.headers.get("host", ""), request.headers.get("origin"), request.url.path, request.method):
+        return JSONResponse(status_code=403, content={"error": {"code": "uat_origin_rejected", "message": "UAT origin rejected", "retryable": False}})
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "no-referrer")

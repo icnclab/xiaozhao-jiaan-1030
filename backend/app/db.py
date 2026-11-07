@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -20,11 +20,29 @@ _engine: Engine | None = None
 _session_factory: sessionmaker[Session] | None = None
 
 
+def _create_checked_engine(url: str) -> Engine:
+    settings = get_settings()
+    if settings.is_uat and url != settings.database_url:
+        raise RuntimeError("UAT_DATABASE_OVERRIDE_FORBIDDEN")
+    engine = create_engine(url, pool_pre_ping=True, future=True)
+    if settings.is_uat:
+        @event.listens_for(engine, "connect")
+        def check_uat_connection(connection, record):
+            from app.uat import verify_db_cursor
+            cursor = connection.cursor()
+            try:
+                verify_db_cursor(cursor)
+            finally:
+                cursor.close()
+                connection.rollback()
+    return engine
+
+
 def get_engine() -> Engine:
     """取得全域 engine（延遲建立，方便測試改用測試資料庫）。"""
     global _engine, _session_factory
     if _engine is None:
-        _engine = create_engine(get_settings().database_url, pool_pre_ping=True, future=True)
+        _engine = _create_checked_engine(get_settings().database_url)
         _session_factory = sessionmaker(bind=_engine, expire_on_commit=False)
     return _engine
 
@@ -41,7 +59,7 @@ def configure_engine(url: str) -> Engine:
     global _engine, _session_factory
     if _engine is not None:
         _engine.dispose()
-    _engine = create_engine(url, pool_pre_ping=True, future=True)
+    _engine = _create_checked_engine(url)
     _session_factory = sessionmaker(bind=_engine, expire_on_commit=False)
     return _engine
 

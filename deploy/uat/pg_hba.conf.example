@@ -1,0 +1,8 @@
+# PLAN ONLY: insert BEFORE broader allow rules, after separate approval.
+# Preserve existing production-role rules. IPv4 + IPv6 both covered.
+host ltc_demo ltc_uat_app 127.0.0.1/32 scram-sha-256
+host ltc_demo ltc_uat_app ::1/128 scram-sha-256
+host all ltc_uat_app 0.0.0.0/0 reject
+host all ltc_uat_app ::/0 reject
+local ltc_demo ltc_uat_app scram-sha-256
+local all ltc_uat_app reject

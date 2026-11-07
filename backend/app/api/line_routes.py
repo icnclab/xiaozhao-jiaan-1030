@@ -45,6 +45,11 @@ async def webhook(request: Request, db: Session = Depends(get_db)) -> dict:
         payload = json.loads(body.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise HTTPException(status_code=400, detail={"code": "bad_json", "message": "invalid json"}) from exc
+    from app.uat import check_webhook
+    try:
+        check_webhook(get_settings(), payload)
+    except RuntimeError:
+        raise HTTPException(status_code=403, detail={"code": "uat_source_not_allowed", "message": "UAT source not permitted"})
     new, duplicate = line_service.store_events(db, payload)
     logger.info("line webhook accepted: new=%d duplicate=%d", new, duplicate)
     return {"ok": True, "new": new, "duplicate": duplicate}

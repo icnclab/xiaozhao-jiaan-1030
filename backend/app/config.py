@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import json
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -21,6 +23,26 @@ class Settings(BaseSettings):
         extra="ignore",
         hide_input_in_errors=True,
     )
+
+    deployment_profile: str = "default"
+    uat_production_fingerprints_file: str = ""
+    uat_line_user_ids: tuple[str, ...] = ()
+    uat_account_roles: dict[str, str] = {}
+    uat_outbound_mode: str = "blocked"
+
+    @field_validator("uat_line_user_ids", mode="before")
+    @classmethod
+    def _uat_ids(cls, value):
+        return tuple(x.strip() for x in value.split(",") if x.strip()) if isinstance(value, str) else value
+
+    @field_validator("uat_account_roles", mode="before")
+    @classmethod
+    def _uat_roles(cls, value):
+        return json.loads(value) if isinstance(value, str) else value
+
+    @property
+    def is_uat(self) -> bool:
+        return self.deployment_profile == "uat"
 
     app_env: str = "dev"
     tz_name: str = "Asia/Taipei"
@@ -135,14 +157,14 @@ class Settings(BaseSettings):
     @property
     def dev_features_enabled(self) -> bool:
         return (
-            not self.is_production
+            not self.is_production and not self.is_uat
             and self.line_mode == "mock"
         )
 
     @property
     def api_docs_enabled(self) -> bool:
         """正式環境關閉公開 API 文件（/api/docs、/api/redoc、/api/openapi.json）；開發/測試環境維持開放。"""
-        return not self.is_production
+        return not (self.is_production or self.is_uat)
 
     def provider_modes(self) -> dict[str, str]:
         return {
@@ -155,9 +177,32 @@ class Settings(BaseSettings):
         }
 
 
+class UatSettings(Settings):
+    @classmethod
+    def settings_customise_sources(cls, settings_cls, init_settings, env_settings, dotenv_settings, file_secret_settings):
+        # UAT accepts ONLY the explicit file mapping, never inherited env/.env.
+        return (init_settings,)
+
+
 @lru_cache
 def get_settings() -> Settings:
+    profile = os.environ.get("LTC_PROFILE", "default")
+    if profile not in {"", "default", "uat"}:
+        raise RuntimeError("UAT_UNKNOWN_DEPLOYMENT_PROFILE")
+    if os.environ.get("LTC_UAT_ENV_FILE") and profile != "uat":
+        raise RuntimeError("UAT_EXPLICIT_PROFILE_AND_FILE_REQUIRED")
+    if profile == "uat":
+        from app.uat import read_values, validate_settings, fail
+        values = read_values(os.environ.get("LTC_UAT_ENV_FILE", ""))
+        if set(values) - set(Settings.model_fields):
+            fail("UAT_UNKNOWN_CONFIG_FIELD")
+        values["deployment_profile"] = "uat"
+        settings = UatSettings(_env_file=None, **values)
+        validate_settings(settings)
+        return settings
     settings = Settings()
+    if settings.app_env == "uat" or settings.is_uat:
+        raise RuntimeError("UAT_EXPLICIT_PROFILE_AND_FILE_REQUIRED")
 
     if settings.is_production:
         missing = [

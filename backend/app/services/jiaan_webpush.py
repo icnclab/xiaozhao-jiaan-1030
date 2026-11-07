@@ -22,10 +22,16 @@ STAGES = (('new', 0), ('unacknowledged_60s', 60), ('unacknowledged_180s', 180))
 
 
 def enabled() -> bool:
+    from app.config import get_settings
+    if get_settings().is_uat:
+        return False
     return os.getenv('JIAAN_WEBPUSH_DISPATCH', 'off').strip().lower() == 'on'
 
 
 def public_key() -> str:
+    from app.config import get_settings
+    if get_settings().is_uat:
+        return ""
     return os.getenv('JIAAN_VAPID_PUBLIC_KEY', '').strip()
 
 

@@ -201,8 +201,16 @@ def process_event(session: Session, line_event_id: uuid.UUID) -> None:
     event = session.get(LineEvent, line_event_id)
     if event is None or event.status in {"done", "ignored"}:
         return
-    content = decrypt_json(event.payload_encrypted) if event.payload_encrypted else {}
+    from app.uat import identity_allowed, account_allowed
+    settings = get_settings()
+    if not identity_allowed(settings, event.line_user_id or ""):
+        event.status, event.error = "ignored", "uat_source_not_allowed"
+        return
     user = _user_for(session, event.line_user_id)
+    if user and not account_allowed(settings, user):
+        event.status, event.error = "ignored", "uat_account_not_allowed"
+        return
+    content = decrypt_json(event.payload_encrypted) if event.payload_encrypted else {}
     path = "none"
     if event.event_type == "follow":
         path = _on_follow(session, event, user)
@@ -441,6 +449,9 @@ def push_tts_audio(session: Session, asset_id: uuid.UUID, user_id: uuid.UUID) ->
     asset = session.get(TtsAsset, asset_id)
     user = session.get(User, user_id)
     if asset is None or user is None:
+        return True
+    from app.uat import account_allowed
+    if not account_allowed(get_settings(), user):
         return True
     if asset.status in {"queued", "running"}:
         return False

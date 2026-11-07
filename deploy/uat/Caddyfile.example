@@ -1,0 +1,7 @@
+# REVIEW TEMPLATE ONLY. Do not run without separate deployment authorization.
+# UAT_HOST must be a NEW dedicated hostname, never the production Funnel host.
+# Same origin for LIFF, API and webhook; 5180 is local development only.
+# Do not enable access logging of raw LIFF callback query strings.
+{$UAT_HOST} {
+    reverse_proxy 127.0.0.1:8151
+}

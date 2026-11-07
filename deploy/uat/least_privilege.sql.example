@@ -1,0 +1,15 @@
+-- PLAN ONLY. DO NOT EXECUTE in this task. No changes to ltc_clean grants.
+-- Review existing ownership, schema grants and pg_hba order before approval.
+CREATE ROLE ltc_uat_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS NOINHERIT;
+-- Use psql \password ltc_uat_app interactively; never save a password here.
+GRANT CONNECT ON DATABASE ltc_demo TO ltc_uat_app;
+-- Connect explicitly to ltc_demo before the remaining statements.
+\connect ltc_demo
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO ltc_uat_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ltc_uat_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ltc_uat_app;
+-- Do not grant database/schema ownership, CREATE, migration or role membership.
+-- PUBLIC may still grant CONNECT to ltc_clean. REVOKE from only this role
+-- does not override PUBLIC. Use the proposed pg_hba role/database allow+deny
+-- boundary instead; verify actual connection denial in read-only preflight.

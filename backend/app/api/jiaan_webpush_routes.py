@@ -19,6 +19,9 @@ STATIC = Path(__file__).resolve().parents[1] / 'static'
 
 
 def manager(user: User):
+    from app.config import get_settings
+    if get_settings().is_uat:
+        raise HTTPException(403, detail="UAT Web Push disabled")
     if not user.is_active or user.role not in jiaan_webpush.MANAGERS:
         raise HTTPException(403, detail='僅授權督導與主任可使用警報接收 APP')
 
