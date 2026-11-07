@@ -12,7 +12,16 @@ phase = sys.argv[1]
 expected = 'ltc' if phase == 'before' else 'ltc_clean'
 url = provision.OLD_URL
 assert url.database == expected
-health = httpx.get('http://127.0.0.1:8140/api/healthz', timeout=10).json()
+# /api/healthz is now minimal for anonymous/public (Tailscale Funnel) callers;
+# this local-only token (same file deploy/fieldtest/*.ps1 use) gets the full
+# payload including database_name back, without needing any new login flow.
+_token_file = Path(__file__).resolve().parents[1] / 'deploy' / 'fieldtest' / 'run' / 'internal_health_token.txt'
+_headers = {}
+if _token_file.is_file():
+    _token = _token_file.read_text(encoding='utf-8').strip()
+    if _token:
+        _headers['X-Internal-Health-Token'] = _token
+health = httpx.get('http://127.0.0.1:8140/api/healthz', timeout=10, headers=_headers).json()
 with create_engine(url).connect() as c, c.begin():
     c.execute(text('SET TRANSACTION READ ONLY'))
     actual = c.scalar(text('SELECT current_database()'))

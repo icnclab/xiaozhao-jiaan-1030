@@ -12,7 +12,6 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import text
 
 from app.api import interaction_routes, admin_routes, auth_routes, caregiver_routes, line_routes, quality_routes
 from app.api import fieldtest_routes
@@ -20,6 +19,7 @@ from app.config import get_settings
 from app.db import new_session
 from app.logging_setup import setup_logging
 from app.providers.llm import warmup as llm_warmup
+from app.services.health import collect_health_for_request
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -33,8 +33,17 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(title="長照 AI 照護小幫手 API", version="0.1.0", docs_url="/api/docs",
-              openapi_url="/api/openapi.json", lifespan=lifespan)
+# 正式環境（APP_ENV=production）關閉公開 API 文件；/api/docs、/api/redoc、
+# /api/openapi.json 三個入口一起關，避免有人忘記其中一個仍是 FastAPI 預設值
+# （先前 redoc_url 未設定，就曾經在正式環境以預設 /redoc 路徑公開）。
+_docs_enabled = get_settings().api_docs_enabled
+app = FastAPI(
+    title="長照 AI 照護小幫手 API", version="0.1.0",
+    docs_url="/api/docs" if _docs_enabled else None,
+    redoc_url="/api/redoc" if _docs_enabled else None,
+    openapi_url="/api/openapi.json" if _docs_enabled else None,
+    lifespan=lifespan,
+)
 
 
 @app.exception_handler(HTTPException)
@@ -94,16 +103,21 @@ from app.api import jiaan_webpush_routes as _jiaan_webpush
 app.include_router(_jiaan_webpush.router, prefix='/api')
 
 @app.get("/api/healthz")
-def healthz() -> dict:
-    """健康檢查：資料庫、provider 模式、worker 心跳。"""
+def healthz(request: Request) -> dict:
+    """健康檢查：對公開網路只回傳 status／worker 心跳秒數。
+
+    這台機器透過 Tailscale Funnel 對公開網路開放，這個端點不需要登入就能打到，
+    所以預設不回傳資料庫名稱、LLM/embedding/LINE 等 provider 模式。本機既有的
+    啟動／重啟腳本（deploy/fieldtest/*.ps1）會帶上只有本機才有的
+    X-Internal-Health-Token，驗證通過才給完整內容；沒有這個 Token（包含所有
+    經 Funnel 進來的公開請求）一律拿到精簡版。需要人工查看完整內容另見
+    /api/admin/healthz（需要管理員登入）。
+    """
     session = new_session()
     try:
-        database_name = session.execute(text("SELECT current_database()")).scalar_one()
-        age = session.execute(text("SELECT EXTRACT(EPOCH FROM now() - max(seen_at)) FROM worker_heartbeats")).scalar()
+        return collect_health_for_request(session, request.headers.get("x-internal-health-token"))
     finally:
         session.close()
-    return {"db": "ok", "database_name": database_name, "modes": get_settings().provider_modes(),
-            "worker_heartbeat_age_sec": round(float(age), 1) if age is not None else None}
 
 
 # ── 前端靜態檔（frontend/dist 存在時由同一個 process 提供，讓單一 HTTPS 入口涵蓋 LIFF、後台與 API）──

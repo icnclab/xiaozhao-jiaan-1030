@@ -79,7 +79,7 @@ try {
         if(@(Get-PortOwner $port).Count -or @(Get-AaProcesses $kind).Count){Log-Start "$kind retained; existing listener/process requires health validation"}
         else {Log-Start "$kind missing: launching aa process"; Start-Owned $kind}
         Wait-JiaanReady $kind {
-            $h=Get-HttpJson $url
+            $h=Get-HttpJson $url (Get-InternalHealthHeaders)
             if($kind -eq 'stt'){ $h.ok -and $h.model -eq 'medium' -and $h.device -eq 'cuda' -and 'medium' -in $h.loaded }
             else { $h.db -eq 'ok' -and $h.modes.line -eq 'real' }
         } { if(-not @(Get-PortOwner $port).Count -and -not @(Get-AaProcesses $kind).Count){Start-Owned $kind} } 30 10

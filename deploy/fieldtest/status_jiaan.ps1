@@ -37,9 +37,10 @@ function Invoke-JiaanNative([string]$Executable, [string[]]$Arguments, [int]$Tim
     } catch { return [pscustomobject]@{ExitCode=-1;Output=@()} }
     finally {$process.Dispose()}
 }
-function Get-HttpJson([string]$Url) {
+function Get-HttpJson([string]$Url, [hashtable]$Headers) {
     try {
-        $result = Invoke-RestMethod -Uri $Url -TimeoutSec 5
+        $result = if ($Headers) { Invoke-RestMethod -Uri $Url -TimeoutSec 5 -Headers $Headers }
+                  else { Invoke-RestMethod -Uri $Url -TimeoutSec 5 }
         $script:HttpFailures.Remove($Url)
         return $result
     } catch {
@@ -49,6 +50,19 @@ function Get-HttpJson([string]$Url) {
         $script:HttpFailures[$Url] = $reason
         return $null
     }
+}
+# /api/healthz 對公開網路（Tailscale Funnel）只回傳精簡版（status／worker 心跳）；
+# 本機既有腳本要繼續拿到 database_name、provider 模式，帶這個只存在本機、
+# 已被 .gitignore 排除的 Token 當 X-Internal-Health-Token。第一次呼叫前，API
+# process 要先啟動過一次才會在這裡生出 Token 檔案；啟動之前這個函式回空字串，
+# 呼叫端一樣會拿到（安全的）精簡版，不是硬性失敗。
+$script:InternalHealthTokenFile = Join-Path $script:RunDir 'internal_health_token.txt'
+function Get-InternalHealthHeaders() {
+    if (Test-Path -LiteralPath $script:InternalHealthTokenFile) {
+        $token = (Get-Content -LiteralPath $script:InternalHealthTokenFile -Raw).Trim()
+        if ($token) { return @{ 'X-Internal-Health-Token' = $token } }
+    }
+    return $null
 }
 function Get-PortOwner([int]$Port) {
     @(Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue)
@@ -124,7 +138,7 @@ function Get-JiaanStatus {
     $rows += [pscustomobject]@{Service='Ollama';Result=$(if($ollama){'PASS'}else{'FAIL'});Detail='127.0.0.1:11434'}
     $rows += [pscustomobject]@{Service='Model';Result=$(if($modelOk){'PASS'}else{'FAIL'});Detail='gemma4:e4b available (not an inference test)'}
     $stt = Get-HttpJson 'http://127.0.0.1:8147/healthz'
-    $api = Get-HttpJson 'http://127.0.0.1:8140/api/healthz'
+    $api = Get-HttpJson 'http://127.0.0.1:8140/api/healthz' (Get-InternalHealthHeaders)
     foreach ($kind in 'stt','api','worker') {
         try { $p = @(Get-AaProcesses $kind); $identity = $true } catch { $p = @(); $identity = $false }
         $port = if($kind -eq 'stt'){8147}elseif($kind -eq 'api'){8140}else{0}

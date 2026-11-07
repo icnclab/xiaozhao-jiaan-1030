@@ -16,7 +16,7 @@ try {
         [math]::Abs(($owner.CreationDate.ToUniversalTime() - ([datetime]$record.Started).ToUniversalTime()).TotalMilliseconds) -gt 1) { throw 'API owner identity mismatch' }
     $apis = @(Get-AaProcesses 'api')
     if (-not (Test-AaPort 8140 $apis)) { throw '8140 is not the verified aa API' }
-    $health = Get-HttpJson 'http://127.0.0.1:8140/api/healthz'
+    $health = Get-HttpJson 'http://127.0.0.1:8140/api/healthz' (Get-InternalHealthHeaders)
     if (-not $health -or $health.database_name -ne 'ltc_clean') { throw 'Runtime is not ltc_clean' }
     $children = @(); $parents = @([int]$owner.ProcessId)
     do {

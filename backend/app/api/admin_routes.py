@@ -36,6 +36,7 @@ from app.models import (
 from app.services import audit, cases, notifications
 from app.services import documents as doc_service
 from app.services.deid import term_hmac
+from app.services.health import collect_health
 from app.services.metrics import compute_metrics
 
 router = APIRouter(prefix="/admin")
@@ -510,6 +511,16 @@ def review_feedback(feedback_id: str, user: User = Depends(require_roles(*SUP)),
     audit.record(db, "feedback.review", actor=user, target_type="feedback", target_id=row.id)
     db.commit()
     return {"ok": True}
+
+
+@router.get("/healthz")
+def healthz_detail(user: User = Depends(require_roles("admin")), db: Session = Depends(get_db)) -> dict:
+    """完整健康檢查（資料庫名稱、provider 模式、worker 心跳）：只限管理員，不對外公開。
+
+    對外公開的 /api/healthz 只回傳 status／worker 心跳秒數；本端點是給需要
+    資料庫名稱、LLM/embedding/LINE provider 等內部設定的人工監控或除錯使用。
+    """
+    return collect_health(db)
 
 
 @router.get("/metrics")

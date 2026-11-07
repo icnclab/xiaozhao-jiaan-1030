@@ -36,6 +36,7 @@ os.environ.update({
     "TTS_PROVIDER": "mock",
     "LINE_MODE": "mock",
     "LINE_CHANNEL_SECRET": "test-channel-secret",
+    "INTERNAL_HEALTH_TOKEN": "test-internal-health-token",
     "DATA_DIR": str(_DATA_DIR),
     "PUBLIC_BASE_URL": "http://testserver",
     "LIFF_ID": "",
