@@ -18,7 +18,7 @@ os.environ.update({
     "LINE_MODE": "mock",
 })
 
-from app.api import caregiver_routes, serializers  # noqa: E402
+from app.api import caregiver_routes, interaction_routes, serializers  # noqa: E402
 from app.models import QaItem  # noqa: E402
 from app.services import qa_service  # noqa: E402
 from app.services.query_understanding import contextual_question  # noqa: E402
@@ -126,7 +126,10 @@ def test_unknown_conversation_maps_to_not_found_without_disclosure():
     def reject(*args, **kwargs):
         raise qa_service.QaError("conversation_not_found", "找不到對話")
 
-    with patch.object(caregiver_routes.qa_service, "ask", reject):
+    with (
+        patch.object(interaction_routes, "validate_ask"),
+        patch.object(caregiver_routes.qa_service, "ask", reject),
+    ):
         try:
             caregiver_routes.ask(body, user, object())
         except caregiver_routes.HTTPException as exc:
@@ -148,7 +151,10 @@ def test_idempotency_key_cannot_be_reused_for_another_conversation():
     def reject(*args, **kwargs):
         raise qa_service.QaError("request_conversation_mismatch", "提問請求與對話不一致")
 
-    with patch.object(caregiver_routes.qa_service, "ask", reject):
+    with (
+        patch.object(interaction_routes, "validate_ask"),
+        patch.object(caregiver_routes.qa_service, "ask", reject),
+    ):
         try:
             caregiver_routes.ask(body, user, object())
         except caregiver_routes.HTTPException as exc:
@@ -156,6 +162,81 @@ def test_idempotency_key_cannot_be_reused_for_another_conversation():
             assert exc.detail["message"] == "提問請求與對話不一致"
         else:
             raise AssertionError("request ID reuse across conversations must be rejected")
+
+
+class SequentialScalarSession:
+    def __init__(self, *values):
+        self.values = iter(values)
+
+    def scalar(self, statement):
+        return next(self.values)
+
+
+def test_ended_interaction_rejects_a_new_followup():
+    user = SimpleNamespace(id=uuid.uuid4(), org_id=uuid.uuid4(), role="caregiver")
+    conversation_id = uuid.uuid4()
+    interaction = SimpleNamespace(
+        id=conversation_id,
+        owner_id=user.id,
+        org_id=user.org_id,
+        ended_at=object(),
+    )
+
+    with pytest.raises(caregiver_routes.HTTPException) as caught:
+        interaction_routes.validate_ask(
+            SequentialScalarSession(interaction, None),
+            user,
+            conversation_id,
+            "request-id-new",
+        )
+
+    assert caught.value.status_code == 409
+    assert caught.value.detail == "interaction ended"
+
+
+def test_ended_interaction_allows_only_same_conversation_idempotent_retry():
+    user = SimpleNamespace(id=uuid.uuid4(), org_id=uuid.uuid4(), role="caregiver")
+    conversation_id = uuid.uuid4()
+    interaction = SimpleNamespace(
+        id=conversation_id,
+        owner_id=user.id,
+        org_id=user.org_id,
+        ended_at=object(),
+    )
+    previous = SimpleNamespace(conversation_id=conversation_id)
+
+    interaction_routes.validate_ask(
+        SequentialScalarSession(interaction, previous),
+        user,
+        conversation_id,
+        "request-id-retry",
+    )
+
+
+def test_qa_entrypoint_runs_interaction_guard_before_context_lookup():
+    conversation_id = uuid.uuid4()
+    body = caregiver_routes.AskIn(
+        question="可以繼續嗎？",
+        conversation_id=str(conversation_id),
+        client_request_id="request-id-guard",
+    )
+    user = SimpleNamespace(id=uuid.uuid4(), org_id=uuid.uuid4(), role="caregiver")
+    db = object()
+
+    with (
+        patch.object(
+            interaction_routes,
+            "validate_ask",
+            side_effect=caregiver_routes.HTTPException(409, "interaction ended"),
+        ) as guard,
+        patch.object(caregiver_routes.qa_service, "ask") as service,
+        pytest.raises(caregiver_routes.HTTPException) as caught,
+    ):
+        caregiver_routes.ask(body, user, db)
+
+    assert caught.value.status_code == 409
+    guard.assert_called_once_with(db, user, conversation_id, "request-id-guard")
+    service.assert_not_called()
 
 
 class EmptyResult:
