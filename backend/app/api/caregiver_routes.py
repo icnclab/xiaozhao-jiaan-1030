@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -95,6 +95,8 @@ def _own_transcript(db: Session, user: User, transcript_id: str) -> Transcript:
 
 
 class AskIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     question: str = Field(min_length=1, max_length=500)
     source: str = Field(default="text", pattern="^(text|voice|transcript)$")
     transcript_id: str | None = None
@@ -125,6 +127,10 @@ def ask(body: AskIn, user: User = Depends(require_roles(*ANY_ROLE)), db: Session
             conversation_id=_parse_uuid(body.conversation_id) if body.conversation_id else None,
         )
     except qa_service.QaError as exc:
+        if exc.code in {"conversation_not_found", "request_organization_mismatch"}:
+            raise _err(404, "not_found", "找不到資料") from exc
+        if exc.code == "request_conversation_mismatch":
+            raise _err(409, exc.code, "提問請求與對話不一致") from exc
         raise _err(422, exc.code, str(exc)) from exc
     return qa_out(db, item, case)
 

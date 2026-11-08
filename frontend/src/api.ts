@@ -132,6 +132,7 @@ export interface CaseBrief {
 
 export interface Answer {
   id: string;
+  conversation_id?: string;
   created_at: string;
   outcome: "answered" | "clarify" | "escalated" | "escalation_failed";
   label: string;

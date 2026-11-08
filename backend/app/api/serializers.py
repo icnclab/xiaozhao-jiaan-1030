@@ -89,6 +89,7 @@ def qa_out(db: Session, item: QaItem, case: Case | None = None) -> dict[str, Any
     settings = get_settings()
     return {
         "id": str(item.id),
+        "conversation_id": str(item.conversation_id),
         "created_at": _iso(item.created_at),
         "outcome": item.outcome,
         "label": AI_LABEL,

@@ -226,7 +226,12 @@ export function WrongButton({ answer, onChange }: { answer: Answer; onChange: (a
   return <FeedbackCollector key={answer.id} answer={answer} onChange={onChange} />;
 }
 
-export function AnswerCard({ answer, onChange, autoPlay = false }: { answer: Answer; onChange: (a: Answer) => void; autoPlay?: boolean }) {
+export function AnswerCard({ answer, onChange, autoPlay = false, conversationId }: {
+  answer: Answer;
+  onChange: (a: Answer) => void;
+  autoPlay?: boolean;
+  conversationId?: string | null;
+}) {
   const escalated = answer.outcome === "escalated" || answer.outcome === "escalation_failed";
   const clarify = answer.outcome === "clarify";
   return (
@@ -259,7 +264,7 @@ export function AnswerCard({ answer, onChange, autoPlay = false }: { answer: Ans
       <EscalateButton answer={answer} onChange={onChange} />
       <div className="row">
         <WrongButton answer={answer} onChange={onChange} />
-        <Link className="btn" to="/liff/ask">💬 繼續提問</Link>
+        <Link className="btn" to="/liff/ask" state={conversationId ? { conversation_id: conversationId } : null}>💬 繼續提問</Link>
       </div>
       <p className="small muted">AI 初步參考不是最終決定；實際做法請依督導確認與機構規定。</p>
     </div>

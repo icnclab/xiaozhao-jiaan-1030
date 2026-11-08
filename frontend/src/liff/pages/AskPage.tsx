@@ -7,14 +7,26 @@ import { VoiceQuestion } from "../VoiceQuestion";
 
 export function AskPage() {
   const { config, user } = useLiff();
+  const location = useLocation();
   // 從談話紀錄確認頁帶過來：已確認的逐字稿 ID 與選取的片段文字
-  const preset = (useLocation().state as { transcript_id?: string; question?: string } | null) ?? null;
+  const preset = (location.state as { transcript_id?: string; question?: string; conversation_id?: string } | null) ?? null;
   const [question, setQuestion] = useState(preset?.question ?? "");
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [mode, setMode] = useState<"text" | "voice">(preset?.question ? "text" : "voice");
   const requestId = useRef(newRequestId());
+  const conversationId = useRef(preset?.conversation_id ?? null);
+  const navigationKey = useRef(location.key);
+  const userScope = useRef(`${user.id}:${user.org?.id ?? ""}:${user.role}`);
+  const currentUserScope = `${user.id}:${user.org?.id ?? ""}:${user.role}`;
+  const userScopeChanged = userScope.current !== currentUserScope;
+  if (navigationKey.current !== location.key || userScopeChanged) {
+    navigationKey.current = location.key;
+    userScope.current = currentUserScope;
+    conversationId.current = userScopeChanged ? null : preset?.conversation_id ?? null;
+    requestId.current = newRequestId();
+  }
   const navigate = useNavigate();
 
   const submit = async (text: string, source: "text" | "voice" | "transcript" = "text", transcriptId?: string) => {
@@ -26,6 +38,7 @@ export function AskPage() {
         source,
         transcript_id: transcriptId ?? null,
         client_request_id: requestId.current,
+        ...(conversationId.current ? { conversation_id: conversationId.current } : {}),
       });
       requestId.current = newRequestId();
       setAnswer(result);
@@ -67,7 +80,7 @@ export function AskPage() {
       ) : (
         <VoiceQuestion onQuestion={(text, transcriptId) => submit(text, "voice", transcriptId)} busy={busy} error={error ? errorMessage(error) : null} />
       )}
-      {answer && <AnswerCard answer={answer} onChange={setAnswer} />}
+      {answer && <AnswerCard answer={answer} onChange={setAnswer} conversationId={user.role === "caregiver" ? answer.conversation_id : null} />}
     </div>
   );
 }

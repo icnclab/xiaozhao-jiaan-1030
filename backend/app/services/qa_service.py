@@ -39,6 +39,46 @@ def load_deid_terms(session: Session, org_id: uuid.UUID) -> set[tuple[str, int]]
     return {(row.term_hmac, row.length) for row in rows}
 
 
+def _previous_question(session: Session, user: User, conversation_id: uuid.UUID) -> str:
+    """Load only this user's latest masked question within the same organization."""
+    previous = session.scalar(
+        select(QaItem.question_masked)
+        .where(
+            QaItem.user_id == user.id,
+            QaItem.org_id == user.org_id,
+            QaItem.conversation_id == conversation_id,
+        )
+        .order_by(QaItem.created_at.desc())
+        .limit(1)
+    )
+    if previous is None:
+        raise QaError("conversation_not_found", "找不到對話")
+    return previous[:MAX_QUESTION_CHARS]
+
+
+def _existing_request(session: Session, user: User, client_request_id: str) -> QaItem | None:
+    # Look up the complete unique key before checking org; filtering org here could
+    # turn a cross-org retry into a duplicate-key insert.
+    existing = session.scalar(
+        select(QaItem).where(
+            QaItem.user_id == user.id,
+            QaItem.client_request_id == client_request_id,
+        )
+    )
+    if existing is not None and existing.org_id != user.org_id:
+        raise QaError("request_organization_mismatch", "找不到提問紀錄")
+    return existing
+
+
+def _apply_question_context(question: str, previous: str | None) -> str:
+    if previous is None:
+        return question
+    from app.services.query_understanding import contextual_question
+
+    contextual = contextual_question(question, previous)
+    return contextual if len(contextual) <= MAX_QUESTION_CHARS else question
+
+
 def _today() -> datetime:
     return datetime.now(ZoneInfo(get_settings().tz_name))
 
@@ -77,10 +117,10 @@ def ask(
     Raises:
         QaError: 輸入不合法。
     """
-    existing = session.scalar(
-        select(QaItem).where(QaItem.user_id == user.id, QaItem.client_request_id == client_request_id)
-    )
+    existing = _existing_request(session, user, client_request_id)
     if existing:
+        if conversation_id and existing.conversation_id != conversation_id:
+            raise QaError("request_conversation_mismatch", "提問請求與對話不一致")
         case = session.scalar(select(Case).where(Case.qa_item_id == existing.id).order_by(Case.created_at))
         return existing, case, False
 
@@ -93,14 +133,9 @@ def ask(
     if len(question) > MAX_QUESTION_CHARS:
         raise QaError("too_long", f"問題請在 {MAX_QUESTION_CHARS} 字以內")
 
-    from app.services.query_understanding import contextual_question
-    previous = None
     if conversation_id:
-        previous = session.scalar(select(QaItem.question_masked).where(
-            QaItem.user_id == user.id, QaItem.org_id == user.org_id,
-            QaItem.conversation_id == conversation_id,
-        ).order_by(QaItem.created_at.desc()).limit(1))
-    question = contextual_question(question, previous)
+        previous = _previous_question(session, user, conversation_id)
+        question = _apply_question_context(question, previous)
 
     org = session.get(Organization, user.org_id)
     assert org is not None

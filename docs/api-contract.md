@@ -25,14 +25,18 @@
 
 ```json
 {"question": "家屬要我幫忙代購成藥可以嗎？", "source": "text|voice|transcript",
- "transcript_id": null, "category_id": null, "client_request_id": "uuid"}
+ "transcript_id": null, "category_id": null, "conversation_id": null, "client_request_id": "uuid"}
 ```
 
-回應 `AnswerOut`：
+新對話省略 `conversation_id`；只有使用者點選「繼續提問」時，才帶入前一個 `AnswerOut` 的 `conversation_id`。
+後端僅使用同一使用者、同一機構、同一對話的上一筆遮罩問題理解明確追問；不使用答案、個案資料或逐字稿作為 Context。未知、已清除或不屬於目前使用者／機構的 ID 統一回 404。
+請求只接受上列欄位；未定義欄位（包含 `case_id`、`case_context`）回 422。個案 Context 尚未啟用，前端導覽狀態也不會轉送個案資料。
+
+回應 `AnswerOut`（新增 `conversation_id`，其餘欄位如既有 serializer）：
 
 ```json
 {
-  "id": "uuid", "outcome": "answered|escalated|escalation_failed",
+  "id": "uuid", "conversation_id": "uuid", "outcome": "answered|escalated|escalation_failed",
   "label": "AI 初步參考",
   "question_masked": "家屬要我幫忙代購成藥可以嗎？",
   "answer_text": "…", "claims": [{"text": "…", "citation_ids": ["c1"]}],
@@ -49,6 +53,7 @@
 
 - `outcome = escalated` 時 `case` 必有值；`escalation_failed` 時 `case = null`、`case_error` 說明原因，前端**不得**顯示「已送交」。
 - `citations[].source_url` 由後端依檢索 metadata 產生，LLM 不產 URL。
+- `conversation_id` 只用於關聯問答；前一筆問題不是回答證據，所有引用仍須來自本輪 RAG 檢索結果。
 - 不回傳相似度、信心分數或「正確率」。
 
 | 方法 | 路徑 | 說明 |

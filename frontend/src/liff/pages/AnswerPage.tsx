@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { api, type Answer } from "../../api";
+import { useLiff } from "../LiffApp";
 import { AnswerCard, ErrorBox } from "../components";
 
 export function AnswerPage() {
+  const { user } = useLiff();
   const { id } = useParams();
   const location = useLocation();
   const initial = (location.state as { answer?: Answer; autoPlay?: boolean } | null) ?? null;
@@ -19,7 +21,7 @@ export function AnswerPage() {
       <p className="notice info">每次提問是一筆紀錄；需居督處理時，另有待確認案件編號。</p>
       {answer && <p style={{overflowWrap:"anywhere"}}>提問紀錄編號：{answer.id}</p>}
       <ErrorBox error={error} />
-      {answer ? <AnswerCard answer={answer} onChange={setAnswer} autoPlay={Boolean(initial?.autoPlay)} /> : !error && <p className="muted">載入中…</p>}
+      {answer ? <AnswerCard answer={answer} onChange={setAnswer} autoPlay={Boolean(initial?.autoPlay)} conversationId={user.role === "caregiver" ? answer.conversation_id : null} /> : !error && <p className="muted">載入中…</p>}
     </div>
   );
 }
