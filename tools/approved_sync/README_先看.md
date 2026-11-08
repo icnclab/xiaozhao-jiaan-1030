@@ -1,5 +1,7 @@
 # 11/8 整合版：Google Drive 官方 API，預設全部停用
 
+> 最新策略改為 GitHub 安全同步＋Google Drive 網頁手動上傳。API／OAuth 工具保留但不啟用；先讀專案根目錄 `docs/sync/GitHub與Drive網頁手動備份.md`。不需 Google Cloud Console 或 Drive 電腦版。以下 API 說明是保留的歷史方案。
+
 本目錄源自使用者補充工具包，原件留在本機隔離審核區。此版本依最新要求只使用官方 Drive v3 API，不依賴電腦版、rclone 或 OneDrive。
 
 - 先讀 docs/sync/GoogleDrive_API_準備與啟用.md（專案根目錄）。

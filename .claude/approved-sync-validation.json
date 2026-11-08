@@ -1,16 +1,16 @@
 {
   "schema": 1,
-  "sourceDigest": "2219ebac2527697bcbbe2a3c0896a4cf43c5dbc0b6b085d129ddadcc2300e562",
+  "sourceDigest": "7bb9ddea8816f32db6e6a19d25806422a979e6276c6b09f5da9ed44f77df86f1",
   "backend": "PASS",
   "backendCount": 356,
   "typescript": "PASS",
   "frontend": "PASS",
   "frontendCount": 213,
   "sensitiveReview": "PASS",
-  "sourceFilesScanned": 356,
-  "newDriveAndSyncMockTests": 19,
-  "newMpcAdapterTests": 4,
-  "testEnvironment": "disposable synthetic-only DB, no migration, no production data or live service changes",
+  "sourceFilesScanned": 369,
+  "syncMockTests": 47,
+  "approvedPublisherTests": 16,
   "cloudVerified": false,
-  "approvalBasis": "explicit user task + actual isolated tests + manually reviewed synthetic examples"
+  "testEnvironment": "disposable synthetic-only DB; no live service writes; mock local bare remotes",
+  "reviewBasis": "explicit user task; pinned SHA; source/history review; actual tests"
 }

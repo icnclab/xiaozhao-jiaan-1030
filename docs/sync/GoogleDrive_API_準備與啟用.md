@@ -1,5 +1,7 @@
 # Google 官方 Drive API：準備完成，實際授權／上傳／排程停用
 
+> 2026-11-08 最新決定：暫不使用 Cloud Console／API／OAuth；改採 [GitHub＋Drive 網頁手動備份](GitHub與Drive網頁手動備份.md)。下文只保留作未來評估，不應依本文啟動授權、試傳或排程。
+
 本分支以 Google Drive v3 API 取代電腦版同步與 rclone。不安裝 Google Drive 電腦版、不接觸 OneDrive、不新增付費服務；Google Cloud 不啟用計費服務，Drive 空間或 API quota 不足就失敗，不自動購買。
 
 ## 目前狀態
