@@ -11,6 +11,25 @@ def expected_account(cfg):
     if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+',account):raise ValueError('LAB_ACCOUNT_PRIVATE_CONFIG_REQUIRED')
     return account
 
+def authenticated_service(cfg):
+    """Read existing private OAuth only; no consent, uploads or token-file writes."""
+    from google.oauth2.credentials import Credentials
+    from google.auth.transport.requests import Request
+    from googleapiclient.discovery import build
+    token=Path(cfg['oauthTokenFile']).resolve()
+    if token.is_relative_to(Path(cfg['repoPath']).resolve()):
+        raise PermissionError('OAUTH_TOKEN_MUST_BE_OUTSIDE_REPOSITORY')
+    credentials=Credentials.from_authorized_user_file(str(token))
+    if set(credentials.scopes or [])!={SCOPE}:raise PermissionError('UNEXPECTED_OAUTH_SCOPES')
+    if not credentials.valid:
+        if not credentials.refresh_token:raise PermissionError('USER_OAUTH_REQUIRED')
+        credentials.refresh(Request())
+    service=build('drive','v3',credentials=credentials,cache_discovery=False)
+    user=service.about().get(fields='user(emailAddress,me)').execute(num_retries=0)['user']
+    if user.get('emailAddress','').lower()!=expected_account(cfg) or user.get('me') is not True:
+        raise PermissionError('AUTHENTICATED_DRIVE_ACCOUNT_MISMATCH')
+    return service,credentials
+
 class GoogleDriveBackup:
     def __init__(self,cfg,*,service=None,media_factory=None,read_only=False):
         self.upload_enabled=not read_only and cfg.get('driveEnabled') is True and cfg.get('driveAccountCheckedByHuman') is True

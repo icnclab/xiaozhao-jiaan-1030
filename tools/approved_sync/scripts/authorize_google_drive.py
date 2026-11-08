@@ -27,7 +27,9 @@ def main():
         previous=logging.root.manager.disable;logging.disable(logging.CRITICAL)
         try:
             flow=InstalledAppFlow.from_client_secrets_file(cfg['oauthClientFile'],scopes=[SCOPE],autogenerate_code_verifier=True)
-            credentials=flow.run_local_server(host='127.0.0.1',port=0,open_browser=True,timeout_seconds=300,authorization_prompt_message='請由本人在瀏覽器確認實驗室帳號與授權。',success_message='授權回應已收到，請回到本機工具查看核對結果。')
+            credentials=flow.run_local_server(host='127.0.0.1',port=0,open_browser=True,timeout_seconds=300,access_type='offline',prompt='consent',login_hint=account,include_granted_scopes='false',authorization_prompt_message='請由本人在瀏覽器確認實驗室帳號與授權。',success_message='授權回應已收到，請回到本機工具查看核對結果。')
+            if not credentials.refresh_token or set(credentials.granted_scopes or credentials.scopes or [])!={SCOPE}:
+                raise PermissionError('EXACT_DRIVE_FILE_AND_REFRESH_TOKEN_REQUIRED')
             service=build('drive','v3',credentials=credentials,cache_discovery=False)
             user=service.about().get(fields='user(emailAddress,me)').execute()['user']
             if user.get('emailAddress','').lower()!=account or user.get('me') is not True:raise PermissionError('WRONG_GOOGLE_ACCOUNT_TOKEN_NOT_SAVED')

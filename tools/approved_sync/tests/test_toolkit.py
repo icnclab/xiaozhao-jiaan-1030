@@ -26,6 +26,9 @@ class ToolkitTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.base = Path(self.temp.name)
+        # Even mock uploads must never write to the user's real backup staging.
+        environment=patch.dict(os.environ,{'LOCALAPPDATA':str(self.base/'mock-appdata')})
+        environment.start();self.addCleanup(environment.stop)
         self.repo = self.base / 'repo'
         self.repo.mkdir()
         command('git', 'init', '-q', str(self.repo))

@@ -2,7 +2,7 @@
   "repoPath": "C:\\aa\\ltc_care_installer_20260912\\ltc_care",
   "expectedGitHubRemote": "https://github.com/icnclab/xiaozhao-jiaan-1030.git",
   "expectedGitHubAccount": "icnclab",
-  "stableBranch": "sync/stable-20261107-jiaan1030",
+  "stableBranch": "sync/stable-20261108-handover-dual-api",
   "allowGitHubAutoPush": false,
   "existingGithubSyncScript": "deploy/fieldtest/github_sync_check.ps1",
   "driveMode": "api",
@@ -13,5 +13,8 @@
   "driveFolderId": "",
   "driveParentFolderId": "",
   "oauthClientFile": "",
-  "oauthTokenFile": ""
+  "oauthTokenFile": "",
+  "pickerApiKey": "",
+  "pickerProjectNumber": "",
+  "pickerGrantVerified": false
 }
