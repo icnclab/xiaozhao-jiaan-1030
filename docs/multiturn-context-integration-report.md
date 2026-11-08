@@ -11,6 +11,8 @@
 
 最新核准 tag 比固定基線多 7 個提交，含健康檢查 API hardening、內部 health token 初始化、UAT 隔離與已審核的 handover / Drive 備份作業。這些提交沒有改動 Patch 的 11 個目標路徑或前端依賴 manifest；已完整保留在整合分支上。其他較新 handover tag 是該核准 tag 的祖先，不是遺漏的後續分支。
 
+遠端 `main` 與此核准 tag 沒有共同祖先；本整合分支刻意保持在核准 tag 的歷史線上，未嘗試合併 `main`。若日後需整合至 `main`，須由維護者先確認兩條獨立歷史的正式整併策略。
+
 ## 整合功能與安全邊界
 
 - LIFF 只在明確續問時傳遞 `conversation_id`；新對話不繼承上一段脈絡，切換登入身分時清除前端脈絡。
