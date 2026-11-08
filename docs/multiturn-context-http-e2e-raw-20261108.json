@@ -1,0 +1,148 @@
+{
+  "passed": 27,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "login:caregiver_owner",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "name": "login:caregiver_peer",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "name": "login:caregiver_other_org",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "name": "login:supervisor",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "name": "new_question_http_200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "name": "new_question_has_conversation",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "rag_citations_present",
+      "passed": true,
+      "detail": "answered"
+    },
+    {
+      "name": "new_question_created_interaction",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "name": "interaction_has_one_question",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "first_request_idempotent_retry",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "retry_keeps_conversation",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "new_question_starts_separate_conversation",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "explicit_continue_http_200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "name": "explicit_continue_keeps_conversation",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "end_interaction_http_200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "name": "interaction_has_ended_at",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "ended_interaction_rejects_new_followup",
+      "passed": true,
+      "detail": "409"
+    },
+    {
+      "name": "ended_interaction_allows_same_request_retry",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "name": "cross_user_blocked",
+      "passed": true,
+      "detail": "404"
+    },
+    {
+      "name": "cross_org_blocked",
+      "passed": true,
+      "detail": "404"
+    },
+    {
+      "name": "role_blocked",
+      "passed": true,
+      "detail": "404"
+    },
+    {
+      "name": "forged_conversation_blocked",
+      "passed": true,
+      "detail": "404"
+    },
+    {
+      "name": "case_context_rejected_by_backend",
+      "passed": true,
+      "detail": "422"
+    },
+    {
+      "name": "high_risk_escalated",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "high_risk_case_created",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "high_risk_has_no_citations",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "no_worker_or_delivery_executed",
+      "passed": true,
+      "detail": "notification_rows=0; mock_deliveries=0; worker_not_started"
+    }
+  ],
+  "latency_ms": {
+    "count": 12,
+    "min": 7.21,
+    "median": 12.07,
+    "p95": 57.12,
+    "max": 121.32
+  }
+}

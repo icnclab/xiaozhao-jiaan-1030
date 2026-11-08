@@ -120,18 +120,17 @@ def ask(body: AskIn, user: User = Depends(require_roles(*ANY_ROLE)), db: Session
         if category is None or category.org_id != user.org_id:
             raise deny_not_found(db, user, "category", body.category_id)
         category_id = category.id
-    conversation_id = _parse_uuid(body.conversation_id) if body.conversation_id else None
-    if conversation_id:
-        # conversation_id is also used by the isolated Interaction workflow.
-        # Reuse its owner/org/role/end-state guard before loading any context.
-        from app.api.interaction_routes import validate_ask
+    requested_conversation_id = _parse_uuid(body.conversation_id) if body.conversation_id else None
+    from app.api.interaction_routes import ensure_ask_interaction
 
-        validate_ask(db, user, conversation_id, body.client_request_id)
+    conversation_id, use_previous_context = ensure_ask_interaction(
+        db, user, requested_conversation_id, body.client_request_id,
+    )
     try:
         item, case, _ = qa_service.ask(
             db, user, question=body.question, source=body.source, client_request_id=body.client_request_id,
             transcript_id=transcript_id, category_id=category_id,
-            conversation_id=conversation_id,
+            conversation_id=conversation_id, use_previous_context=use_previous_context,
         )
     except qa_service.QaError as exc:
         if exc.code in {"conversation_not_found", "request_organization_mismatch"}:

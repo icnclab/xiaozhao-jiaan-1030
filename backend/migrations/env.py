@@ -12,6 +12,7 @@ from app import models  # noqa: F401  註冊所有模型
 from app import quality_models  # noqa: F401  dedicated quality schema
 from app import jiaan1030_client_models  # noqa: F401  GA09/SC09 service-client master data
 from app import jiaan1030_draft_models  # noqa: F401  GA09/SC09 draft table
+from app import interaction_models  # noqa: F401  isolated interaction/history authorization tables
 from app.config import get_settings
 from app.db import Base
 

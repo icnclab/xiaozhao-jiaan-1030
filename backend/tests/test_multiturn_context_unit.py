@@ -127,7 +127,11 @@ def test_unknown_conversation_maps_to_not_found_without_disclosure():
         raise qa_service.QaError("conversation_not_found", "找不到對話")
 
     with (
-        patch.object(interaction_routes, "validate_ask"),
+        patch.object(
+            interaction_routes,
+            "ensure_ask_interaction",
+            return_value=(uuid.UUID(body.conversation_id), True),
+        ),
         patch.object(caregiver_routes.qa_service, "ask", reject),
     ):
         try:
@@ -152,7 +156,11 @@ def test_idempotency_key_cannot_be_reused_for_another_conversation():
         raise qa_service.QaError("request_conversation_mismatch", "提問請求與對話不一致")
 
     with (
-        patch.object(interaction_routes, "validate_ask"),
+        patch.object(
+            interaction_routes,
+            "ensure_ask_interaction",
+            return_value=(uuid.UUID(body.conversation_id), True),
+        ),
         patch.object(caregiver_routes.qa_service, "ask", reject),
     ):
         try:
@@ -206,7 +214,7 @@ def test_ended_interaction_allows_only_same_conversation_idempotent_retry():
     previous = SimpleNamespace(conversation_id=conversation_id)
 
     interaction_routes.validate_ask(
-        SequentialScalarSession(interaction, previous),
+        SequentialScalarSession(interaction, previous, True),
         user,
         conversation_id,
         "request-id-retry",
@@ -226,7 +234,7 @@ def test_qa_entrypoint_runs_interaction_guard_before_context_lookup():
     with (
         patch.object(
             interaction_routes,
-            "validate_ask",
+            "ensure_ask_interaction",
             side_effect=caregiver_routes.HTTPException(409, "interaction ended"),
         ) as guard,
         patch.object(caregiver_routes.qa_service, "ask") as service,
@@ -237,6 +245,62 @@ def test_qa_entrypoint_runs_interaction_guard_before_context_lookup():
     assert caught.value.status_code == 409
     guard.assert_called_once_with(db, user, conversation_id, "request-id-guard")
     service.assert_not_called()
+
+
+class InteractionSession:
+    def __init__(self, value=None):
+        self.value = value
+        self.added = []
+        self.flushed = False
+
+    def scalar(self, statement):
+        return self.value
+
+    def add(self, value):
+        self.added.append(value)
+
+    def flush(self):
+        self.flushed = True
+        for value in self.added:
+            if getattr(value, "id", None) is None:
+                value.id = uuid.uuid4()
+
+
+def test_new_caregiver_question_creates_managed_interaction_without_context():
+    user = SimpleNamespace(id=uuid.uuid4(), org_id=uuid.uuid4(), role="caregiver")
+    session = InteractionSession()
+
+    conversation_id, use_context = interaction_routes.ensure_ask_interaction(
+        session, user, None, "request-id-first",
+    )
+
+    assert isinstance(conversation_id, uuid.UUID)
+    assert use_context is False
+    assert session.flushed is True
+    assert session.added[0].owner_id == user.id
+    assert session.added[0].org_id == user.org_id
+    assert session.added[0].start_request_id == "request-id-first"
+
+
+def test_first_question_in_explicit_interaction_does_not_require_previous_context():
+    conversation_id = uuid.uuid4()
+    user = SimpleNamespace(id=uuid.uuid4(), org_id=uuid.uuid4(), role="caregiver")
+    interaction = SimpleNamespace(
+        id=conversation_id,
+        owner_id=user.id,
+        org_id=user.org_id,
+        ended_at=None,
+    )
+
+    resolved, use_context = interaction_routes.ensure_ask_interaction(
+        SequentialScalarSession(interaction, None, False),
+        user,
+        conversation_id,
+        "request-id-first-explicit",
+    )
+
+    assert resolved == conversation_id
+    assert use_context is False
 
 
 class EmptyResult:

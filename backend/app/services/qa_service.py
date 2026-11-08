@@ -98,6 +98,7 @@ def ask(
     transcript_id: uuid.UUID | None = None,
     category_id: uuid.UUID | None = None,
     conversation_id: uuid.UUID | None = None,
+    use_previous_context: bool = True,
 ) -> tuple[QaItem, Case | None, bool]:
     """回答問題或轉人工。
 
@@ -133,7 +134,7 @@ def ask(
     if len(question) > MAX_QUESTION_CHARS:
         raise QaError("too_long", f"問題請在 {MAX_QUESTION_CHARS} 字以內")
 
-    if conversation_id:
+    if conversation_id and use_previous_context:
         previous = _previous_question(session, user, conversation_id)
         question = _apply_question_context(question, previous)
 

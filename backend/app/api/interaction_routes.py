@@ -548,14 +548,51 @@ def end(id: uuid.UUID, user: User = Depends(require_roles("caregiver")), db: Ses
 
 
 def validate_ask(db, user, conversation_id, request_id):
-    """新群組需逐次驗證；舊的非群組 conversation_id 保持相容。"""
+    """Validate a managed group and report whether it already has Context.
+
+    ``None`` means a legacy standalone conversation UUID, ``False`` means a
+    managed Interaction with no prior QA, and ``True`` means Context exists.
+    """
     g = db.scalar(select(Interaction).where(Interaction.id == conversation_id).with_for_update())
     if not g:
-        return
+        return None
     if g.owner_id != user.id or g.org_id != user.org_id or user.role != "caregiver":
         raise deny_not_found(db, user, "interaction", conversation_id)
-    previous = db.scalar(select(QaItem).where(QaItem.user_id == user.id, QaItem.client_request_id == request_id))
+    previous = db.scalar(select(QaItem).where(
+        QaItem.user_id == user.id,
+        QaItem.client_request_id == request_id,
+    ))
     if previous and previous.conversation_id != g.id:
         raise HTTPException(409, "request belongs to another interaction")
     if g.ended_at and not previous:
         raise HTTPException(409, "interaction ended")
+    return bool(db.scalar(select(exists(select(QaItem.id).where(
+        QaItem.conversation_id == g.id,
+        QaItem.user_id == user.id,
+        QaItem.org_id == user.org_id,
+    )))))
+
+
+def ensure_ask_interaction(db, user, conversation_id, request_id):
+    """Create a caregiver's first group or validate an explicit continuation.
+
+    The first request's idempotency key is also the start key.  A request that
+    omits ``conversation_id`` can therefore never inherit another thread.
+    """
+    if conversation_id is not None:
+        context_exists = validate_ask(db, user, conversation_id, request_id)
+        return conversation_id, context_exists is not False
+    if user.role != "caregiver":
+        return None, False
+    group = db.scalar(select(Interaction).where(
+        Interaction.owner_id == user.id,
+        Interaction.start_request_id == request_id,
+    ).with_for_update())
+    if group is not None:
+        if group.org_id != user.org_id:
+            raise deny_not_found(db, user, "interaction", group.id)
+    else:
+        group = Interaction(org_id=user.org_id, owner_id=user.id, start_request_id=request_id)
+        db.add(group)
+        db.flush()
+    return group.id, False
