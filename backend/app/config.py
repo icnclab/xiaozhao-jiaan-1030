@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     uat_line_user_ids: tuple[str, ...] = ()
     uat_account_roles: dict[str, str] = {}
     uat_outbound_mode: str = "blocked"
+    uat_handover_mpc_enabled: bool = False
 
     @field_validator("uat_line_user_ids", mode="before")
     @classmethod

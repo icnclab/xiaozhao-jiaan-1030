@@ -1,4 +1,4 @@
 {
-  "branch": "sync/stable-20261107-jiaan1030",
-  "note": "GitHub 自動同步目標分支。只同步 HEAD 上有 stable-ready-* tag 的 commit，且工作目錄必須乾淨（不自動 commit）。更新穩定分支時，手動改這個 branch 值。"
+  "branch": "sync/stable-20261108-handover-dual-api",
+  "note": "Isolated reviewed source branch only; does not change the live main working tree sync target."
 }

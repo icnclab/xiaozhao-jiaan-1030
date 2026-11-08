@@ -1,0 +1,16 @@
+# Only append relevant entries after checking the existing .gitignore.
+# Do not replace the file. Git ignore does not protect files ALREADY TRACKED.
+**/uat.local.env
+**/sync_targets.local.json
+**/real_interviews_extracted_samples.json
+**/internal_health_token.txt
+**/.local_webpush_secrets/
+**/*.before_db_stage*.backup
+**/.env
+**/.env.local
+**/*.local.env
+**/*.dump
+**/*.dump.sha256
+**/restore_log.txt
+**/data_demo/
+**/docs/interviews/

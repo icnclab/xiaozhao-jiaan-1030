@@ -135,3 +135,8 @@ docs/jiaan1030_forms/
 
 # Explicitly reviewed credential-free UAT template only
 !/deploy/uat/uat.env.example
+
+# Explicit reviewed dummy template; real configuration remains ignored.
+!/.env.example
+*.local.json
+**/oauth/**

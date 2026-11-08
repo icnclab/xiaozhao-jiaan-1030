@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "policy": "Exact LF-normalized file SHA256 AND exact matched-value SHA256; reviewed canonical synthetic examples, regex, or port-1 fake DSNs only. No live credential exemptions.",
+  "files": {
+    ".claude/skills/github-sync/SKILL.md": {
+      "fileSha256": "11a9e08707506aed10330763fde0e896931277e3987ac07726576c464a9dcd4c",
+      "matchedSha256": {
+        "db_dsn_password": [
+          "7a50b99f7fc470f293b2173ec4f6c07709ce6ad2c04980cefee8010d404fa9b8"
+        ]
+      }
+    },
+    ".claude/skills/rag-evaluation/SKILL.md": {
+      "fileSha256": "33b13cbf8e1cdd65d90b6d057850f57f84306f6a3662fbea56846bd03dcb04f2",
+      "matchedSha256": {
+        "db_dsn_password": [
+          "f2d3a66a82ef80a62d9f28aa59fa8984135ed2863420589cb3921ebe2f2fcd16"
+        ]
+      }
+    },
+    "backend/app/services/deid.py": {
+      "fileSha256": "9d582a862b4d4dee10954df8eb672d9b859feb7110a4f5fd35f636f0481c5a5b",
+      "matchedSha256": {
+        "taiwan_id": [
+          "51ff20a57253f7f0ee3a9bffe86a86a2141c716b2f554b2bf6429df50e538c13"
+        ]
+      }
+    },
+    "backend/tests/test_deid.py": {
+      "fileSha256": "d90e4b4c54175fef547992ecabb5abb4f90174b5098b4b4aac749b952135147c",
+      "matchedSha256": {
+        "taiwan_id": [
+          "51ff20a57253f7f0ee3a9bffe86a86a2141c716b2f554b2bf6429df50e538c13"
+        ]
+      }
+    },
+    "backend/tests/test_embedding_gemma_compat_unit.py": {
+      "fileSha256": "526ffa31924d03ff5ab07d62e4fca182b64db52332bfaa63cf1e686dcd5b2d9f",
+      "matchedSha256": {
+        "db_dsn_password": [
+          "f2d3a66a82ef80a62d9f28aa59fa8984135ed2863420589cb3921ebe2f2fcd16"
+        ]
+      }
+    }
+  }
+}

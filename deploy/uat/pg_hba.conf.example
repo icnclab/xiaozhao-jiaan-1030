@@ -1,8 +1,16 @@
-# PLAN ONLY: insert BEFORE broader allow rules, after separate approval.
-# Preserve existing production-role rules. IPv4 + IPv6 both covered.
+# PLAN ONLY. Prepared for current Docker PG16 route; DO NOT apply automatically.
+# Insert at byte 0 BEFORE all existing rules/includes, after separate approval.
+# Windows 127.0.0.1/localhost/::1:55432 are seen as 172.18.0.1 by this server.
+# Revalidate source, container identity and original file hash before any apply.
+# Preserve every existing production-role rule and file byte after this block.
+host ltc_demo ltc_uat_app 172.18.0.1/32 scram-sha-256
 host ltc_demo ltc_uat_app 127.0.0.1/32 scram-sha-256
 host ltc_demo ltc_uat_app ::1/128 scram-sha-256
 host all ltc_uat_app 0.0.0.0/0 reject
 host all ltc_uat_app ::/0 reject
-local ltc_demo ltc_uat_app scram-sha-256
+# "all" does not match physical replication protocol connections.
+host replication ltc_uat_app 0.0.0.0/0 reject
+host replication ltc_uat_app ::/0 reject
+# UAT uses TCP; no Unix-socket exception is needed.
 local all ltc_uat_app reject
+local replication ltc_uat_app reject

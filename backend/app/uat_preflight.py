@@ -7,6 +7,11 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError
 from app.uat import verify_db_cursor, fail
 
+def database_denial_verified(exc) -> bool:
+    code = getattr(exc.orig, "sqlstate", None)
+    explicit_hba = "pg_hba.conf rejects connection" in str(exc.orig)
+    return code in {"28000", "42501"} or explicit_hba
+
 def check_database(settings) -> None:
     engine = create_engine(settings.database_url, connect_args={"options": "-c default_transaction_read_only=on -c statement_timeout=5000"})
     try:
@@ -37,8 +42,9 @@ def check_database(settings) -> None:
             with other.connect():
                 fail("UAT_CAN_CONNECT_OTHER_DATABASE")
         except DBAPIError as exc:
-            code = getattr(exc.orig,"sqlstate",None)
-            if code not in {"28000","42501"}:
+            # libpq startup failures can omit SQLSTATE. Accept only an explicit
+            # HBA rejection in that case, never timeout/password/NOLOGIN errors.
+            if not database_denial_verified(exc):
                 fail("UAT_DATABASE_DENIAL_NOT_VERIFIED")
         finally:
             other.dispose()
