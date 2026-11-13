@@ -47,7 +47,7 @@ MENU_KEYWORDS = {
     "問AI": ("ask", "開啟提問頁"),
     "錄音": ("record", "開啟錄音／談話紀錄頁"),
     "談話紀錄": ("record", "開啟錄音／談話紀錄頁"),
-    "問題分類": ("report", "開啟問題分類回報頁"),
+    "問題分類": ("report/entry", "開啟問題分類回報頁"),
     "我的案件": ("cases", "開啟我的案件"),
     "使用說明": ("help", "開啟使用說明與知識庫涵蓋範圍"),
 }
@@ -252,7 +252,7 @@ def _on_unfollow(session: Session, event: LineEvent) -> None:
 
 def _function_menu() -> dict[str, Any]:
     """One Flex card (desktop fallback) with mobile quick replies; no client sniffing."""
-    pages = (("問 AI", "ask"), ("錄音／談話", "record"), ("問題分類", "report"),
+    pages = (("問 AI", "ask"), ("錄音／談話", "record"), ("問題分類", "report/entry"),
              ("我的案件", "cases"), ("使用說明", "help"))
     unavailable = _text("小照｜功能選單\n功能連結暫時無法使用，請聯絡督導協助。")
     base = get_settings().public_base_url

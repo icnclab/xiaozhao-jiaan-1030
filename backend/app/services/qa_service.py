@@ -110,6 +110,7 @@ def ask(
             "session": session,
             "org_id": org.id,
             "facility_type": org.facility_type,
+            "role": user.role,
             "today": today,
             "question_raw": question,
             "deid_terms": load_deid_terms(session, org.id),

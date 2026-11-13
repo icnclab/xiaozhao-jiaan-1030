@@ -249,9 +249,15 @@ $Root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $stamp = Get-Date -Format "yyyyMMdd"
 $stage = Join-Path $env:TEMP "ltc_care_pkg"; if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 $pkgRoot = Join-Path $stage "ltc_care"; New-Item -ItemType Directory -Force $pkgRoot, $OutDir | Out-Null
+$frontendStage = Join-Path $stage "frontend-build"
 
 Write-Host "== 前端建置" -ForegroundColor Cyan
-Push-Location (Join-Path $Root "frontend"); npm run build | Select-Object -Last 2; Pop-Location
+Push-Location (Join-Path $Root "frontend")
+try {
+    npm run build -- --outDir $frontendStage | Select-Object -Last 2
+    if ($LASTEXITCODE -ne 0) { throw "前端建置失敗（exit $LASTEXITCODE）" }
+} finally { Pop-Location }
+if (-not (Test-Path -LiteralPath (Join-Path $frontendStage "index.html"))) { throw "前端 stage 缺少 index.html" }
 
 Write-Host "== 匯出相依與下載 wheels（cp311＋cp312，win_amd64）" -ForegroundColor Cyan
 Push-Location (Join-Path $Root "backend")
@@ -267,6 +273,9 @@ Write-Host "== 複製程式碼" -ForegroundColor Cyan
 $xd = @(".git", ".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache", "venv_asr", "data", "logs", "run", "wheels", "bin", ".claude")
 $xdArgs = @(); foreach ($d in $xd) { $xdArgs += $d }
 robocopy $Root $pkgRoot /E /NFL /NDL /NJH /NJS /XD @xdArgs /XF ".env" ".env.*" "*.pyc" "*.log" "*.pid" | Out-Null
+$packagedDist = Join-Path $pkgRoot "frontend\dist"
+if (Test-Path -LiteralPath $packagedDist) { Remove-Item -LiteralPath $packagedDist -Recurse -Force }
+Copy-Item -LiteralPath $frontendStage -Destination $packagedDist -Recurse -Force
 Copy-Item (Join-Path $Root ".env.example") (Join-Path $pkgRoot ".env.example") -Force
 if (-not $NoFfmpeg) {
     $ff = (Get-Command ffprobe -ErrorAction SilentlyContinue).Source

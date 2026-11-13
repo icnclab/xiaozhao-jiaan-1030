@@ -99,6 +99,25 @@ def test_roles_confirmed_by_caregiver_unknown_stays_unknown(client, world, tmp_p
     assert ask["outcome"] in {"answered", "escalated"}
 
 
+def test_supervisor_role_tags_multiple_speakers(client, world, tmp_path):
+    """第七輪：多人逐字稿角色標註，speaker_1=居督、speaker_2=家屬，各自留存角色與對應片段。"""
+    headers = login_liff(client, "cg1")
+    MockStt.script = SEGMENTS
+    transcript_id = upload(client, headers, make_wav(tmp_path / "a.wav")).json()["transcript_id"]
+    drain()
+    body = {
+        "segments": [{"idx": 0, "speaker": "speaker_1"}, {"idx": 1, "speaker": "speaker_2"}],
+        "roles": {"speaker_1": "supervisor", "speaker_2": "family"},
+        "selected_idx": [],
+        "summary": None,
+    }
+    confirmed = client.post(f"/api/transcripts/{transcript_id}/confirm", json=body, headers=headers).json()
+    assert confirmed["status"] == "confirmed"
+    assert confirmed["roles"] == {"speaker_1": "supervisor", "speaker_2": "family"}
+    speakers = {s["idx"]: s["speaker"] for s in confirmed["segments"]}
+    assert speakers[0] == "speaker_1" and speakers[1] == "speaker_2" and speakers[2] == "unknown"
+
+
 def test_invalid_role_rejected(client, world, tmp_path):
     headers = login_liff(client, "cg1")
     MockStt.script = SEGMENTS

@@ -227,7 +227,7 @@ def export_xlsx(db: Session = Depends(get_db), user=Depends(current_user)):
     wb = Workbook()
     wb.remove(wb.active)
     specs = [
-        ("47人測試總覽", ["編號","身分","帳號ID","對應狀態","操作事件","AI問答","建立案件","測試狀態"],
+        ("場測總覽", ["編號","身分","帳號ID","對應狀態","操作事件","AI問答","建立案件","測試狀態"],
           [[p["code"], p["role"], p["user_id"] or "",p["mapping_status"],p["audit_event_count"],p["qa_count"],p["case_count"],p["status"]] for p in data["participants"]]),
         ("個別操作紀錄", ["編號","使用者ID","事件","時間","結果"],
           [[r.get("code"),r.get("user_id"),r.get("event"),str(r.get("occurred_at") or ""),str(r.get("outcome") or "")] for r in data["events"]]),

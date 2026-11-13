@@ -23,12 +23,13 @@ export function CasesPage() {
   return (
     <div className="page stack">
       <h1>我的案件</h1>
-      <ErrorBox error={error} />
+      <div aria-live="polite"><ErrorBox error={error} /></div>
+      {rows === null && !error && <p role="status">正在載入案件…</p>}
       {rows?.length === 0 && <p className="muted">還沒有案件。</p>}
       {rows?.map((c) => (
         <Link key={c.id} to={`/liff/cases/${c.id}`} className="card" style={{ textDecoration: "none", color: "inherit" }}>
           <div className="row">
-            <strong>{c.number}</strong>
+            <span>待確認案件編號：</span><strong>{c.number}</strong>
             <span className={`tag ${c.status === "replied" ? "ok" : c.status === "closed" ? "" : "warn"}`}>{c.status_label}</span>
           </div>
           <p className="small">{c.summary_masked}</p>

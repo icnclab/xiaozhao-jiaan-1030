@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { api, errorMessage, getToken, setToken, type PublicConfig, type User } from "../api";
-import { loginDev, loginWithLiff, type LiffSession } from "./auth";
+import { api, errorMessage, getToken, isApiError, SESSION_EXPIRED_EVENT, setToken, type PublicConfig, type User } from "../api";
+import { loginDev, loginWithLiff, reopenLiff, type LiffSession } from "./auth";
 
 interface LiffContextValue {
   config: PublicConfig;
@@ -10,7 +10,7 @@ interface LiffContextValue {
   logout: () => void;
 }
 
-const LiffContext = createContext<LiffContextValue | null>(null);
+export const LiffContext = createContext<LiffContextValue | null>(null);
 
 export function useLiff(): LiffContextValue {
   const value = useContext(LiffContext);
@@ -60,26 +60,55 @@ export function LiffApp() {
   const location = useLocation();
 
   useEffect(() => {
-    api<PublicConfig>("/api/config/public").then(setConfig).catch((e) => setError(errorMessage(e)));
+    const reverify = () => {
+      setError(null);
+      setSession(null);
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, reverify);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, reverify);
+  }, []);
+
+  useEffect(() => {
+    // XZ_LIFF_CONFIG_TIMEOUT_V1: show a usable error rather than infinite loading.
+    let active = true;
+    const timeout = new Promise<never>((_resolve, reject) => {
+      window.setTimeout(() => reject({
+        code: "config_timeout", message: "小照載入逾時，請重新載入或稍後重試", status: 0, retryable: true,
+      }), 12000);
+    });
+    Promise.race([api<PublicConfig>("/api/config/public"), timeout])
+      .then((value) => { if (active) setConfig(value); })
+      .catch((e) => { if (active) setError(errorMessage(e)); });
+    return () => { active = false; };
   }, []);
 
   // 已有 session token → 直接取 /me
   useEffect(() => {
     if (!config || session) return;
-    const token = getToken();
-    if (token) {
-      api<User>("/api/me")
-        .then((user) => setSession({ status: "ok", user, dev: config.line_mode === "mock" }))
-        .catch(() => setToken(null));
-      return;
+    let cancelled = false;
+    setBusy(true);
+    async function restore() {
+      if (getToken()) {
+        try {
+          const user = await api<User>("/api/me");
+          if (!cancelled) { setBusy(false); setSession({ status: "ok", user, dev: config!.line_mode === "mock" }); }
+          return;
+        } catch (e) {
+          // Only an expired/invalid application session may trigger fresh LINE verification.
+          if (!isApiError(e) || e.status !== 401) throw e;
+          if (cancelled) return;
+          setToken(null);
+        }
+      }
+      if (!cancelled && config!.line_mode === "real" && config!.liff_id) {
+        const next = await loginWithLiff(config!);
+        if (!cancelled) { setBusy(false); setSession(next); }
+      }
     }
-    if (config.line_mode === "real" && config.liff_id) {
-      setBusy(true);
-      loginWithLiff(config)
-        .then(setSession)
-        .catch((e) => setError(errorMessage(e)))
-        .finally(() => setBusy(false));
-    }
+    restore().catch((e) => {
+      if (!cancelled) setError(errorMessage(e));
+    }).finally(() => { if (!cancelled) setBusy(false); });
+    return () => { cancelled = true; };
   }, [config, session]);
 
   useEffect(() => {
@@ -99,6 +128,12 @@ export function LiffApp() {
       <div className="page">
         <div className="notice danger">{error}</div>
         <button className="btn block" onClick={() => window.location.reload()}>重新載入</button>
+        {config?.line_mode === "real" && config.liff_id && (
+          <button className="btn block" onClick={() => {
+            setError(null); setBusy(true);
+            reopenLiff(config).catch((e) => { setError(errorMessage(e)); setBusy(false); });
+          }}>重新進行 LINE 登入</button>
+        )}
       </div>
     );
   }
@@ -117,14 +152,20 @@ export function LiffApp() {
     );
   }
 
+  const isSupervisory = ["supervisor", "director", "admin"].includes(session.user.role);
   const tabs = [
     { to: "/liff", label: "首頁", icon: "🏠", end: true },
-    { to: "/liff/ask", label: "問 AI", icon: "💬" },
+    // 督導/主任的「問AI」改連專屬督導AI助手（/api/qa/supervisor-ask 後端角色檢查），
+    // 不是只改標題：照服員仍走原本的 /liff/ask。
+    isSupervisory
+      ? { to: "/liff/supervisor-ask", label: "AI 照護助手", icon: "💬" }
+      : { to: "/liff/ask", label: "問 AI", icon: "💬" },
     { to: "/liff/record", label: "錄音", icon: "🎙️" },
-    { to: "/liff/report", label: "分類回報", icon: "📋" },
+    { to: "/liff/report/entry", label: "問題分類", icon: "📋" },
     { to: "/liff/cases", label: "我的案件", icon: "📂" },
   ];
   const mockModes = Object.entries(config.modes).filter(([, v]) => v === "mock" || v === "extractive");
+  const independentAssistant = location.pathname === "/liff/supervisor-ask";
   return (
     <LiffContext.Provider value={{ config, user: session.user, dev: session.dev, logout }}>
       {(session.dev || mockModes.length > 0) && (
@@ -133,19 +174,20 @@ export function LiffApp() {
           {mockModes.length > 0 ? `　模擬／退路模式：${mockModes.map(([k, v]) => `${k}=${v}`).join("、")}` : ""}
         </div>
       )}
-      <div className="topbar">
+      {!independentAssistant && <div className="topbar">
         <NavLink to="/liff"><strong>{config.bot_name}｜長照 AI 照護小幫手</strong></NavLink>
         <span className="small">{session.user.display_name}</span>
-      </div>
+      </div>}
+      {session.dev && <div className="page"><NavLink to="/liff/mpc-review" className="btn">MPC 人工核對（測試）</NavLink></div>}
       <Outlet />
-      <nav className="tabbar">
+      {!independentAssistant && <nav className="tabbar">
         {tabs.map((t) => (
-          <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => (isActive ? "active" : "")}>
+          <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => ((t.to === "/liff/report/entry" ? location.pathname === "/liff/report" || location.pathname.startsWith("/liff/report/") : isActive) ? "active" : "")}>
             <span className="icon">{t.icon}</span>
             {t.label}
           </NavLink>
         ))}
-      </nav>
+      </nav>}
     </LiffContext.Provider>
   );
 }

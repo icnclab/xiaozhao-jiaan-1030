@@ -1,0 +1,10 @@
+$ErrorActionPreference = 'Stop'
+Set-Location 'C:\aa\ltc_care_installer_20260912\ltc_care\backend'
+. 'C:\aa\ltc_care_installer_20260912\ltc_care\deploy\fieldtest\load_webpush_runtime.ps1'
+$env:JIAAN_WEBPUSH_SELF_TEST = 'on'
+$env:JIAAN_WEBPUSH_DISPATCH = 'off'
+$env:JIAAN_EMERGENCY_LINE_DISPATCH = 'off'
+Write-Host 'SERVICE=ORIGINAL_SOS'
+Write-Host 'PORT=8165'
+Write-Host 'AUTO_DISPATCH=OFF'
+& 'C:\aa\ltc_care_installer_20260912\ltc_care\backend\.venv\Scripts\python.exe' -B -m uvicorn 'app.main:app' --host 127.0.0.1 --port 8165 --no-access-log

@@ -23,6 +23,23 @@ def metric(values):
     return dict(numerator=sum(values), denominator=len(values), rate=sum(values)/len(values) if values else None)
 
 
+def percentile(values, pct):
+    if not values:
+        return None
+    ordered = sorted(values)
+    index = min(len(ordered) - 1, max(0, round(pct / 100 * (len(ordered) - 1))))
+    return ordered[index]
+
+
+def timing_summary(results):
+    # graph_total 是單次 run_graph() 的壁鐘耗時（ms），不含 HTTP/LINE 傳輸層；
+    # 18 筆樣本不足以代表正式負載分佈，僅供離線比較用。
+    values = [r['actual'].get('timings_ms', {}).get('graph_total')
+              for r in results if r['actual'].get('timings_ms', {}).get('graph_total') is not None]
+    return dict(n=len(values), p50_ms=percentile(values, 50), p95_ms=percentile(values, 95),
+                note='18 筆樣本，僅工作區 read-only replay 耗時，非正式負載下的回應時間分佈')
+
+
 def statistics(results):
     fields = {
         'expected_behavior_match':'behavior_match', 'risk_block_recall':'risk_block_recalled',
@@ -30,9 +47,18 @@ def statistics(results):
         'answer_correctness_proxy':'answer_correctness_proxy', 'citation_correctness_proxy':'citation_correctness_proxy',
         'repetition_regression_pass':'repetition_pass', 'concise_presentation_proxy_pass':'concise_proxy_pass',
         'automated_check_pass':'automated_pass'}
-    return {key: metric([r[field] for r in results if key != 'answer_correctness_proxy'
+    stats = {key: metric([r[field] for r in results if key != 'answer_correctness_proxy'
                         or r['expected_behavior'] in ('answer', 'direct_answer', 'concise_answer')])
             for key, field in fields.items()}
+    # 證據完整呈現率：每一項「Gold 答案明示、且已被檢索並通過既有驗證器」的
+    # 必要事實（fact_checks 的每一個 key），是否真的出現在最終呈現答案中。
+    # 分母＝這 18 題累計的必要事實項目數，不是題數；一題漏掉一項就扣一項，
+    # 不是整題二元判定（那是 answer_correctness_proxy 既有的做法）。這個指標
+    # 專門用來抓「顯示層過濾器把已驗證證據濾掉」這類問題（例如本輪修正的
+    # BA16 距離限制），和檢索/驗證層的問題分開看。
+    stats['evidence_presentation_completeness'] = metric(
+        [v for r in results for v in r['fact_checks'].values()])
+    return stats
 
 
 def normalized(text):
@@ -180,6 +206,7 @@ def main():
     engine.dispose()
     attach(results, annotations)
     stats = statistics(results)
+    timing = timing_summary(results)
     metadata = dict(dataset_version=manifest['dataset_version'], evaluated_at=datetime.now(timezone.utc).isoformat(),
                     qa_policy_version=DEFAULT_POLICY.version, clarification_policy_version=DEFAULT_POLICY.clarification_version,
                     safety_policy_version=DEFAULT_POLICY.safety_version,
@@ -191,7 +218,7 @@ def main():
                                  'Answer and citation correctness are explicit fact/source proxies, not human semantic grading',
                                  'Risk-block answer completeness needs human comparison to reviewed Gold answer',
                                  'Conciseness budget is an offline heuristic, never a production token/output restriction'])
-    metadata.update(offline_evaluator_version=VERSION, offline_evaluation_method=METHOD)
+    metadata.update(offline_evaluator_version=VERSION, offline_evaluation_method=METHOD, timing=timing)
     report = dict(metadata=metadata, statistics=stats, results=results,
                   failures=[r['id'] for r in results if not r['automated_pass']],
                   next_problem_groups=['Risk recognition coverage: disease-exclusion questions and environmental hazards',
@@ -201,17 +228,25 @@ def main():
     (args.output / 'baseline_report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2, default=str), encoding='utf-8')
     lines = ['# Gold Dataset v1 baseline', '',
              '用途：development Gold regression set；18 筆未切分，不代表正式 AI 準確率。',
-             f"政策：{DEFAULT_POLICY.version}；資料：{manifest['dataset_version']}。",
-             '執行：目前工作區完整 graph + Answer assembly，ltc_clean READ ONLY；未重啟 live API，未建立 QA/case。', '',
-             '| 指標 | 結果 |', '|---|---|']
+             f"政策：{DEFAULT_POLICY.version}；資料：{manifest['dataset_version']}（kb_version: {manifest['kb_version'][:22]}...）。",
+             '執行：目前工作區完整 graph + Answer assembly，ltc_clean READ ONLY；未重啟 live API，未建立 QA/case。',
+             '', '**三層結果務必分開看，不可互相替代：**',
+             '1. 自動化檢查通過（`automated_pass`／本報告各項 rate）＝程式可重複驗證的事實、引用與行為比對，18 筆全過不等於「AI 準確率 100%」。',
+             '2. 人工 Gold 判定（`correct_answer`／`reviewed_correction`）＝嘉安審核過的標準答案，是本報告拿來比對的基準，本身仍可能需要再次覆核。',
+             '3. 實際模型生成結果（`results[].actual`）＝這次 replay 真正產生的答案、引用與證據，所有輸出已完整保存於 baseline_report.json，供人工覆核。',
+             '', '| 指標 | 結果 |', '|---|---|']
     for k, v in stats.items():
         lines.append(f"| {k} | {v['numerator']}/{v['denominator']}" + (f" ({v['rate']:.1%}) |" if v['rate'] is not None else ' (N/A) |'))
+    lines.append(f"| response_time_p50_ms / p95_ms (n={timing['n']}) | {timing['p50_ms']} / {timing['p95_ms']} |")
     lines += ['', '???????' + VERSION + '?' + METHOD,
               '???????????????? baseline_report.json????????']
     lines += ['', 'answer/citation correctness 為可重複執行的事實與來源 proxy，不是人工語義正確率。',
               '答案 proxy：Gold 答案中明示的 BA16、藥品、本人所需、距離、超距費用、家人費用與用藥界線。',
               '引用 proxy：文件名、頁碼、BA16 與引用存在；不自動斷言每一句完整蘊含。',
+              '證據完整呈現率：18 題累計的必要事實項目（不是題數）中，有多少確實出現在最終呈現答案裡；'
+              '專門抓顯示層把已檢索、已驗證的證據濾掉的情況（例如本輪修正前的 BA16 距離限制），和檢索/驗證層問題分開看。',
               '冗長 proxy：max(300 字, Gold 答案字數×2)；不刪減 production 輸出。',
+              '回應時間為 18 筆 read-only replay 的工作區耗時（ms），不含 HTTP/LINE 傳輸層，非正式負載下的分佈。',
               'risk_block 與非風險 no_evidence/escalate 分開計算。所有答案完整性仍需人工覆核。', '',
               '| Feedback ID | 問題 | 預期 | 實際 | 自動檢查 | 原因 |', '|---|---|---|---|---|---|']
     for r in results:

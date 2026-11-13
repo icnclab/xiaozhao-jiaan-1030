@@ -89,7 +89,6 @@ def summarize(rows):
 def render(state):
     from app.services.answer_presentation import assemble_answer
     from app.services.qa_graph import REASON_TEXT
-    from app.services.qa_service import EMERGENCY_NOTE
     outcome = state.get('outcome')
     sources = []
     display_claims = None
@@ -117,7 +116,16 @@ def render(state):
     elif outcome == 'escalate':
         reason = state.get('reason') or 'insufficient'
         from app.services.public_messages import escalation_message
-        answer = (EMERGENCY_NOTE if reason == 'risk_emergency' else '') + escalation_message(reason)
+        from app.services.jiaan1030_role_guard import make_role_aware
+        # 2026-11-13 fix: this offline replay had drifted from production
+        # since commit fc1d350 (2026-11-05) switched qa_service.ask() to
+        # make_role_aware(); this still built the escalation text from the
+        # stale literal EMERGENCY_NOTE, so Gold/replay evaluations were
+        # scoring a message callers never actually see. role defaults to
+        # caregiver when the replayed state has none (matches qa_graph's
+        # own default at qa_graph.py:400).
+        answer = make_role_aware(reason, state.get('role', 'caregiver'), escalation_message(reason),
+                                  question=state.get('question_masked', ''))
         behavior = 'refuse'
     else:
         raise ValueError('Unknown graph outcome')

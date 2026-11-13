@@ -67,6 +67,7 @@ class QaState(TypedDict, total=False):
     session: Session
     org_id: uuid.UUID
     facility_type: str
+    role: str
     today: date
     question_raw: str
     deid_terms: set[tuple[str, int]]
@@ -395,7 +396,9 @@ def node_generate(state: QaState) -> QaState:
         from app.services.answer_presentation import scoped_ba16_candidate
         candidate = scoped_ba16_candidate(state['question_masked'], state['evidence_map'])
         if candidate is None:
-            candidate = get_llm_provider().answer(state["question_masked"], state["evidence"])
+            candidate = get_llm_provider().answer(
+                state["question_masked"], state["evidence"], role=state.get("role", "caregiver")
+            )
     except Exception as exc:  # 任何 provider 錯誤都走轉人工，不硬答
         timings = dict(state.get("timings_ms", {}), generate=_ms(start))
         if isinstance(exc, httpx.TimeoutException):

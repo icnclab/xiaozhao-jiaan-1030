@@ -22,9 +22,12 @@ _DATA_DIR = Path(tempfile.mkdtemp(prefix="ltc_test_"))
 def _test_db_url() -> str:
     env_path = Path(__file__).resolve().parents[2] / ".env"
     for line in env_path.read_text(encoding="utf-8").splitlines():
-        if line.startswith("TEST_DATABASE_URL="):
+        if line.startswith("PYTEST_DATABASE_URL="):
             return line.split("=", 1)[1].split("#", 1)[0].strip()
-    raise RuntimeError("找不到 TEST_DATABASE_URL")
+    raise RuntimeError(
+        "找不到 PYTEST_DATABASE_URL -- pytest 必須使用專屬資料庫，"
+        "不可回退共用 TEST_DATABASE_URL（那是手機隔離驗收用的 ltc_test）"
+    )
 
 
 os.environ.update({
@@ -36,6 +39,7 @@ os.environ.update({
     "TTS_PROVIDER": "mock",
     "LINE_MODE": "mock",
     "LINE_CHANNEL_SECRET": "test-channel-secret",
+    "INTERNAL_HEALTH_TOKEN": "test-internal-health-token",
     "DATA_DIR": str(_DATA_DIR),
     "PUBLIC_BASE_URL": "http://testserver",
     "LIFF_ID": "",
@@ -57,16 +61,49 @@ from app.providers.llm import MockLlm  # noqa: E402
 from app.providers.stt import MockStt  # noqa: E402
 from app.providers.tts import MockTts  # noqa: E402
 from app.services import cases as case_service  # noqa: E402
+from app.services.health import ensure_internal_health_token  # noqa: E402
+
+# TestClient(app)（非 context manager 用法，見下方 client fixture）不會觸發 FastAPI
+# 的 lifespan；正式環境是 uvicorn 在接受連線前跑過 lifespan 才初始化本機健康檢查
+# Token，測試這裡用同一個函式補做這一步，行為才跟正式環境一致。
+ensure_internal_health_token()
 from app.services import documents as doc_service  # noqa: E402
 
 configure_engine(os.environ["DATABASE_URL"])
+
+
+def _assert_pytest_owns_this_database() -> None:
+    """Fail closed before any destructive fixture can run.
+
+    TEST_DATABASE_URL (ltc_test) is the mobile-QA isolated-review database,
+    not pytest's. Pytest has its own ltc_pytest database (see
+    docs/20261113_SOS隔離程序安全與測試DB防護.md). If the resolved connection
+    is ltc_clean or ltc_test -- wrong env var, stale .env, wrong port -- abort
+    before collection instead of deleting rows in either of those databases.
+    """
+    session = new_session()
+    try:
+        name = session.execute(text("SELECT current_database()")).scalar_one()
+    finally:
+        session.close()
+    if name in ("ltc_clean", "ltc_test") or "pytest" not in name.lower():
+        raise RuntimeError(
+            f"RESULT=STOP_UNSAFE_PYTEST_DATABASE_IDENTITY database={name!r} -- "
+            "pytest 只能對名稱含 'pytest' 且不是 ltc_clean/ltc_test 的資料庫執行破壞性測試，"
+            "拒絕繼續（不會執行任何 DELETE）"
+        )
+
+
+_assert_pytest_owns_this_database()
 DOCS = Path(__file__).resolve().parents[2] / "demo" / "documents"
 PASSWORD = "test-password-123"
 TABLES = (
-    "citations, feedback, tts_assets, notification_jobs, case_messages, case_events, cases, transcript_revisions, "
+    "citations, feedback, tts_assets, notification_jobs, jiaan1030_service_form_drafts, "
+    "jiaan1030_service_client_grants, jiaan1030_service_clients, case_messages, case_events, "
+    "cases, transcript_revisions, "
     "transcript_segments, qa_items, transcripts, chunks, document_versions, documents, category_templates, "
     "categories, binding_codes, sessions, line_accounts, deid_terms, users, organizations, line_events, "
-    "line_mock_outbox, jobs, audit_logs, worker_heartbeats"
+    "line_mock_outbox, jobs, audit_logs, worker_heartbeats, jiaan1030_service_forms, jiaan1030_ba_services"
 )
 
 
@@ -80,6 +117,10 @@ def _reset_state():
     # 測試庫專用：DELETE 比 TRUNCATE 快很多（WSL 卷上 TRUNCATE 每次約 6 秒）；
     # replica 角色暫停觸發器（含 append-only 與外鍵），僅在測試清庫時使用。
     session = new_session()
+    name = session.execute(text("SELECT current_database()")).scalar_one()
+    if name in ("ltc_clean", "ltc_test") or "pytest" not in name.lower():
+        session.close()
+        raise RuntimeError(f"RESULT=STOP_UNSAFE_PYTEST_DATABASE_IDENTITY database={name!r}")
     session.execute(text("SET session_replication_role = replica"))
     for table in TABLES.split(","):
         session.execute(text(f"DELETE FROM {table.strip()}"))

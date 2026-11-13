@@ -104,13 +104,12 @@ export function AdminQualityFeedbackPage() {
     } catch (e) { setError(e); } finally { setBusy(false); }
   };
   return <div className="stack">
-    <h1>回答回饋與品質審核</h1>
-    <p className="muted">回饋須核對依據並驗證後，才可匯出為正式資料集。待審核與駁回資料不會匯出。</p>
+    <h1>需要確認的 AI 回答</h1>
+    <p className="muted">逐筆查看使用者原本的問題、需要確認的原因、AI 引用來源，以及目前處理狀態。</p>
     <ErrorBox error={error} />
     <div className="row"><label>狀態<select value={status} disabled={busy} onChange={e => { setGoldQueue(false); setGoldFilter(""); setStatus(e.target.value); }}>
-      <option value="pending_review">待審核</option><option value="verified">已驗證</option><option value="rejected">已駁回</option><option value="">全部</option>
+      <option value="pending_review">待確認</option><option value="verified">已修正</option><option value="rejected">不適用</option><option value="">全部</option>
     </select></label><button className="btn" disabled={busy} onClick={load}>重新整理</button>
-      {["json", "jsonl", "csv"].map(format => <button className="btn" key={format} disabled={busy} onClick={() => exportData(format)}>匯出已驗證 {format.toUpperCase()}</button>)}
     </div>
     {isAdmin && <section className="card stack" aria-label="標準案例資料管理"><h2>標準案例資料管理</h2>
       <div className="row">{[["pending_review", "待一般審核"], ["needs_review", "標準案例待重新審核"], ["ready", "標準案例可使用"], ["not_eligible", "標準案例不適用"]].map(([key, label]) =>
@@ -119,7 +118,12 @@ export function AdminQualityFeedbackPage() {
         <option value="">全部</option><option value="needs_review">需要重新審核</option><option value="ready">可使用</option><option value="not_eligible">不適用</option>
       </select></label>
       <label><input type="checkbox" checked={goldQueue} disabled={busy} onChange={e => { setGoldQueue(e.target.checked); if (e.target.checked) { setStatus("verified"); setGoldFilter("needs_review"); } else setGoldFilter(""); }} /> 只看標準案例待審核</label>
-      <div className="row">{["json", "jsonl", "csv"].map(format => <button className="btn" key={format} disabled={busy} onClick={() => exportData(format, true)}>匯出正式標準案例{format.toUpperCase()}</button>)}</div></section>}
+      </section>}
+    <details className="card"><summary><strong>進階操作／資料匯出</strong></summary>
+      <p className="muted small">只有通過原有資格檢查的資料可匯出；待確認與不適用資料不會納入。</p>
+      <div className="row">{["json", "jsonl", "csv"].map(format => <button className="btn" key={format} disabled={busy} onClick={() => exportData(format)}>匯出已驗證 {format.toUpperCase()}</button>)}</div>
+      {isAdmin && <div className="row">{["json", "jsonl", "csv"].map(format => <button className="btn" key={format} disabled={busy} onClick={() => exportData(format, true)}>匯出正式標準案例{format.toUpperCase()}</button>)}</div>}
+    </details>
     <p className="muted">已驗證不等於可作正式標準案例；正式匯出只包含已驗證且資料資格可使用的回饋。</p>
     <table><thead><tr><th>時間</th><th>問題</th><th>錯誤類型</th><th>狀態</th><th>標準案例資料狀態</th><th /></tr></thead><tbody>
       {rows.map(row => <tr key={row.id}><td>{formatTime(row.created_at)}</td><td>{row.qa_snapshot.question}</td><td>{errorLabel((row.reviewed_correction || row.submission).error_type)}</td><td>{publicLabel(row.status)}</td><td>{goldLabel(row.gold_readiness)}{isAdmin && goldQueue && <div className="small muted">{row.gold_priority}</div>}</td>

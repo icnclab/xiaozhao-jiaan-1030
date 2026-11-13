@@ -1,7 +1,7 @@
-import { publicLabel } from '../../publicText';
 import { useEffect, useState } from "react";
 import { api } from "../../api";
 import { ErrorBox } from "../../liff/components";
+import { publicLabel } from "../../publicText";
 
 interface Metrics {
   period: { days: number; from: string; to: string };
@@ -16,47 +16,41 @@ interface Metrics {
   note: string;
 }
 
-const pct = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(1)}%`);
+const pct = (value: number | null) => value === null ? "尚無資料" : `${(value * 100).toFixed(1)}%`;
 
 export function AdminMetricsPage() {
   const [days, setDays] = useState(30);
-  const [m, setM] = useState<Metrics | null>(null);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState<unknown>(null);
   useEffect(() => {
-    api<Metrics>(`/api/admin/metrics?days=${days}`).then(setM).catch(setError);
+    setError(null);
+    api<Metrics>(`/api/admin/metrics?days=${days}`).then(setMetrics).catch(setError);
   }, [days]);
-  if (!m) return <div><ErrorBox error={error} />{!error && <p className="muted">載入中…</p>}</div>;
-  const tile = (title: string, value: string, sub: string, def: string) => (
-    <div className="card metric">
-      <div className="muted small">{title}</div>
-      <div className="value">{value}</div>
-      <div className="small">{sub}</div>
-      <div className="def">{def}</div>
+  if (!metrics) return <div><ErrorBox error={error} />{!error && <p className="muted">資料載入中…</p>}</div>;
+  const tile = (title: string, value: string, explanation: string) => <div className="card metric">
+    <div className="muted small">{title}</div><div className="value">{value}</div><div className="small">{explanation}</div>
+  </div>;
+  return <div className="stack">
+    <h1>服務品質與運作概況</h1>
+    <p className="muted">先看目前需要處理的工作與服務是否正常；比例是運作觀察，不代表任何同仁犯錯。</p>
+    <div className="row"><span className="muted small">統計期間</span>{[7, 30, 90].map(day =>
+      <button key={day} className={`btn ${days === day ? "primary" : ""}`} onClick={() => setDays(day)}>{day} 天</button>)}</div>
+    <div className="notice info small">{metrics.note}</div>
+    <div className="metrics">
+      {tile("待處理案件", String(metrics.backlog.pending), `另有 ${metrics.backlog.in_progress} 件處理中；${metrics.backlog.unassigned} 件尚未指派`)}
+      {tile("需要確認的回答", String(metrics.feedback.wrong), `使用者回報需要確認；期間內共 ${metrics.feedback.answered} 則回答`)}
+      {tile("回答是否附上來源", pct(metrics.answered.value), `${metrics.answered.numerator}／${metrics.answered.denominator} 則符合原統計定義`)}
+      {tile("知識庫更新狀況", `${metrics.knowledge_base.current_documents} 份現行文件`, `最近發布：${metrics.knowledge_base.last_published_at ? new Date(metrics.knowledge_base.last_published_at).toLocaleString("zh-TW") : "尚無紀錄"}`)}
+      {tile("系統運作狀態", metrics.case_create_failed.count === 0 && metrics.notifications.failed === 0 ? "正常" : "需要留意", `建案失敗 ${metrics.case_create_failed.count} 件；通知失敗 ${metrics.notifications.failed}／${metrics.notifications.total}`)}
     </div>
-  );
-  return (
-    <div className="stack">
-      <h1>治理指標</h1>
-      <div className="row">
-        <span className="muted small">期間</span>
-        {[7, 30, 90].map((d) => <button key={d} className={`btn ${days === d ? "primary" : ""}`} onClick={() => setDays(d)}>{d} 天</button>)}
-      </div>
-      <div className="notice info small">{m.note}</div>
-      <div className="metrics">
-        {tile("拒答（轉督導）比例", pct(m.refusal_rate.value), `${m.refusal_rate.numerator} ／ ${m.refusal_rate.denominator} 題`, m.refusal_rate.definition)}
-        {tile("附出處回答比例", pct(m.answered.value), `${m.answered.numerator} ／ ${m.answered.denominator} 題`, m.answered.definition)}
-        {tile("建案失敗（需重試）", String(m.case_create_failed.count), "件", m.case_create_failed.definition)}
-        {tile("待處理量", `${m.backlog.pending} ／ ${m.backlog.in_progress}`, `待處理／處理中；未指派 ${m.backlog.unassigned}`, m.backlog.definition)}
-        {tile("首次回覆時間（中位數）", m.first_reply_minutes.median === null ? "—" : `${m.first_reply_minutes.median} 分`, `已回覆 ${m.first_reply_minutes.replied} ／ 建立 ${m.first_reply_minutes.created} 件；平均 ${m.first_reply_minutes.mean ?? "—"} 分`, m.first_reply_minutes.definition)}
-        {tile("「回答有誤」比例", pct(m.feedback.wrong_rate), `${m.feedback.wrong} ／ ${m.feedback.answered} 則回答；有幫助 ${m.feedback.helpful}`, m.feedback.definition)}
-        {tile("通知失敗", `${m.notifications.failed} ／ ${m.notifications.total}`, "件", m.notifications.definition)}
-        {tile("知識庫", `${m.knowledge_base.current_documents} 份現行文件`, `最近發布 ${m.knowledge_base.last_published_at ? new Date(m.knowledge_base.last_published_at).toLocaleString("zh-TW") : "—"}`, "目前對本機構生效的文件版本數（含共用文件）")}
-      </div>
-      <div className="card">
-        <h3>轉督導原因分布</h3>
-        <table><tbody>{Object.entries(m.refusal_rate.by_reason).map(([k, v]) => <tr key={publicLabel(k)}><td>{publicLabel(k)}</td><td>{v}</td></tr>)}</tbody></table>
-      </div>
-      <p className="small muted">期間：{new Date(m.period.from).toLocaleString("zh-TW")} ～ {new Date(m.period.to).toLocaleString("zh-TW")}。這些是流程指標，不是回答正確率；引用正確性需人工抽查（docs/eval-citation-review.csv）。</p>
-    </div>
-  );
+    <details className="card"><summary><strong>詳細報表</strong></summary><div className="metrics" style={{ marginTop: 12 }}>
+      {tile("安全拒答比例", pct(metrics.refusal_rate.value), `${metrics.refusal_rate.numerator}／${metrics.refusal_rate.denominator}；安全拒答是保護機制，不代表操作錯誤`)}
+      {tile("平均首次回覆時間", metrics.first_reply_minutes.mean === null ? "尚無資料" : `${metrics.first_reply_minutes.mean} 分鐘`, `中位數 ${metrics.first_reply_minutes.median ?? "尚無資料"} 分鐘；已回覆 ${metrics.first_reply_minutes.replied} 件`)}
+      {tile("通知錯誤", String(metrics.notifications.failed), `總通知數 ${metrics.notifications.total}`)}
+      {tile("回覆需要確認比例", pct(metrics.feedback.wrong_rate), `${metrics.feedback.wrong}／${metrics.feedback.answered}；屬品質回饋，不等同系統或人員犯錯`)}
+    </div><h3>轉交／拒答原因分布</h3><table><tbody>{Object.entries(metrics.refusal_rate.by_reason).map(([key, value]) =>
+      <tr key={key}><td>{publicLabel(key)}</td><td>{value}</td></tr>)}</tbody></table>
+    <div className="small muted">原統計定義：{metrics.backlog.definition}；{metrics.answered.definition}；{metrics.refusal_rate.definition}</div></details>
+    <p className="small muted">統計期間：{new Date(metrics.period.from).toLocaleString("zh-TW")} 至 {new Date(metrics.period.to).toLocaleString("zh-TW")}。本頁未變更後端統計定義。</p>
+  </div>;
 }

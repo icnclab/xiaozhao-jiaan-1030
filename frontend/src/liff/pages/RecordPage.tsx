@@ -99,6 +99,7 @@ export function RecordPage() {
           <div className="notice info small">{config.consent_text}</div>
           {phase === "idle" && (
             <>
+              <p>請先勾選錄音同意事項，才能開始錄音。</p>
               <label className="row">
                 <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ width: 22, height: 22 }} />
                 我已告知在場的人錄音用途並取得同意

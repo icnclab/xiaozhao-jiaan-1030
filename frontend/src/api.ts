@@ -12,6 +12,7 @@ export interface ApiError {
 }
 
 const TOKEN_KEY = "ltc_session";
+export const SESSION_EXPIRED_EVENT = "ltc:session-expired";
 
 export function getToken(): string | null {
   try {
@@ -61,6 +62,10 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const body = (await parse(response)) as { error?: Partial<ApiError> } | null;
   if (!response.ok) {
     const err = body?.error ?? {};
+    if (response.status === 401 && token && !path.startsWith("/api/auth/")) {
+      setToken(null);
+      window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT, { detail: { path } }));
+    }
     throw {
       code: err.code ?? `http_${response.status}`,
       message: response.status >= 500 ? SYSTEM_FAILURE : publicMessage(err.message),

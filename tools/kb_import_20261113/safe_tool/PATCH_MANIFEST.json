@@ -1,0 +1,27 @@
+{
+  "package": "Seventh candidate continuation patch (not a deployable release)",
+  "source_zip": "小照第七版待修程式_20261113.zip",
+  "changed_files": [
+    {
+      "path": "backend/app/static/xz_sos_app.js",
+      "original_sha256": "06EA299D4E7495CF16AF0E300AEFC53A8F840EC89AF9983AAEAA37A3E12DB8D3",
+      "updated_sha256": "254C2D0A3C552CD7CAFC484D5287D4A32C644D5C5962F5CAC6602F576B432D18"
+    },
+    {
+      "path": "backend/app/static/xz_sos_app.html",
+      "original_sha256": "B7EEB5DFA01761D195E1EE0FB829EA8CDC463A542B6CACB1730FE7EDC2ADED36",
+      "updated_sha256": "4510946BFF205D5B8126469C15A728E9A4B969A49D6161D5D71452184452FD1E"
+    },
+    {
+      "path": "frontend/src/liff/pages/HomePage.tsx",
+      "original_sha256": "0D62E700D43B3D5B63F6B05BA78C1D8F4F8C7A83AB8357AA1970BCF5D6D8ED95",
+      "updated_sha256": "A9009BA40436DA8FB619A2382AE9CA4F89E81BE0BA214B59CDFD0407B2EA2D3E"
+    },
+    {
+      "path": "frontend/src/liff/pages/ReportEntryPage.tsx",
+      "original_sha256": "AE9E4A06773BA8C90D456F45849A8863A419A31FBC3C23359E8DCA4EF702E8AE",
+      "updated_sha256": "53A223B0115DA4830CC073066F9A8A4D611706C882350747A2031E24D3878B05"
+    }
+  ],
+  "note": "Apply only under run/seventh_candidate_work_20261113; no official services or DB changes"
+}

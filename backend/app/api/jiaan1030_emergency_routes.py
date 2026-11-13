@@ -10,14 +10,15 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse, Response
-from pydantic import BaseModel, Field
+from fastapi.responses import RedirectResponse, Response
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.auth import current_user
 from app.db import get_db
 from app.models import User
+from app.services import audit
 
 router = APIRouter()
 PREFIX = '/jiaan1030'
@@ -32,6 +33,22 @@ class NewEmergency(BaseModel):
 
 class Handoff(BaseModel):
     client_request_id: uuid.UUID
+    # 2026-11-14 新增：結束通報時鼓勵填寫原因（非必填，不破壞既有呼叫端）；
+    # 不得含個案細節，僅供事件處理摘要與稽核使用。
+    reason: str | None = Field(default=None, max_length=200)
+
+class CancelReport(BaseModel):
+    client_request_id: uuid.UUID
+    # 取消誤報「一定」要填原因（跟結束通報不同，取消代表這筆通報本身不成立）。
+    reason: str = Field(min_length=1, max_length=200)
+
+    @field_validator('reason')
+    @classmethod
+    def validate_reason(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError('取消原因（必填）不可空白')
+        return value
 
 
 def error(code: int, name: str, message: str):
@@ -96,8 +113,10 @@ def record_event(db: Session, eid: uuid.UUID, user: User, kind: str, old: str | 
 
 @router.get(PREFIX + '/emergency-ui', include_in_schema=False)
 def emergency_page():
-    return HTMLResponse((ROOT / 'jiaan1030_emergency.html').read_text(encoding='utf-8'),
-                        headers={'Cache-Control': 'no-store', 'X-Frame-Options': 'DENY'})
+    # 舊書籤與尚未更新的入口一律安全導向第五版 SOS；443 與 8443 的
+    # sessionStorage 不共用，因此新版 SOS 會要求使用者重新登入，不假裝單一登入。
+    return RedirectResponse('https://stust.tail379935.ts.net:8443/api/jiaan1030/sos-app/',
+                            status_code=307, headers={'Cache-Control': 'no-store'})
 
 
 @router.get(PREFIX + '/launcher.js', include_in_schema=False)
@@ -146,7 +165,9 @@ def create_emergency(body: NewEmergency, user: User = Depends(current_user), db:
 def list_emergencies(status: Literal['active', 'resolved', 'all'] = 'active',
                      user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
     check_role(user, RESPONDERS)
-    where = "e.status IN ('open','acknowledged')" if status == 'active' else ("e.status='resolved'" if status == 'resolved' else 'TRUE')
+    # 'resolved' 這個查詢參數代表「已結案的歷史清單」，同時包含真正處理完成(resolved)
+    # 跟取消的誤報(cancelled)，兩者在前端會用不同文字呈現，不會混為一談。
+    where = "e.status IN ('open','acknowledged')" if status == 'active' else ("e.status IN ('resolved','cancelled')" if status == 'resolved' else 'TRUE')
     own = ' AND e.created_by = :uid' if user.role == 'caregiver' else ''
     # Restrict to the requester's organisation, then restrict caregivers to their own reports.
     params = {'org': user.org_id, 'uid': user.id}
@@ -162,15 +183,22 @@ def list_emergencies(status: Literal['active', 'resolved', 'all'] = 'active',
 def emergency_history(emergency_id: uuid.UUID, user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
     check_role(user, RESPONDERS)
     get_one(db, user, emergency_id)
+    # actor_role 是「現在」的角色（即時 join users.role），不是事件發生當時的角色快照；
+    # events 表沒有存角色快照欄位。這在絕大多數情況下沒差（角色很少變動），但如果某人
+    # 事後被降／升職，歷史紀錄顯示的角色稱呼會變成「現在」的角色，不是當時的。前端顯示
+    # 文字會加註這一點不是假造，只是即時 join 的已知限制。
     rows = db.execute(text('''
-        SELECT e.event_type, e.actor_id, e.from_status, e.to_status, e.created_at, u.display_name AS actor_name
+        SELECT e.event_type, e.actor_id, e.from_status, e.to_status, e.created_at,
+               u.display_name AS actor_name, u.role AS actor_role
         FROM jiaan1030_emergency_events e
         JOIN jiaan1030_emergencies a ON a.id=e.emergency_id
         LEFT JOIN users u ON u.id = e.actor_id
         WHERE e.emergency_id=:eid AND a.org_id=:org
-        ORDER BY e.created_at, e.id
+        ORDER BY e.created_at, CASE e.event_type WHEN 'created' THEN 0 WHEN 'acknowledged' THEN 1
+                 WHEN 'resolved' THEN 2 WHEN 'cancelled' THEN 2 ELSE 3 END, e.id
     '''), {'eid': emergency_id, 'org': user.org_id}).mappings().all()
     return {'items': [dict(event_type=r['event_type'], actor_id=str(r['actor_id']), actor_name=r['actor_name'],
+                           actor_role=r['actor_role'],
                            from_status=r['from_status'], to_status=r['to_status'],
                            created_at=r['created_at'].isoformat()) for r in rows]}
 
@@ -187,6 +215,7 @@ def acknowledge(emergency_id: uuid.UUID, body: Handoff,
             WHERE id=:eid AND org_id=:org AND status='open'
         '''), {'uid': user.id, 'eid': emergency_id, 'org': user.org_id})
         record_event(db, emergency_id, user, 'acknowledged', 'open', 'acknowledged')
+        audit.record(db, 'sos.acknowledge', actor=user, target_type='emergency', target_id=emergency_id)
         db.commit()
     elif row['status'] == 'acknowledged' and row['acknowledged_by'] == user.id:
         db.rollback()
@@ -216,6 +245,40 @@ def resolve(emergency_id: uuid.UUID, body: Handoff,
         WHERE id=:eid AND org_id=:org AND status='acknowledged'
     '''), {'uid': user.id, 'eid': emergency_id, 'org': user.org_id})
     record_event(db, emergency_id, user, 'resolved', 'acknowledged', 'resolved')
+    audit.record(db, 'sos.resolve', actor=user, target_type='emergency', target_id=emergency_id,
+                 meta={'reason': body.reason} if body.reason else {})
+    db.commit()
+    return serialize(get_one(db, user, emergency_id))
+
+
+# XZ_SOS_CANCEL_FALSE_ALARM_V1 - 2026-11-14：區分「取消尚未接手的誤報」跟「結束已處理的
+# 通報」是兩種不同業務意義的操作，不能共用 resolve()。只允許從 open 轉成 cancelled；
+# 一旦有人 acknowledge，就不再是「誤報可以單方面撤銷」的情境，必須走 resolve()，避免
+# 用「取消」掩蓋掉一筆已經有人在處理的真實事件。原通報人（確認是自己誤觸/誤判）或本
+# 機構督導／主任／管理員都可以取消；照服員不能取消別人的通報（避免冒用督導權限）。
+# 「取消已完成的ACK接手」(把 acknowledged 退回 open) 沒有安全的既定規則，本次不實作，
+# 也不在這裡新增任何讓事件倒退回之前狀態的路徑。
+@router.post(PREFIX + '/emergencies/{emergency_id}/cancel')
+def cancel(emergency_id: uuid.UUID, body: CancelReport,
+           user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
+    check_role(user, RESPONDERS)
+    row = get_one(db, user, emergency_id, lock=True)
+    if row['status'] != 'open':
+        db.rollback()
+        error(409, 'not_cancellable', '只有尚未接手的通報才能取消為誤報；已接手的通報請用「結束通報」')
+    is_reporter = row['created_by'] == user.id
+    is_manager = user.role in MANAGERS
+    if not (is_reporter or is_manager):
+        db.rollback()
+        error(403, 'forbidden', '只有原通報人或本機構督導／主任／管理員可取消尚未接手的通報')
+    db.execute(text('''
+        UPDATE jiaan1030_emergencies
+        SET status='cancelled', resolved_by=:uid, resolved_at=now()
+        WHERE id=:eid AND org_id=:org AND status='open'
+    '''), {'uid': user.id, 'eid': emergency_id, 'org': user.org_id})
+    record_event(db, emergency_id, user, 'cancelled', 'open', 'cancelled')
+    audit.record(db, 'sos.cancel', actor=user, target_type='emergency', target_id=emergency_id,
+                 meta={'reason': body.reason, 'was_reporter': is_reporter})
     db.commit()
     return serialize(get_one(db, user, emergency_id))
 
@@ -242,8 +305,28 @@ def notification_readiness(user: User = Depends(current_user), db: Session = Dep
                 'active': int(row['active']),
                 'line_ready': int(row['line_ready']),
             }
+    # Keep LINE and Web Push readiness separate. A subscription only confirms
+    # registration on a device; it is NOT proof of successful delivery.
+    push_rows = db.execute(text("""
+        SELECT u.role, COUNT(DISTINCT u.id) FILTER (
+            WHERE s.is_active IS TRUE
+        ) AS webpush_ready
+        FROM users u
+        LEFT JOIN jiaan_webpush_subscriptions s
+          ON s.user_id = u.id AND s.org_id = u.org_id
+        WHERE u.org_id = :org AND u.is_active IS TRUE
+          AND u.role IN ('supervisor', 'director', 'admin')
+        GROUP BY u.role
+    """), {'org': user.org_id}).mappings().all()
+    for role in result:
+        result[role]['webpush_ready'] = 0
+    for row in push_rows:
+        if row['role'] in result:
+            result[row['role']]['webpush_ready'] = int(row['webpush_ready'])
     return {
         'recipients': result,
+        'new_and_60s_webpush_ready': result['supervisor']['webpush_ready'],
+        '180s_webpush_ready': result['director']['webpush_ready'] + result['admin']['webpush_ready'],
         'new_and_60s_line_ready': result['supervisor']['line_ready'],
         '180s_line_ready': result['director']['line_ready'] + result['admin']['line_ready'],
         'notification_delivery_verified': False,

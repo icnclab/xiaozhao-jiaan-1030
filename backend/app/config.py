@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     secret_key: str = Field(default="", min_length=0)
     data_encryption_key: str = ""
     public_base_url: str = "http://127.0.0.1:8140"
+    internal_health_token: str = ""
 
     line_mode: str = "mock"
     line_channel_secret: str = ""
@@ -137,6 +138,11 @@ class Settings(BaseSettings):
             not self.is_production
             and self.line_mode == "mock"
         )
+
+    @property
+    def api_docs_enabled(self) -> bool:
+        """正式環境關閉公開 API 文件（/api/docs、/api/redoc、/api/openapi.json）；開發/測試環境維持開放。"""
+        return not self.is_production
 
     def provider_modes(self) -> dict[str, str]:
         return {

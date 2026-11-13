@@ -82,8 +82,11 @@ def include_ba16_fact(question, evidence_map, candidate: CandidateAnswer):
         if item.chunk_id not in scope_ids:
             continue
         text = re.sub(r'\s+', '', item.text)
-        for pattern in [r'上述目的物品或事項應為長照給付對象本身所需']:
-            match = re.search(pattern, text)
+        # Same scope table also carries the distance limit (五公里); the
+        # medication branch must surface it like the own-need fact above,
+        # not only when the question asks about distance directly.
+        for matcher in (r'上述目的物品或事項應為長照給付對象本身所需', _FACT_PATTERNS['distance']):
+            match = matcher.search(text) if hasattr(matcher, 'search') else re.search(matcher, text)
             if match:
                 facts.append({'text': match.group().rstrip('。') + '。', 'citation_refs': [ref]})
     return replace(candidate, claims=facts + [c for c in candidate.claims if c not in facts])
@@ -186,6 +189,13 @@ def assemble_answer(question, evidence_map, verified_claims):
                     if re.search(pattern, compact):
                         fact_fields.append(name)
                 if field == 'medicine' and fact_fields == ['recipient'] and re.search(r'本身所需|本人所需', compact) and not re.search(r'家人|百分之|50%', compact):
+                    fact_fields = []
+                # The distance ceiling is a service-wide eligibility condition
+                # (applies to BA16 as a whole, not only to a given item type),
+                # so medicine-field questions must still see it; mirrors the
+                # recipient carve-out above and stays narrow: only the plain
+                # 五公里 statement, not the separate excess-cost exception.
+                if field == 'medicine' and fact_fields == ['distance'] and re.search(r'(?:五|5)公里內', compact) and not re.search(r'超出|超過|自行負擔', compact):
                     fact_fields = []
                 if fact_fields and field not in fact_fields and not re.search(r'藥品|處方藥|給藥|用藥|不得|不可|不適用|僅限', compact):
                     continue

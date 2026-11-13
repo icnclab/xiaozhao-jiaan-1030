@@ -151,8 +151,8 @@ showTestModeBanner();
 async function connect(){
  try{me=await api('/api/me');$('login').classList.add('hide');$('main').classList.remove('hide');
  $('who').textContent='已登入：'+me.display_name+'（'+me.role+'）';
- $('caregiver').classList.remove('hide');
- if(me.role!=='caregiver') $('supervisor').classList.remove('hide');
+ $('caregiver').classList.toggle('hide',me.role!=='caregiver');
+ $('supervisor').classList.toggle('hide',me.role==='caregiver');
  state('可以使用。緊急狀況仍請先直接求援。');await refresh();if(me.role!=='caregiver')await showReadiness();
  }catch(e){me=null;$('login').classList.remove('hide');$('main').classList.add('hide');state('登入已失效，請先從小照原頁面進入或使用居督帳密。');}
 }
@@ -452,4 +452,295 @@ async function change(id,what){if(busy)return;busy=true;
  state('成功更新：'+(statusNames[v.status]||'狀態已更新'));await new Promise(r=>setTimeout(r,100));
  }catch(e){state('操作失敗：'+e.message)}finally{busy=false;refresh()}}
 $('refresh').onclick=()=>{refresh();if(me&&me.role!=='caregiver')showReadiness()};connect();setInterval(()=>{if(me)refresh()},5000);
-</script></body></html>
+</script>
+<!-- xz-sos-ux-v1 -->
+<script>
+(function () {
+  'use strict';
+  if (document.getElementById('xz-sos-ux-v1')) return;
+  const main = document.querySelector('main') || document.body;
+  const roleText = (document.body.innerText || '').slice(0, 1500);
+  const isSupervisor = /\((supervisor|director|admin|manager)\)/i.test(roleText);
+  const css = document.createElement('style');
+  css.id = 'xz-sos-ux-css-v1';
+  css.textContent = `
+    #xz-sos-ux-v1 { font-family:system-ui,'Noto Sans TC',sans-serif; margin:0 0 18px; color:#19354a; }
+    #xz-sos-ux-v1 .xz-top {display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px}
+    #xz-sos-ux-v1 .xz-back {display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 13px;background:#fff;border:1px solid #d4dee6;border-radius:12px;font-size:15px;color:#173348;text-decoration:none;font-weight:750}
+    #xz-sos-ux-v1 .xz-role {font-size:13px;color:#49677b}
+    #xz-sos-ux-v1 .xz-panel {border:1px solid #d9e3e9;border-radius:16px;background:white;padding:17px 15px;box-shadow:0 2px 6px rgba(17,40,56,.04)}
+    #xz-sos-ux-v1 .xz-title {font-size:21px;font-weight:800;margin:0 0 5px}
+    #xz-sos-ux-v1 .xz-description {font-size:14px;line-height:1.6;color:#50687b;margin:0 0 13px}
+    #xz-sos-ux-v1 .xz-links {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    #xz-sos-ux-v1 .xz-jump {text-align:left;min-height:64px;padding:10px 12px;border-radius:12px;border:1px solid #dce4ea;background:#f4f8fa;color:#19354a;font:700 15px system-ui;cursor:pointer}
+    #xz-sos-ux-v1 .xz-jump strong {display:block;font-size:12px;margin-top:5px;font-weight:600;color:#536b7b}
+    #xz-sos-ux-v1 .xz-jump.xz-urgent {border-color:#e3aaaa;background:#fff1f0;color:#9b1b18}
+    #xz-sos-ux-v1 .xz-jump:focus-visible,#xz-sos-ux-v1 .xz-back:focus-visible {outline:3px solid #3e8bd0;outline-offset:2px}
+    #xz-sos-ux-v1 .xz-note {font-size:12px;color:#667c8d;line-height:1.5;margin:12px 0 0}
+    #xz-sos-ux-v1 .xz-tool {margin-top:12px;font:700 14px system-ui;background:#fff;border:1px solid #cddce5;color:#29546d;border-radius:10px;padding:12px;min-height:44px;cursor:pointer}
+    .xz-ux-hidden {display:none!important}
+    @media(min-width:540px){#xz-sos-ux-v1 .xz-links{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  `;
+  document.head.appendChild(css);
+  const host = document.createElement('div');
+  host.id = 'xz-sos-ux-v1';
+  host.innerHTML = `<div class="xz-top"><a class="xz-back" href="/liff/ask">← 返回小照</a><span class="xz-role"></span></div>`;
+  main.insertBefore(host, main.firstChild);
+  const back = host.querySelector('.xz-back');
+  back.addEventListener('click', (e) => {
+    try {
+      const ref = document.referrer ? new URL(document.referrer) : null;
+      if (ref && ref.origin === location.origin && !ref.pathname.includes('/emergency-ui')) {
+        e.preventDefault(); location.assign(ref.pathname + ref.search + ref.hash);
+      }
+    } catch (_) { /* keep fallback */ }
+  });
+  if (!isSupervisor) return;
+  host.querySelector('.xz-role').textContent = '督導工作台';
+  const panel = document.createElement('div');
+  panel.className = 'xz-panel';
+  panel.innerHTML = `<div class="xz-title">緊急通報管理</div><p class="xz-description">先看尚未接手及處理中的事件。已完成紀錄與建立新通報放在後面，減少找案件的時間。</p><div class="xz-links"></div><p class="xz-note">這是操作捷徑，不代表通知已送達；遇到實際緊急狀況仍須依機構 SOP 直接求援。</p>`;
+  host.appendChild(panel);
+  const links = panel.querySelector('.xz-links');
+  const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4')).filter(h => !host.contains(h));
+  const groups = [
+    { label:'🔴 尚未接手',re:/尚未接手/,urgent:true },
+    { label:'🟡 已接手・處理中',re:/已接手|處理中/,urgent:true },
+    { label:'🟢 最近已完成',re:/最近.*完成|已完成通報/,urgent:false },
+    { label:'📋 我的通報紀錄',re:/我的通報紀錄/,urgent:false }
+  ];
+  function firstHeading(re){return headings.find(h=>re.test(h.textContent||''));}
+  groups.forEach(g=>{
+    const h=firstHeading(g.re);
+    if(!h) return;
+    const btn=document.createElement('button');btn.type='button';btn.className='xz-jump'+(g.urgent?' xz-urgent':'');
+    const count=(h.textContent||'').match(/[（(](\d+)[）)]/);
+    btn.textContent=g.label;
+    const small=document.createElement('strong');small.textContent=count?`目前 ${count[1]} 筆`:'點擊查看';btn.appendChild(small);
+    btn.addEventListener('click',()=>{h.scrollIntoView({behavior:'smooth',block:'start'});});
+    links.appendChild(btn);
+  });
+  // Fold archived cases only when they live in their own dedicated section.
+  const completedHeading=firstHeading(/最近.*完成|已完成通報/);
+  if (completedHeading) {
+    const archive=completedHeading.closest('section');
+    const hasActiveHeading=archive && Array.from(archive.querySelectorAll('h2,h3')).some(h=>/尚未接手|處理中|已接手/.test(h.textContent||''));
+    if (archive && archive!==main && !hasActiveHeading && !host.contains(archive)) {
+      archive.classList.add('xz-ux-hidden');
+      const showArchive=document.createElement('button');
+      showArchive.type='button';showArchive.className='xz-tool';
+      showArchive.textContent='＋ 展開最近已完成通報';
+      showArchive.addEventListener('click',()=>{
+        const isOpen=!archive.classList.toggle('xz-ux-hidden');
+        showArchive.textContent=isOpen?'－ 收合最近已完成通報':'＋ 展開最近已完成通報';
+        if(isOpen) completedHeading.scrollIntoView({behavior:'smooth',block:'start'});
+      });
+      host.appendChild(showArchive);
+    }
+  }
+  const reportHeading=firstHeading(/請點選發生了什麼事/);
+  if (reportHeading) {
+    // Reduce reporting controls only when the heading and its controls are enclosed
+    // in a dedicated section; never hide a shared container containing case lists.
+    const container=reportHeading.closest('section');
+    const otherTitles=container ? Array.from(container.querySelectorAll('h2,h3')).filter(h=>h!==reportHeading && /尚未接手|處理中|最近|通報紀錄/.test(h.textContent||'')) : [];
+    const toggle=document.createElement('button');toggle.type='button';toggle.className='xz-tool';
+    if(container && otherTitles.length===0 && container!==main && !host.contains(container)) {
+      toggle.textContent='＋ 我要建立新通報（展開）';
+      container.classList.add('xz-ux-hidden');
+      toggle.addEventListener('click',()=>{
+        const open=container.classList.toggle('xz-ux-hidden')===false;
+        toggle.textContent=open?'－ 收合建立通報':'＋ 我要建立新通報（展開）';
+      });
+      host.appendChild(toggle);
+    } else {
+      toggle.textContent='＋ 前往建立新通報';
+      toggle.addEventListener('click',()=>reportHeading.scrollIntoView({behavior:'smooth',block:'start'}));
+      host.appendChild(toggle);
+    }
+  }
+  if (!links.children.length) {
+    const p=document.createElement('p');p.className='xz-note';p.textContent='案件分類標題未找到，保留原始案件操作區，以免遮蔽通報。';panel.appendChild(p);
+  }
+})();
+</script>
+
+<!-- XZ_SUPERVISOR_COMPACT_V2 -->
+<script>
+/* XZ_SUPERVISOR_COMPACT_V2 — presentation only; no network or privilege changes. */
+(function () {
+  'use strict';
+  const root = document.getElementById('supervisor');
+  if (!root || document.getElementById('xz-compact-style-v2')) return;
+  const css = document.createElement('style');
+  css.id = 'xz-compact-style-v2';
+  css.textContent = `
+    #xz-sos-ux-v1 .xz-panel, #xz-sos-ux-v1 > .xz-tool {display:none!important}
+    #supervisor {font-family:system-ui,'Noto Sans TC',sans-serif}
+    #supervisor > h2:first-child {font-size:1.18rem;margin:16px 0 6px}
+    #supervisor .xz-compact-intro {color:#475569;font-size:.87rem;line-height:1.5;margin:0 0 14px}
+    #supervisor section {margin:14px 0 24px}
+    #supervisor section h3{font-size:1.05rem;margin:12px 0}
+    #supervisor .ev-card{padding:15px;border-radius:16px;margin:0 0 6px;box-shadow:0 1px 5px rgba(10,20,30,.04)}
+    #supervisor .ev-top{gap:8px;align-items:center}
+    #supervisor .ev-meta,#supervisor .ev-ref{font-size:.82rem;color:#64748b}
+    #supervisor .xz-compact-date {font-size:.82rem;color:#64748b;margin-top:7px}
+    #supervisor .xz-more{margin:8px 0 0;border-top:1px solid #e2e8f0;padding-top:4px}
+    #supervisor .xz-more>summary{color:#475569;cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:.85rem;font-weight:650;list-style:none}
+    #supervisor .xz-more>summary::-webkit-details-marker{display:none}
+    #supervisor .xz-more>summary:after{content:'⌄';margin-left:8px}
+    #supervisor .xz-more[open]>summary:after{content:'⌃'}
+    #supervisor .xz-more .ev-meta{margin:4px 0}
+    #supervisor .xz-more .ev-ref{padding:4px 0}
+    #supervisor .xz-more button.secondary{background:#f0f4f7;color:#243a4b;font-size:.83rem;padding:9px 13px;margin:5px 4px 5px 0;min-height:42px}
+    #supervisor .ev-actions{margin-top:7px}
+    #supervisor .ev-actions button.done,#supervisor .ev-actions button.btn-take {margin:4px 0;min-height:48px;width:100%;font-size:.96rem}
+    #supervisor .xz-archive{margin:26px 0 14px;border-top:1px solid #e2e8f0;padding-top:12px}
+    #supervisor .xz-archive>summary{font-size:1rem;font-weight:800;cursor:pointer;padding:10px 0;min-height:48px}
+    #supervisor .xz-archive .card-list{padding-top:8px}
+    #supervisor .xz-archive .ev-card{background:#fff}
+    #supervisor .xz-archive .ev-card .ev-badge{font-size:.72rem}
+    #supervisor #openList>.muted,#supervisor #ackList>.muted{padding:12px;border-radius:12px;background:#f0f4f6}
+    @media(max-width:390px){#supervisor .ev-card{padding:12px}#supervisor .ev-cat{font-size:.94rem}}
+  `;
+  document.head.appendChild(css);
+
+  const title = root.querySelector('h2');
+  if(title && !root.querySelector('.xz-compact-intro')){
+    title.textContent = '督導待辦';
+    const p=document.createElement('p');p.className='xz-compact-intro';
+    p.textContent='先處理待接手案件；已完成紀錄需要時再展開。';
+    title.after(p);
+  }
+  const archiveList=document.getElementById('resolvedList');
+  if(archiveList && !root.querySelector('.xz-archive')){
+    const heading=archiveList.previousElementSibling;
+    const details=document.createElement('details');details.className='xz-archive';
+    const summary=document.createElement('summary');summary.textContent='查看已完成通報（預設收合）';
+    details.append(summary);
+    if(heading && /^H[234]$/.test(heading.tagName) && /完成/.test(heading.textContent)) heading.remove();
+    archiveList.before(details);details.append(archiveList);
+  }
+  const states = new Map();
+  function compactCard(card){
+    if(card.dataset.xzCompact==='yes')return;
+    const top=card.querySelector('.ev-top');
+    const meta=card.querySelector('.ev-meta');
+    const ref=card.querySelector('.ev-ref');
+    const actions=card.querySelector('.ev-actions');
+    if(!top||!meta||!actions)return;
+    card.dataset.xzCompact='yes';
+    const id=ref?.textContent?.trim() || top.textContent.trim()+meta.textContent.slice(0,35);
+    const archive=!!card.closest('#resolvedList');
+    const previous=states.get(id)||false;
+    const first=meta.textContent.match(/建立時間[：:]\s*([^\n|｜]+)/);
+    if(first){const date=document.createElement('div');date.className='xz-compact-date';date.textContent=first[1].trim();top.after(date)}
+    const other=document.createElement('details');other.className='xz-more';other.open=previous;
+    const summary=document.createElement('summary');summary.textContent='更多資訊・處理紀錄・LINE 狀態';other.append(summary);
+    other.addEventListener('toggle',()=>{states.set(id,other.open);if(states.size>200)states.delete(states.keys().next().value)});
+    const histButton=Array.from(actions.querySelectorAll('button')).find(b=>/歷程/.test(b.textContent));
+    if(histButton)other.append(histButton);
+    if(meta)other.append(meta);
+    if(ref)other.append(ref);
+    // Keep action buttons (ACK/resolve) visible and wired to existing backend handlers.
+    const delivery=Array.from(card.children).filter(el=>el.tagName==='BUTTON'&&/LINE 通知/.test(el.textContent));
+    for(const button of delivery){
+      const detail=button.nextElementSibling;
+      other.append(button);
+      if(detail && detail.classList.contains('muted')) other.append(detail);
+    }
+    // Existing history blocks are re-created by showHistory, then should stay inside details.
+    card.append(other);
+    if(archive){
+      // Archive has no primary action; only its own details remain.
+      if(actions && !actions.querySelector('button')) actions.remove();
+    }
+  }
+  const lists=['openList','ackList','resolvedList'];
+  let scheduled=false;
+  function refreshCards(){
+    scheduled=false;
+    for(const id of lists){const list=document.getElementById(id);if(!list)continue;
+      for(const card of list.querySelectorAll(':scope > .ev-card'))compactCard(card);
+    }
+  }
+  function schedule(){if(!scheduled){scheduled=true;queueMicrotask(refreshCards)}}
+  for(const id of lists){const list=document.getElementById(id);if(!list)continue;
+    new MutationObserver(mutations=>{if(mutations.some(m=>m.target===list&&m.type==='childList'))schedule()})
+      .observe(list,{childList:true});
+  }
+  schedule();
+})();
+
+</script>
+<!-- XZ_RBAC_UX_R7 -->
+<script>
+/* XZ_RBAC_UX_R7 — navigation and font size only; no SOS API or authentication changes. */
+(function () {
+  'use strict';
+  if (document.getElementById('xz-rbac-r7-style')) return;
+  const css = document.createElement('style');
+  css.id = 'xz-rbac-r7-style';
+  css.textContent = `
+    :root {font-size:20px!important}
+    body {line-height:1.65!important}
+    .wrap {max-width:700px!important;margin:0 auto!important;width:100%!important}
+    #supervisor .ev-card {padding:18px!important}
+    #supervisor .ev-cat, #supervisor .ev-badge {font-size:1rem!important}
+    #supervisor .ev-meta,#supervisor .ev-ref,#supervisor .xz-compact-date,
+    #supervisor .xz-more>summary,#supervisor .muted {font-size:.90rem!important}
+    #supervisor button,#supervisor .xz-archive>summary {font-size:1rem!important;min-height:50px!important}
+    #xz-sos-ux-v1 .xz-back {font-size:1rem!important;min-height:48px!important}
+    h1{font-size:1.5rem!important}h2{font-size:1.25rem!important}h3{font-size:1.1rem!important}
+    @media (max-width:480px) {.wrap{padding:12px!important}}
+  `;
+  document.head.appendChild(css);
+  function updateBack() {
+    const back = document.querySelector('#xz-sos-ux-v1 .xz-back');
+    if (!back) return;
+    const role = (document.getElementById('who')?.textContent || '').toLowerCase();
+    if (/supervisor|director|admin/.test(role)) {
+      back.setAttribute('href', '/admin/cases');
+      back.textContent = '← 返回督導工作台';
+    } else if (/caregiver/.test(role)) {
+      back.setAttribute('href', '/liff');
+      back.textContent = '← 返回照服員首頁';
+    }
+  }
+  // 既有 UX v1 有依 referrer 自動返回的舊 click handler，改為強制依角色導向。
+  document.addEventListener('click', function (ev) {
+    const target = ev.target;
+    const link = target instanceof Element ? target.closest('#xz-sos-ux-v1 .xz-back') : null;
+    if (!link) return;
+    const href = link.getAttribute('href');
+    if (href !== '/admin/cases' && href !== '/liff') return;
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    window.location.assign(href);
+  }, true);
+  const who = document.getElementById('who');
+  if (who) new MutationObserver(updateBack).observe(who, {childList:true,characterData:true,subtree:true});
+  updateBack();
+})();
+
+</script>
+<!-- XZ_R10_SOS_SOUND: Only foreground alerts; do not enable real dispatch. -->
+<script>
+(function(){
+  function setup(){
+    const input=document.getElementById('alerts');const section=document.getElementById('supervisor');
+    if(!input||!section||document.getElementById('xz-r10-sound'))return;
+    const label=input.closest('label');if(!label)return;
+    const box=document.createElement('div');box.id='xz-r10-sound';
+    box.style.cssText='background:#e8f4f1;border:1px solid #b5d8ce;border-radius:12px;padding:14px;margin:16px 0;font-size:1rem;';
+    label.style.cssText='display:flex;align-items:center;gap:10px;font-weight:700;font-size:1rem;';
+    label.insertBefore(document.createTextNode('🔔 '),label.firstChild);
+    box.appendChild(label);
+    const title=section.querySelector('h2');if(title)title.insertAdjacentElement('afterend',box);else section.prepend(box);
+    const note=document.createElement('p');note.style.cssText='font-size:.85rem;margin:6px 0 0;';
+    note.textContent='僅在本頁開啟且位於前景時響鈴，不保證鎖屏或背景警報。';box.appendChild(note);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+})();
+</script>
+</body></html>

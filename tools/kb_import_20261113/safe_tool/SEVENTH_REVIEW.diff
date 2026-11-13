@@ -1,0 +1,225 @@
+--- a/backend/app/static/xz_sos_app.js
++++ b/backend/app/static/xz_sos_app.js
+@@ -11,9 +11,9 @@
+ async function req(path,method='GET',body=null){const headers={};if(token)headers.Authorization='Bearer '+token;if(body)headers['Content-Type']='application/json';const res=await fetch(BASE+path,{method,headers,cache:'no-store',body:body?JSON.stringify(body):undefined});let data={};try{data=await res.json()}catch{} if(!res.ok){const detail=data?.error||data?.detail||{};const msg=detail?.message||(typeof detail==='string'?detail:null)||('HTTP '+res.status);const err=new Error(msg);err.status=res.status;err.code=detail?.code||null;throw err}return data}
+ function save(){try{if(el('remember').checked&&token)localStorage.setItem(KEY,token);else localStorage.removeItem(KEY)}catch{}}
+ function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}}
+-async function logout(revoke=true){if(revoke&&token){try{await req('/auth/logout','POST')}catch{}}token='';user=null;stopPolling();soundedStages.clear();lastUnclaimed=[];sirenOff();document.title=originalTitle;try{localStorage.removeItem(KEY)}catch{};el('password').value='';show('app',false);show('logout',false);show('login',true);toast('已登出緊急通報 APP')}
+-async function bootstrap(t,remembered=false){token=t;try{const u=await req('/me');if(!roles[u.role])throw new Error('此帳號沒有獨立 SOS APP 權限');user=u;show('login',false);show('app',true);show('logout',true);show('caregiver',u.role==='caregiver');show('manager',u.role!=='caregiver');show('caregiverSetup',u.role==='director'||u.role==='admin');if(u.role==='director'||u.role==='admin')await loadCaregivers();el('identity').textContent=(u.display_name||u.username)+'｜'+roles[u.role]+'｜'+(u.org?.name||'');if(!remembered)save();await reload();stopPolling();if(u.role!=='caregiver'){pollTimer=setInterval(()=>{if(token)reload()},5000);restoreNotificationState()}}catch(e){token='';user=null;try{localStorage.removeItem(KEY)}catch{};show('app',false);show('login',true);show('logout',false);toast('登入需要重新驗證：'+errorText(e))}}
+-async function login(){if(busy)return;const username=el('username').value.trim(),password=el('password').value;if(!username||!password){toast('請輸入帳號及密碼');return}busy=true;el('loginBtn').disabled=true;try{const r=await req('/auth/sos/login','POST',{username,password});if(r.status!=='ok'||!r.session_token)throw Error('登入未成功');el('password').value='';await bootstrap(r.session_token)}catch(e){toast('登入失敗：'+errorText(e))}finally{busy=false;el('loginBtn').disabled=false}}
++async function logout(revoke=true){if(revoke&&token){try{await req('/auth/logout','POST')}catch{}}token='';user=null;stopPolling();soundedStages.clear();lastUnclaimed=[];sirenOff();el('alerts').checked=false;document.title=originalTitle;try{localStorage.removeItem(KEY)}catch{};el('password').value='';show('app',false);show('logout',false);show('login',true);toast('已登出緊急通報 APP')}
++async function bootstrap(t,remembered=false){token=t;try{const u=await req('/me');if(!roles[u.role])throw new Error('此帳號沒有獨立 SOS APP 權限');user=u;show('login',false);show('app',true);show('logout',true);show('caregiver',u.role==='caregiver');show('manager',u.role!=='caregiver');show('caregiverSetup',u.role==='director'||u.role==='admin');if(u.role==='director'||u.role==='admin')await loadCaregivers();el('identity').textContent=(u.display_name||u.username)+'｜'+roles[u.role]+'｜'+(u.org?.name||'');if(!remembered)save();/* 必須在第一次 reload 前，以已驗證 user.id 恢復本帳號的聲音偏好。 */el('alerts').checked=u.role!=='caregiver'&&savedSoundPreference();await reload();stopPolling();if(u.role!=='caregiver'){pollTimer=setInterval(()=>{if(token)reload()},5000);void restoreNotificationState()}}catch(e){token='';user=null;try{localStorage.removeItem(KEY)}catch{};show('app',false);show('login',true);show('logout',false);toast('登入需要重新驗證：'+errorText(e))}}
++async function login(){if(busy)return;const username=el('username').value.trim(),password=el('password').value;if(!username||!password){toast('請輸入帳號及密碼');return}/* 點登入也是使用者互動；僅預先喚醒已曾授權裝置的音訊，不為其他帳號自動勾選或播放。 */if(anySavedSoundPreference()){const ctx=ensureSiren();if(ctx&&ctx.state==='suspended')void ctx.resume().catch(()=>{audioFailed=true;updateRingStatus()})}busy=true;el('loginBtn').disabled=true;try{const r=await req('/auth/sos/login','POST',{username,password});if(r.status!=='ok'||!r.session_token)throw Error('登入未成功');el('password').value='';await bootstrap(r.session_token)}catch(e){toast('登入失敗：'+errorText(e))}finally{busy=false;el('loginBtn').disabled=false}}
+ function box(parent,text){const p=document.createElement('p');p.textContent=text;parent.appendChild(p)}
+ function button(parent,label,fn,cls=''){const b=document.createElement('button');b.type='button';b.textContent=label;if(cls)b.className=cls;b.addEventListener('click',fn);parent.appendChild(b);return b}
+ function formatDate(s){if(!s)return '';const d=new Date(s);return Number.isNaN(d.getTime())?s:d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:true})}
+@@ -136,7 +136,7 @@
+ function effectiveVolume(stageVolumeRatio){return muted?0:Math.max(0,Math.min(1,userVolume))*MAX_SAFE_VOLUME*stageVolumeRatio}
+ function sirenOn(stage){
+   const ctx=ensureSiren();if(!ctx){updateRingStatus();return}
+-  if(ctx.state==='suspended')ctx.resume().catch(()=>{audioFailed=true;updateRingStatus()});
++  if(ctx.state==='suspended')void ctx.resume().then(()=>{audioFailed=ctx.state!=='running';updateRingStatus()}).catch(()=>{audioFailed=true;updateRingStatus()});
+   const p=sirenStageParams(stage);
+   const t=ctx.currentTime;
+   sirenLfo.frequency.setTargetAtTime(p.rate,t,0.25);
+@@ -154,13 +154,15 @@
+ }
+ function updateRingStatus(){
+   const s=el('ringStatus');if(!s)return;
+-  if(audioFailed){s.textContent='⚠️ 警示音無法播放（瀏覽器音訊功能異常），請改用電話或畫面確認通報，不要只依賴聲音。';return}
++  if(!el('alerts')?.checked){s.textContent='🔈 本頁警示音尚未啟用；首次請勾選啟用。';return}
++  if(audioFailed||!sirenCtx||sirenCtx.state!=='running'){s.textContent='⚠️ 聲音尚未真正啟用。請點選「試聽警示音」或重新勾選啟用；若瀏覽器阻擋，仍要看畫面並電話通知。';return}
+   if(muted){s.textContent='🔇 已靜音（事件狀態不受影響，仍需用畫面確認是否有未接手通報）';return}
+   s.textContent=sirenActive?'🔊 警示音播放中':'🔈 目前無未接手通報，警示音待命';
+ }
+ function evaluateSiren(){
+   const alertsOn=el('alerts')&&el('alerts').checked;
+-  const foreground=document.visibilityState==='visible'&&document.hasFocus();
++  // 手機 PWA 的 document.hasFocus() 在畫面可見時也可能回傳 false；只用 visibility 判斷前景。
++  const foreground=document.visibilityState==='visible';
+   if(!alertsOn||!foreground){sirenOff();return}
+   const active=new Set(lastUnclaimed.map(x=>x.id));
+   for(const id of soundedStages.keys())if(!active.has(id))soundedStages.delete(id);
+@@ -181,7 +183,7 @@
+   if(highest!==null)sirenOn(highest);else sirenOff();
+ }
+ function notifyVisibleUnclaimed(unclaimed){lastUnclaimed=unclaimed;evaluateSiren()}
+-function onAlertsToggle(){try{localStorage.setItem(soundPrefKey(),el('alerts').checked?'1':'0')}catch{};if(el('alerts').checked)restoreAudioFromGesture();else evaluateSiren()}
++function onAlertsToggle(){if(!user||user.role==='caregiver')return;try{localStorage.setItem(soundPrefKey(),el('alerts').checked?'1':'0')}catch{};if(el('alerts').checked)void restoreAudioFromGesture();else{evaluateSiren();updateRingStatus()}}
+ function onVolumeChange(){const v=el('sirenVolume');if(!v)return;userVolume=Math.max(0,Math.min(100,Number(v.value)||0))/100;if(sirenCtx&&sirenActive){const stage=[...soundedStages.values()].sort((a,b)=>({new:0,'60s':1,'180s':2}[b]-{new:0,'60s':1,'180s':2}[a]))[0]||'new';sirenOn(stage)}}
+ function onMuteToggle(){muted=!muted;const b=el('sirenMute');if(b)b.textContent=muted?'取消靜音':'靜音警示音';if(sirenCtx&&sirenActive){const stage=[...soundedStages.values()].sort((a,b)=>({new:0,'60s':1,'180s':2}[b]-{new:0,'60s':1,'180s':2}[a]))[0]||'new';sirenOn(stage)}else updateRingStatus()}
+ // XZ_SOS_SIREN_PREVIEW_V1：試聽不建立任何事件、不呼叫後端 API，只在使用者點擊（符合
+@@ -224,6 +226,13 @@
+ }
+ async function send(){if(busy||!selection)return;if(!confirm('再次確認：送出「'+cats[selection]+'」緊急通報？'))return;busy=true;el('send').disabled=true;requestId=requestId||crypto.randomUUID();try{await req('/jiaan1030/emergencies','POST',{category:selection,client_request_id:requestId});toast('通報已建立，但通知送達仍須獨立確認；危急請立即電話求援');requestId=null;selection=null;show('confirm',false);await reload()}catch(e){toast('通報結果未確認：'+errorText(e)+'。不要立刻重複送出，先更新事件清單。')}finally{busy=false;el('send').disabled=false}}
+ function urlBase64ToUint8Array(base64){const padding='='.repeat((4-base64.length%4)%4);const raw=atob((base64+padding).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
++// 確認本機 PushSubscription 的應用伺服器公鑰符合目前環境，避免金鑰輪替後假稱已恢復。
++function pushKeyMatches(sub,serverPublicKey){
++  const browserKey=sub?.options?.applicationServerKey;
++  if(!browserKey||!serverPublicKey)return null;
++  const got=new Uint8Array(browserKey),expected=urlBase64ToUint8Array(serverPublicKey);
++  return got.length===expected.length&&got.every((v,i)=>v===expected[i]);
++}
+ 
+ // XZ_SOS_SW_ACTIVATION_WAIT_V1: do not subscribe before the worker is active.
+ async function waitForSosWorker(reg){
+@@ -263,6 +272,11 @@
+   const reg=await navigator.serviceWorker.register('/api/jiaan1030/sos-app/sw.js',{scope:'/api/jiaan1030/sos-app/'});
+   const activeReg=await waitForSosWorker(reg);
+   let sub=await activeReg.pushManager.getSubscription();
++  if(sub&&pushKeyMatches(sub,config.public_key)===false){
++    if(!confirm('此瀏覽器訂閱使用舊版推播公鑰，需要重新訂閱才能接收新通知。是否更新本機訂閱？'))return;
++    if(!(await sub.unsubscribe()))throw Error('無法移除舊訂閱；請在瀏覽器網站設定中重設通知後重試');
++    sub=null;
++  }
+   if(!sub)sub=await activeReg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(config.public_key)});
+   const data=sub.toJSON();
+   if(!data.keys?.p256dh||!data.keys?.auth)throw Error('瀏覽器未提供完整裝置訂閱資料，請移除網站通知權限後重試');
+@@ -284,7 +298,9 @@
+ // 只有「已授權且瀏覽器本機已有訂閱」時才會靜默同步；其餘情況維持既有
+ // 「啟用此裝置通知」按鈕讓使用者主動操作，不偷偷繞過瀏覽器授權限制。
+ async function restoreNotificationState(){
+-  const stateEl=el('pushState');
++  const stateEl=el('pushState'),sessionUserId=user?.id;
++  if(!sessionUserId)return;
++  const sameUser=()=>user?.id===sessionUserId&&Boolean(token);
+   if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window)){
+     stateEl.textContent='此瀏覽器不支援背景推播；仍可使用頁面開啟時的前景提醒。';return;
+   }
+@@ -300,12 +316,17 @@
+     const sub=reg?await reg.pushManager.getSubscription():null;
+     if(!sub){stateEl.textContent='已允許通知，但這個瀏覽器還沒有建立訂閱，請按下方按鈕完成一次性設定。';return}
+     const config=await req('/jiaan1030/webpush/config');
++    if(!sameUser())return;
+     if(!config.public_key){stateEl.textContent='系統設定尚未完成（缺少 Web Push 公鑰），請聯絡管理者。';return}
++    if(pushKeyMatches(sub,config.public_key)===false){stateEl.textContent='本機訂閱的推播公鑰已過期；請按「啟用此裝置通知」並確認更新。尚未恢復遠端推播。';return}
+     const data=sub.toJSON();
+     if(!data.keys?.p256dh||!data.keys?.auth){stateEl.textContent='已允許通知，但瀏覽器訂閱資料不完整，請按下方按鈕修復一次。';return}
++    if(!sameUser())return;
+     await req('/jiaan1030/webpush/subscription','POST',{endpoint:data.endpoint,p256dh:data.keys.p256dh,auth:data.keys.auth});
++    if(!sameUser())return;
+     stateEl.textContent=(config.enabled?'此裝置通知已自動恢復有效；伺服器自動派送：已開啟（仍須送達驗證）':'此裝置通知已自動恢復有效；推播派送停用，僅供測試（不代表通知已可送達）');
+   }catch(e){
++    if(!sameUser())return;
+     const d=describePushSetupError(e);
+     stateEl.textContent=d.state==='conflict'?d.text:'已允許通知，但自動確認時發生問題（'+d.text+'），可按下方按鈕重試一次。';
+   }
+@@ -330,13 +351,13 @@
+   }
+ }
+ 
+-async function diagnosePush(){const parts=[];parts.push('通知API：'+(('Notification'in window)?'支援':'不支援'));parts.push('權限：'+(('Notification'in window)?Notification.permission:'無'));parts.push('Service Worker：'+(('serviceWorker'in navigator)?'支援':'不支援'));try{const reg=await navigator.serviceWorker.getRegistration('/api/jiaan1030/sos-app/');const sub=reg?await reg.pushManager.getSubscription():null;const cfg=await req('/jiaan1030/webpush/config');parts.push('Worker：'+(reg?.active?'已啟用':'未啟用'));parts.push('訂閱：'+(sub?'存在':'不存在'));parts.push('VAPID：'+(cfg.public_key?'已提供':'缺失'));parts.push('正式派送：'+(cfg.enabled?'ON':'OFF'))}catch(e){parts.push('後端診斷：'+errorText(e))}el('pushState').textContent=parts.join('｜')+'。這是本機診斷，沒有發送通知，也不代表實際送達。'}
++async function diagnosePush(){const parts=[];parts.push('通知API：'+(('Notification'in window)?'支援':'不支援'));parts.push('權限：'+(('Notification'in window)?Notification.permission:'無'));parts.push('Service Worker：'+(('serviceWorker'in navigator)?'支援':'不支援'));try{const reg=await navigator.serviceWorker.getRegistration('/api/jiaan1030/sos-app/');const sub=reg?await reg.pushManager.getSubscription():null;const cfg=await req('/jiaan1030/webpush/config');parts.push('Worker：'+(reg?.active?'已啟用':'未啟用'));parts.push('訂閱：'+(sub?'存在':'不存在'));parts.push('VAPID：'+(!cfg.public_key?'缺失':!sub?'公鑰已提供（未訂閱）':pushKeyMatches(sub,cfg.public_key)===false?'⚠️ 與本機訂閱不一致':pushKeyMatches(sub,cfg.public_key)===true?'與本機訂閱相符':'有公鑰，瀏覽器無法比對'));parts.push('正式派送：'+(cfg.enabled?'ON':'OFF'))}catch(e){parts.push('後端診斷：'+errorText(e))}el('pushState').textContent=parts.join('｜')+'。這是本機診斷，沒有發送通知，也不代表實際送達。'}
+ 
+ async function notifyTest(){try{if(Notification.permission!=='granted')throw Error('先允許通知');const reg=await navigator.serviceWorker.register('/api/jiaan1030/sos-app/sw.js',{scope:'/api/jiaan1030/sos-app/'});const activeReg=await waitForSosWorker(reg);await activeReg.showNotification('小照｜本機顯示測試',{body:'這不是緊急事件，沒有傳送到伺服器',tag:'xz-sos-local-test'});toast('本機顯示測試已送出；這不是遠端推播驗證')}catch(e){toast(errorText(e))}}
+ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInstall=e});el('loginBtn').addEventListener('click',login);el('password').addEventListener('keydown',e=>{if(e.key==='Enter')login()});el('logout').addEventListener('click',()=>logout(true));el('refresh').addEventListener('click',reload);el('install').addEventListener('click',async()=>{show('installHelp',true);if(promptInstall){await promptInstall.prompt();promptInstall=null}});el('categories').addEventListener('click',e=>{const btn=e.target.closest('button[data-cat]');if(!btn)return;selection=btn.dataset.cat;requestId=null;el('selected').textContent=cats[selection];show('confirm',true);el('confirm').scrollIntoView({behavior:'smooth'})});el('cancel').addEventListener('click',()=>show('confirm',false));el('send').addEventListener('click',send);el('pushEnable').addEventListener('click',notifyEnable);if(el('alerts'))el('alerts').addEventListener('change',onAlertsToggle);if(el('sirenVolume'))el('sirenVolume').addEventListener('input',onVolumeChange);if(el('sirenMute'))el('sirenMute').addEventListener('click',onMuteToggle);if(el('sirenPreview'))el('sirenPreview').addEventListener('click',onSirenPreview);async function loadCaregivers(){try{const users=await req('/admin/users');const sel=el('cgSelect');sel.replaceChildren();for(const u of users){if(u.role!=='caregiver'||!u.is_active||u.is_deleted)continue;const o=document.createElement('option');o.value=u.id;o.textContent=u.username+' · '+u.display_name;sel.appendChild(o)}if(!sel.options.length)toast('本機構沒有可設定密碼的在職照服員');updateCgSelection()}catch(e){toast('載入照服員清單失敗：'+errorText(e))}}
+ const weakPasswords=new Set(['123456','12345678','password','qwerty','111111','000000']);function passwordProblem(pwd){if(pwd.length<6)return'至少需要 6 字元';if(weakPasswords.has(pwd.toLowerCase())||/^(.)\1+$/.test(pwd))return'這是常見弱密碼，請改用其他密碼';return''}function updateCgSelection(){const s=el('cgSelect');el('cgSelected').textContent=s.selectedOptions[0]?'已選擇：'+s.selectedOptions[0].textContent:'尚未選擇照服員'}function updatePasswordHint(){const p=passwordProblem(el('cgPassword').value);el('cgPasswordHint').textContent=p||'格式符合要求；儲存前仍會再次確認。'}
+ async function setCgPassword(){const target=el('cgSelect').value,pwd=el('cgPassword').value,problem=passwordProblem(pwd);if(!target||problem){toast(!target?'請先選擇照服員':problem);return}const selected=el('cgSelect').selectedOptions[0]?.textContent||'選取的照服員';if(!confirm('確認為「'+selected+'」設定新的 SOS 密碼？舊 SOS 工作階段將需要重新登入。'))return;const btn=el('cgSetPassword');btn.disabled=true;try{await req('/admin/users/'+encodeURIComponent(target)+'/sos-password','POST',{password:pwd});toast('已設定 SOS 登入密碼');el('cgPassword').value='';updatePasswordHint()}catch(e){toast('設定失敗：'+errorText(e))}finally{btn.disabled=false}}
+ el('pushTest').addEventListener('click',notifyTest);el('pushRemoteTest').addEventListener('click',notifyRemoteTest);const diag=document.createElement('button');diag.type='button';diag.className='secondary';diag.textContent='檢查權限與訂閱（不發送）';diag.addEventListener('click',diagnosePush);el('pushRemoteTest').before(diag);el('cgSetPassword').addEventListener('click',setCgPassword);el('cgSelect').addEventListener('change',updateCgSelection);el('cgPassword').addEventListener('input',updatePasswordHint);el('cgTogglePassword').addEventListener('click',()=>{const p=el('cgPassword');p.type=p.type==='password'?'text':'password';el('cgTogglePassword').textContent=p.type==='password'?'顯示':'隱藏'});
+-el('loginBtn').addEventListener('pointerdown',()=>{if(anySavedSoundPreference()){el('alerts').checked=true;restoreAudioFromGesture()}});
+-(async()=>{let saved='';try{saved=localStorage.getItem(KEY)||''}catch{}if(saved){el('remember').checked=true;await bootstrap(saved,true);if(user?.role!=='caregiver'&&savedSoundPreference()){el('alerts').checked=true;evaluateSiren()}}})();
++// 不用『任一帳號曾勾選』決定目前帳號的聲音開關；bootstrap 已依已驗證 user.id 恢復。
++(async()=>{let saved='';try{saved=localStorage.getItem(KEY)||''}catch{}if(saved){el('remember').checked=true;await bootstrap(saved,true)}})();
+ })();
+
+--- a/backend/app/static/xz_sos_app.html
++++ b/backend/app/static/xz_sos_app.html
+@@ -8,5 +8,5 @@
+ <section class="card" id="login"><h2>緊急通報 APP 登入</h2><p class="muted">照服員、居督、主任皆使用自己的帳號密碼。不需 LINE 綁定，原本的小照網頁不變。</p><label for="username">帳號</label><input id="username" autocomplete="username" maxlength="64"><label for="password">密碼</label><input id="password" type="password" autocomplete="current-password" maxlength="200"><label class="inline"><input id="remember" type="checkbox">在這台私人裝置保留登入（直到伺服器工作階段到期）</label><button id="loginBtn">登入緊急 APP</button><p class="muted hint">公用手機請勿勾選。已登入仍可能因工作階段到期、撤銷或裝置清除而重新登入。密碼不會儲存在手機。</p></section>
+ <section id="app" class="hidden"><div class="card"><div id="identity"></div><div class="row"><button class="secondary" id="refresh">更新事件</button><button class="secondary install-button" id="install">如何安裝到桌面</button></div><p id="installHelp" class="muted hint hidden">Android：Chrome 選單 → 安裝應用程式／新增至主畫面。iPhone：Safari 分享 → 加入主畫面。通知請到下方「裝置通知」開啟，安裝不代表推播已啟用。</p></div>
+ <div id="caregiver" class="hidden"><h2>我要緊急通報</h2><p class="muted hint">先選事件類型，再次確認才送出；不輸入個案個資。</p><div class="grid" id="categories"><button data-cat="fall"><span>🤕</span>跌倒</button><button data-cat="violence"><span>✊</span>暴力</button><button data-cat="injury"><span>🩹</span>傷口</button><button data-cat="unresponsive"><span>😵</span>昏倒／意識異常</button><button data-cat="traffic"><span>🚗</span>車禍</button><button data-cat="self_harm"><span>⚠️</span>自傷風險</button><button data-cat="other"><span>❓</span>其他／不確定</button></div><div class="card hidden" id="confirm"><strong id="selected"></strong><p>確定送出？會建立一筆緊急通報，但不保證通知立即到達督導。</p><div class="row"><button id="send" class="danger">確認建立通報</button><button id="cancel" class="secondary">取消</button></div></div><h2>我的通報</h2><div id="myCases"></div></div>
+-<div id="manager" class="hidden"><div class="card"><label class="inline"><input id="alerts" type="checkbox"> 🔔 啟用本頁聲音與通知（僅前景開啟時有效；首次聲音提示需點選）</label><p class="muted hint">僅在本頁開啟且位於前景時響鈴，不保證鎖屏或背景警報。取消勾選只會關閉本機聲音，不會視為已接手。</p><label for="sirenVolume">警示音音量</label><input id="sirenVolume" type="range" min="0" max="100" value="70" aria-describedby="sirenVolumeHint"><p id="sirenVolumeHint" class="muted hint">音量只在安全範圍內調整，不會超過手機原本的音量上限，也不會關閉手機靜音或勿擾模式。</p><div class="row"><button type="button" class="secondary" id="sirenPreview">🔊 試聽警示音</button><button type="button" class="secondary" id="sirenMute">靜音警示音</button></div><p id="ringStatus" class="muted hint" role="status" aria-live="polite">尚未啟用警示音</p></div><h2>待接手 <span id="openCount">0</span></h2><div id="openCases"></div><h2>處理中 <span id="ackCount">0</span></h2><div id="ackCases"></div><details><summary>已完成通報（需要時展開）</summary><div id="resolvedCases"></div></details><div class="card hidden" id="caregiverSetup"><h2>設定照服員 SOS 密碼</h2><p class="muted hint">僅主任／管理員可設定同機構照服員；不會更動 LINE 綁定或 LINE 登入密碼。</p><div class="step"><div class="step-title">步驟一｜選擇照服員</div><select id="cgSelect" aria-label="照服員" style="font:inherit;width:100%;min-height:48px;padding:8px;border-radius:9px;border:1px solid #9daeb8"></select><p id="cgSelected" class="muted hint"></p></div><div class="step"><div class="step-title">步驟二｜輸入新 SOS 密碼</div><div class="password-row"><input id="cgPassword" aria-label="新 SOS 密碼" type="password" autocomplete="new-password" maxlength="200" placeholder="至少 6 字元，不可使用常見弱密碼"><button type="button" class="secondary" id="cgTogglePassword">顯示</button></div><p id="cgPasswordHint" class="muted hint" aria-live="polite">密碼不會預填，也不會寫入網址或日誌。</p></div><div class="step"><div class="step-title">步驟三｜確認並儲存</div><button id="cgSetPassword">確認設定密碼</button></div><details><summary>密碼安全說明</summary><p class="muted hint">請以安全方式私下交付本人。管理者不能查看既有密碼；設定後舊 SOS 工作階段會撤銷。請勿使用 123456、password、帳號或連續相同字元。</p></details></div><div class="card"><h2>裝置通知</h2><p id="pushState" class="muted">尚未檢查</p><button id="pushEnable">啟用此裝置通知</button><button id="pushTest" class="secondary">測試本機顯示</button><button id="pushRemoteTest" class="secondary">測試遠端推播（僅自己）</button><p class="muted hint">此處可訂閱瀏覽器推播；伺服器派送目前另有安全開關。Web Push／鎖屏通知不保證到達或持續響鈴，不等於原生 Android APP。</p></div></div>
++<div id="manager" class="hidden"><div class="card"><label class="inline"><input id="alerts" type="checkbox"> 🔔 啟用本頁警示音（首次勾選一次；同帳號之後自動恢復）</label><p class="muted hint">已允許的同帳號會在重新登入時自動嘗試恢復；若瀏覽器阻止播放，請點「試聽警示音」啟用。只在頁面可見時播放，不保證鎖屏或背景警報。取消勾選僅關閉本機聲音，不等於接手。</p><label for="sirenVolume">警示音音量</label><input id="sirenVolume" type="range" min="0" max="100" value="70" aria-describedby="sirenVolumeHint"><p id="sirenVolumeHint" class="muted hint">音量只在安全範圍內調整，不會超過手機原本的音量上限，也不會關閉手機靜音或勿擾模式。</p><div class="row"><button type="button" class="secondary" id="sirenPreview">🔊 試聽警示音</button><button type="button" class="secondary" id="sirenMute">靜音警示音</button></div><p id="ringStatus" class="muted hint" role="status" aria-live="polite">尚未啟用警示音</p></div><h2>待接手 <span id="openCount">0</span></h2><div id="openCases"></div><h2>處理中 <span id="ackCount">0</span></h2><div id="ackCases"></div><details><summary>已完成通報（需要時展開）</summary><div id="resolvedCases"></div></details><div class="card hidden" id="caregiverSetup"><h2>設定照服員 SOS 密碼</h2><p class="muted hint">僅主任／管理員可設定同機構照服員；不會更動 LINE 綁定或 LINE 登入密碼。</p><div class="step"><div class="step-title">步驟一｜選擇照服員</div><select id="cgSelect" aria-label="照服員" style="font:inherit;width:100%;min-height:48px;padding:8px;border-radius:9px;border:1px solid #9daeb8"></select><p id="cgSelected" class="muted hint"></p></div><div class="step"><div class="step-title">步驟二｜輸入新 SOS 密碼</div><div class="password-row"><input id="cgPassword" aria-label="新 SOS 密碼" type="password" autocomplete="new-password" maxlength="200" placeholder="至少 6 字元，不可使用常見弱密碼"><button type="button" class="secondary" id="cgTogglePassword">顯示</button></div><p id="cgPasswordHint" class="muted hint" aria-live="polite">密碼不會預填，也不會寫入網址或日誌。</p></div><div class="step"><div class="step-title">步驟三｜確認並儲存</div><button id="cgSetPassword">確認設定密碼</button></div><details><summary>密碼安全說明</summary><p class="muted hint">請以安全方式私下交付本人。管理者不能查看既有密碼；設定後舊 SOS 工作階段會撤銷。請勿使用 123456、password、帳號或連續相同字元。</p></details></div><div class="card"><h2>裝置通知</h2><p id="pushState" class="muted">尚未檢查</p><button id="pushEnable">啟用此裝置通知</button><button id="pushTest" class="secondary">測試本機顯示</button><button id="pushRemoteTest" class="secondary">測試遠端推播（僅自己）</button><p class="muted hint">此處可訂閱瀏覽器推播；伺服器派送目前另有安全開關。Web Push／鎖屏通知不保證到達或持續響鈴，不等於原生 Android APP。</p></div></div>
+ </section><script src="/api/jiaan1030/sos-app/app.js" defer></script></main></body></html>
+
+--- a/frontend/src/liff/pages/HomePage.tsx
++++ b/frontend/src/liff/pages/HomePage.tsx
+@@ -1,38 +1,38 @@
+-import { useEffect, useState } from "react";
+-import { Link } from "react-router-dom";
+-import { api } from "../../api";
+-import { useLiff } from "../LiffApp";
+-
+-export function HomePage() {
+-  const { user, dev } = useLiff();
+-  const [stats, setStats] = useState<{ open_cases: number; replied_cases: number } | null>(null);
+-  useEffect(() => {
+-    api<typeof stats>("/api/stats/mine").then(setStats).catch(() => setStats(null));
+-  }, []);
+-  return (
+-    <div className="page stack">
+-      <h1>{user.display_name}，您好</h1>
+-      <p className="muted">{user.org?.name}</p>
+-      <div className="notice info">
+-        請選一項功能開始。填寫或說明時，請用「個案」「家屬」代稱，不要提供姓名或房號。
+-      </div>
+-      {/* XZ_EMERGENCY_ROLE_ENTRY_20261103: the server enforces org and role authorization. */}
+-      <div className="menu-grid">
+-        {/* 督導/主任用專屬督導AI助手（/api/qa/supervisor-ask 後端角色檢查），不是照服員那套/liff/ask */}
+-        {["supervisor", "director", "admin"].includes(user.role) ? (
+-          <Link to="/liff/supervisor-ask"><span className="icon" aria-hidden="true">💬</span><strong>AI 照護助手</strong><span className="muted">預設語音提問，回答附出處</span></Link>
+-        ) : (
+-          <Link to="/liff/ask"><span className="icon" aria-hidden="true">💬</span><strong>問 AI</strong><span className="muted">文字或語音提問，回答附出處</span></Link>
+-        )}
+-        <Link to="/liff/record"><span className="icon" aria-hidden="true">🎙️</span><strong>錄音／談話紀錄</strong><span className="muted">錄音後查看談話文字</span></Link>
+-        <Link to="/liff/report/entry"><span className="icon" aria-hidden="true">📋</span><strong>問題分類</strong><span className="muted">選擇試用預覽或原有分類回報</span></Link>
+-        <Link to="/liff/cases"><span className="icon" aria-hidden="true">📂</span><strong>我的案件</strong><span className="muted">{stats ? `${stats.replied_cases} 件已回覆／${stats.open_cases} 件進行中` : "查看進度與督導回覆"}</span></Link>
+-        {/* 統一指向正式第五版 SOS App；443 與 8443 不共用瀏覽器登入狀態。 */}
+-        {["caregiver", "supervisor", "director", "admin"].includes(user.role) && <a target="_blank" rel="noopener noreferrer" href="https://stust.tail379935.ts.net:8443/api/jiaan1030/sos-app/" className="emergency-entry" style={{ border: "2px solid #ad251e", borderRadius: 12, padding: 15, display: "grid", gap: 6, textDecoration: "none" }}><strong>🚨 新分頁開啟緊急通報／督導接手</strong><span className="muted">LINE若未開啟新分頁，請長按並選擇外部瀏覽器；網址可複製。危急請先撥 119／110。</span></a>}
+-        {/* GA09/SC09 尚未經嘉安確認為正式上線功能，正式畫面先隱藏，僅保留於模擬登入／測試入口 */}
+-        {dev && <Link to="/liff/service-clients"><span className="icon" aria-hidden="true">🧾</span><strong>服務紀錄表單</strong><span className="muted">GA09/SC09（測試用假資料）</span></Link>}
+-      </div>
+-      <Link className="btn block home-help" to="/liff/help">使用說明與知識庫涵蓋範圍</Link>
+-    </div>
+-  );
+-}
++import { useEffect, useState } from "react";
++import { Link } from "react-router-dom";
++import { api } from "../../api";
++import { useLiff } from "../LiffApp";
++
++export function HomePage() {
++  const { user, dev } = useLiff();
++  const [stats, setStats] = useState<{ open_cases: number; replied_cases: number } | null>(null);
++  useEffect(() => {
++    api<typeof stats>("/api/stats/mine").then(setStats).catch(() => setStats(null));
++  }, []);
++  return (
++    <div className="page stack">
++      <h1>{user.display_name}，您好</h1>
++      <p className="muted">{user.org?.name}</p>
++      <div className="notice info">
++        請選一項功能開始。填寫或說明時，請用「個案」「家屬」代稱，不要提供姓名或房號。
++      </div>
++      {/* XZ_EMERGENCY_ROLE_ENTRY_20261103: the server enforces org and role authorization. */}
++      <div className="menu-grid">
++        {/* 督導/主任用專屬督導AI助手（/api/qa/supervisor-ask 後端角色檢查），不是照服員那套/liff/ask */}
++        {["supervisor", "director", "admin"].includes(user.role) ? (
++          <Link to="/liff/supervisor-ask"><span className="icon" aria-hidden="true">💬</span><strong>AI 照護助手</strong><span className="muted">預設語音提問，回答附出處</span></Link>
++        ) : (
++          <Link to="/liff/ask"><span className="icon" aria-hidden="true">💬</span><strong>問 AI</strong><span className="muted">文字或語音提問，回答附出處</span></Link>
++        )}
++        <Link to="/liff/record"><span className="icon" aria-hidden="true">🎙️</span><strong>錄音／談話紀錄</strong><span className="muted">錄音後查看談話文字</span></Link>
++        <Link to="/liff/report/entry"><span className="icon" aria-hidden="true">📋</span><strong>問題分類</strong><span className="muted">選擇試用預覽或原有分類回報</span></Link>
++        <Link to="/liff/cases"><span className="icon" aria-hidden="true">📂</span><strong>我的案件</strong><span className="muted">{stats ? `${stats.replied_cases} 件已回覆／${stats.open_cases} 件進行中` : "查看進度與督導回覆"}</span></Link>
++        {/* 統一指向當前正式版 SOS App；443 與 8443 不共用瀏覽器登入狀態。 */}
++        {["caregiver", "supervisor", "director", "admin"].includes(user.role) && <a target="_blank" rel="noopener noreferrer" href="https://stust.tail379935.ts.net:8443/api/jiaan1030/sos-app/" className="emergency-entry" style={{ border: "2px solid #ad251e", borderRadius: 12, padding: 15, display: "grid", gap: 6, textDecoration: "none" }}><strong>🚨 新分頁開啟緊急通報／督導接手</strong><span className="muted">LINE若未開啟新分頁，請長按並選擇外部瀏覽器；網址可複製。危急請先撥 119／110。</span></a>}
++        {/* GA09/SC09 尚未經嘉安確認為正式上線功能，正式畫面先隱藏，僅保留於模擬登入／測試入口 */}
++        {dev && <Link to="/liff/service-clients"><span className="icon" aria-hidden="true">🧾</span><strong>服務紀錄表單</strong><span className="muted">GA09/SC09（測試用假資料）</span></Link>}
++      </div>
++      <Link className="btn block home-help" to="/liff/help">使用說明與知識庫涵蓋範圍</Link>
++    </div>
++  );
++}
+
+--- a/frontend/src/liff/pages/ReportEntryPage.tsx
++++ b/frontend/src/liff/pages/ReportEntryPage.tsx
+@@ -14,7 +14,7 @@
+         <Link className="btn block big" to="/liff/report" state={state}>原有分類回報</Link>
+         <p>使用原本的分類、問題與送件流程。</p>
+       </section>
+-      {/* 統一指向正式第五版 SOS App；443 與 8443 不共用瀏覽器登入狀態。 */}
++      {/* 統一指向當前正式版 SOS App；443 與 8443 不共用瀏覽器登入狀態。 */}
+       <a className="btn block" target="_blank" rel="noopener noreferrer" href="https://stust.tail379935.ts.net:8443/api/jiaan1030/sos-app/">🚨 新分頁開啟嘉安緊急通報／督導接手</a><p className="small muted">LINE若未開啟新分頁，請長按連結選擇「使用外部瀏覽器開啟」，或複製網址：https://stust.tail379935.ts.net:8443/api/jiaan1030/sos-app/</p>
+       <Link className="btn block" to="/liff">返回首頁</Link>
+     </main>

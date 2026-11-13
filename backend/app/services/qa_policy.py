@@ -30,8 +30,20 @@ class ClarificationRule:
     prompt: str
 
 
-CLARIFICATION_POLICY_VERSION = '2026-10-11.clarification.1'
+CLARIFICATION_POLICY_VERSION = '2026-11-10.reporting-deadline.1'
 CLARIFICATION_RULES: tuple[ClarificationRule, ...] = (
+    ClarificationRule(
+        code='unspecified_reporting_deadline',
+        label='未指定緊急通報類型與適用規範',
+        pattern=re.compile(r'通報.{0,12}(?:期限|時限|多久|何時|時間)|(?:期限|時限).{0,12}通報'),
+        # Named incidents or named reporting jurisdictions may continue to RAG;
+        # they still must pass retrieval, citation, and risk checks.
+        concrete_action=re.compile(
+            r'跌倒|受傷|傷口|暴力|虐待|意識異常|昏倒|火災|傳染病|感染|職災|'
+            r'機構內部|內部通報|主管機關|地方政府|社會局|衛生局|長照中心|事故通報|'
+            r'緊急事件通報辦法'),
+        prompt='請問是哪一種事件的通報期限？例如機構內部緊急通報、跌倒事故通報，或向主管機關通報。不同類型及機構規範的期限可能不同，我會依您指定的類型查核文件與出處。',
+    ),
     ClarificationRule(
         code='unspecified_repeated_operation',
         label='未說明具體服務或操作',

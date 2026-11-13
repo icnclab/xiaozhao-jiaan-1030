@@ -22,6 +22,7 @@ from app.logging_setup import setup_logging
 from app.services import documents, jobs, notifications, retention, transcripts, tts_service
 from app.services import jiaan_emergency_dispatch
 from app.services import jiaan_webpush
+from app.services import sopb_voice_outbox
 
 logger = logging.getLogger("worker")
 SWEEP_INTERVAL_SEC = 300
@@ -196,7 +197,7 @@ def main() -> None:
     signal.signal(signal.SIGINT, _stop)
     signal.signal(signal.SIGTERM, _stop)
     logger.info("worker %s started", worker_id)
-    last_sweep, last_beat, last_emergency, last_webpush = 0.0, 0.0, 0.0, 0.0
+    last_sweep, last_beat, last_emergency, last_webpush, last_voice = 0.0, 0.0, 0.0, 0.0, 0.0
     while running:
         now = time.monotonic()
         if now - last_beat > 15:
@@ -224,6 +225,26 @@ def main() -> None:
             finally:
                 session.close()
             last_emergency = now
+        # SOPB isolated Voice/SMS pipeline; OFF by default, loopback-only.
+        if sopb_voice_outbox.is_enabled() and now - last_voice >= EMERGENCY_SWEEP_INTERVAL_SEC:
+            try:
+                session = new_session()
+                try:
+                    staged = sopb_voice_outbox.stage(session)
+                    session.commit()
+                except Exception:
+                    session.rollback()
+                    raise
+                finally:
+                    session.close()
+                # Claim/commit occurs before outbound HTTP; no open SQL transaction
+                # is held while waiting on the gateway.
+                attempted = sopb_voice_outbox.dispatch_one(new_session)
+                if staged or attempted:
+                    logger.info("sopb voice staged=%d attempted=%s", staged, attempted)
+            except Exception as exc:
+                logger.warning("sopb voice cycle failed: %s", type(exc).__name__)
+            last_voice = now
         # Separate web-push pipeline. Disabled by default; does not affect LINE.
         if jiaan_webpush.enabled() and now - last_webpush >= EMERGENCY_SWEEP_INTERVAL_SEC:
             session = new_session()

@@ -6,7 +6,7 @@ from datetime import date
 from dataclasses import replace
 
 from app.providers.llm import CandidateAnswer
-from app.services.answer_presentation import include_ba16_fact, ba16_safety_note
+from app.services.answer_presentation import assemble_answer, include_ba16_fact, ba16_safety_note
 from app.services.qa_graph import node_verify, run_graph
 from app.services.qa_policy import DEFAULT_POLICY, screen_risk
 from scripts.test_retrieval_gate import chunk
@@ -21,6 +21,34 @@ class AnswerWording(unittest.TestCase):
                       version_id=header.version_id)
         ids = (header.chunk_id, obj.chunk_id)
         self.evidence = {'E1': replace(header, scope_chunk_ids=ids), 'E2': replace(obj, scope_chunk_ids=ids)}
+
+    def test_distance_limit_not_dropped_for_medication_question(self):
+        """Regression for 2026-11-12 BA16 review: '可以幫忙買藥嗎？' answers were
+        missing the 五公里 distance ceiling even though it was retrieved and
+        verified, because assemble_answer's field-relevance filter treated it
+        as off-topic for a 'medicine' field question. Covers both the claim
+        assembly step (include_ba16_fact) and the display filter (assemble_answer)."""
+        header = chunk('附表四 照顧組合表', 'BA16 代購或代領或代送服務')
+        items = replace(chunk('附表四 照顧組合表', '一、目的物品或事項包括：餐食、食材、生活用品、藥品。'), version_id=header.version_id)
+        own_need = replace(chunk('附表四 照顧組合表', '三、上述目的物品或事項應為長照給付對象本身所需。'), version_id=header.version_id)
+        distance = replace(chunk('附表四 照顧組合表',
+            '四、本組合以代購或代領或代送長照給付對象物品或事項為主，距離自案家出門起算五公里內，適用本組合。超過五公里所需費用由長照給付對象自行負擔。'),
+            version_id=header.version_id)
+        ids = (header.chunk_id, items.chunk_id, own_need.chunk_id, distance.chunk_id)
+        evidence = {
+            'E1': replace(header, scope_chunk_ids=ids), 'E2': replace(items, scope_chunk_ids=ids),
+            'E4': replace(own_need, scope_chunk_ids=ids), 'E5': replace(distance, scope_chunk_ids=ids),
+        }
+        c = CandidateAnswer(claims=[{'text': '依 BA16 服務範圍，可以協助代購／代領／代送藥品。', 'citation_refs': ['E1', 'E2']}])
+        shaped = include_ba16_fact('可以幫忙買藥嗎？', evidence, c)
+        state = dict(question_masked='可以幫忙買藥嗎？', policy=DEFAULT_POLICY, candidate=shaped, evidence_map=evidence)
+        verified = node_verify(state)
+        self.assertEqual(verified['outcome'], 'answer')
+        self.assertTrue(any('五公里' in claim['text'] for claim in verified['claims']),
+                         'distance fact must survive claim assembly')
+        rows, _ = assemble_answer('可以幫忙買藥嗎？', evidence, verified['claims'])
+        self.assertTrue(any('五公里' in row['text'] for row in rows),
+                         'distance fact must not be filtered out of the medicine-field display')
 
     def test_core_fact_survives_existing_verifier(self):
         c = CandidateAnswer(claims=[{'text':'代購或代領或代送的服務內容包含藥品。','citation_refs':['E2']}])

@@ -63,6 +63,12 @@ it('supervisor only has caregiver binding/unbinding, no account management or no
   expect(cg.queryByRole('button',{name:'停用'})).toBeNull();expect(cg.queryByRole('button',{name:'刪除帳號'})).toBeNull();
   expect(account('jiaan_sv01').queryByRole('button')).toBeNull();expect(account('test_cg01').queryByRole('button',{name:/更多/})).toBeNull();
 });
+it('director sees a read-only table without a fake operation column',async()=>{
+  role='director';await mount();
+  expect(screen.queryByRole('columnheader',{name:'操作'})).toBeNull();
+  expect(screen.queryByText('待權限確認')).toBeNull();
+  expect(screen.queryByRole('button')).toBeNull();
+});
 it('inactive accounts offer enable to admin; unbound accounts do not offer unbind',async()=>{
   await mount();fireEvent.click(screen.getByRole('checkbox',{name:'顯示停用／已刪除帳號'}));await screen.findAllByText('test_disabled');
   const cg=account('test_disabled');expect((cg.getByRole('button',{name:'產生綁定碼'}) as HTMLButtonElement).disabled).toBe(true);

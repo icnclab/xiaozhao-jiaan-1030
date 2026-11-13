@@ -43,21 +43,27 @@ router = APIRouter()
 ANY_ROLE = ("caregiver", "supervisor", "director", "admin")
 
 # MPC review-only API. No database writes or outgoing notifications.
+# Reviewer-facing oversight tool (see app/services/mpc_handover.py docstring): judges
+# an upstream classifier's output before any case/emergency workflow trusts it. Not a
+# caregiver self-service feature, so caregiver is deliberately excluded from ANY_ROLE.
 from app.services.mpc_handover import MpcPayloadError, build_preview, build_review_draft
 
+MPC_REVIEWER_ROLES = ("supervisor", "director", "admin")
+
 @router.post("/mpc/preview")
-def mpc_preview_v2(body: dict, user: User = Depends(require_roles(*ANY_ROLE))) -> dict:
+def mpc_preview_v2(body: dict, user: User = Depends(require_roles(*MPC_REVIEWER_ROLES))) -> dict:
     try:
         return build_preview(body)
     except MpcPayloadError as exc:
         raise _err(422, "mpc_payload_invalid", str(exc)) from exc
 
 @router.post("/mpc/review-draft")
-def mpc_review_draft(body: dict, user: User = Depends(require_roles(*ANY_ROLE))) -> dict:
+def mpc_review_draft(body: dict, user: User = Depends(require_roles(*MPC_REVIEWER_ROLES))) -> dict:
     try:
         return build_review_draft(body.get("payload"), body.get("review"))
     except MpcPayloadError as exc:
         raise _err(422, "mpc_review_invalid", str(exc)) from exc
+
 
 
 def _err(status: int, code: str, message: str) -> HTTPException:
@@ -105,6 +111,37 @@ class AskIn(BaseModel):
 @router.post("/qa/ask")
 def ask(body: AskIn, user: User = Depends(require_roles(*ANY_ROLE)), db: Session = Depends(get_db)) -> dict:
     """提問：附出處回答或轉督導（見 docs/api-contract.md §2）。"""
+    transcript_id = None
+    if body.transcript_id:
+        transcript = _own_transcript(db, user, body.transcript_id)
+        if transcript.status != "confirmed":
+            raise _err(409, "transcript_not_confirmed", "請先確認轉錄內容")
+        transcript_id = transcript.id
+    category_id = None
+    if body.category_id:
+        category = db.get(Category, _parse_uuid(body.category_id))
+        if category is None or category.org_id != user.org_id:
+            raise deny_not_found(db, user, "category", body.category_id)
+        category_id = category.id
+    try:
+        item, case, _ = qa_service.ask(
+            db, user, question=body.question, source=body.source, client_request_id=body.client_request_id,
+            transcript_id=transcript_id, category_id=category_id,
+            conversation_id=_parse_uuid(body.conversation_id) if body.conversation_id else None,
+        )
+    except qa_service.QaError as exc:
+        raise _err(422, exc.code, str(exc)) from exc
+    return qa_out(db, item, case)
+
+
+# XZ_SUPERVISOR_ASK_V1: dedicated entry point for the supervisor/director AI assistant.
+# Reuses the exact same RAG/LLM/citation pipeline as /qa/ask (qa_service.ask) — no second
+# model service, no duplicated retrieval logic. The only difference is the role check:
+# the server decides who may call this, never trusting a role string from the client.
+@router.post("/qa/supervisor-ask")
+def supervisor_ask(body: AskIn, user: User = Depends(require_roles("supervisor", "director")),
+                   db: Session = Depends(get_db)) -> dict:
+    """督導／主任AI助手提問：與/qa/ask共用同一套RAG/LLM/引用驗證，僅角色範圍不同。"""
     transcript_id = None
     if body.transcript_id:
         transcript = _own_transcript(db, user, body.transcript_id)
@@ -491,6 +528,14 @@ def source_chunk(chunk_id: str, user: User = Depends(require_roles(*ANY_ROLE)), 
     }
 
 
+INLINE_VIEWABLE_MIME = {"application/pdf", "text/plain", "image/png", "image/jpeg", "image/gif", "image/webp"}
+
+
+def _disposition_type(mime: str | None) -> str:
+    """PDF／圖片／純文字可在瀏覽器直接開啟用 inline；其他類型（如 docx）無法安全預覽，維持 attachment 下載。"""
+    return "inline" if mime in INLINE_VIEWABLE_MIME else "attachment"
+
+
 def _download_version(db: Session, user: User, version_id: str) -> DocumentVersion:
     """Authorize and return the exact cited version, including non-PDF originals."""
     version, _document = _visible_version(db, user, _parse_uuid(version_id))
@@ -531,6 +576,7 @@ def signed_source_file(ticket: str, db: Session = Depends(get_db)) -> FileRespon
     db.commit()
     return FileResponse(Path(version.file_path), filename=version.file_name,
                         media_type=version.mime or "application/octet-stream",
+                        content_disposition_type=_disposition_type(version.mime),
                         headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"})
 
 
@@ -552,6 +598,7 @@ def source_file(version_id: str, user: User = Depends(require_roles(*ANY_ROLE)),
         path,
         filename=download_version.file_name,
         media_type=download_version.mime or "application/octet-stream",
+        content_disposition_type=_disposition_type(download_version.mime),
     )
 
 
@@ -564,6 +611,15 @@ def my_stats(user: User = Depends(current_user), db: Session = Depends(get_db)) 
                                                                      Case.status == "replied")) or 0
     return {"open_cases": open_cases, "replied_cases": replied}
 
+
+
+# JIAAN1030_SERVICE_CATALOG_ROUTER_V1
+from app.api.jiaan1030_service_catalog import router as jiaan1030_service_catalog_router
+router.include_router(jiaan1030_service_catalog_router)
+
+# JIAAN1030_SERVICE_DRAFTS_ROUTER_V1
+from app.api.jiaan1030_service_drafts import router as jiaan1030_service_drafts_router
+router.include_router(jiaan1030_service_drafts_router)
 
 # MPC V6: explicit, server-reviewed ordinary-case submission. No emergency side effects.
 @router.post("/mpc/submit-case")
@@ -584,4 +640,3 @@ def mpc_submit_case_v6(body: dict, user: User = Depends(require_roles("caregiver
     # Existing case endpoint enforces current organization category and idempotency.
     validated = CaseIn(category_id=category_id, text=text, client_request_id=request_id)
     return create_case(validated, user=user, db=db)
-

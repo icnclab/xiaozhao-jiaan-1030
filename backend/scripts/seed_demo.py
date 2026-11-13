@@ -93,11 +93,13 @@ def seed() -> list[str]:
             return user
 
         admin = make_user(happy, "admin_happy", "示範管理員", "admin")
+        director_happy = make_user(happy, "director_happy", "示範主任", "director")
         sup_a = make_user(happy, "sup_happy_a", "示範督導 A", "supervisor")
         sup_b = make_user(happy, "sup_happy_b", "示範督導 B", "supervisor")
         make_user(happy, "cg_happy_1", "示範照服員 A1", "caregiver")
         unbound = make_user(happy, "cg_happy_2", "示範照服員 A2（未綁定）", "caregiver", bound=False)
         sup_pine = make_user(pine, "sup_pine", "示範督導 P", "supervisor")
+        make_user(pine, "director_pine", "示範主任 P", "director")
         make_user(pine, "cg_pine_1", "示範照服員 P1", "caregiver")
         code = create_binding_code(session, admin, unbound)
         lines.append(f"{happy.name}\tcaregiver\tcg_happy_2\t綁定碼 {code}（7 天有效）")

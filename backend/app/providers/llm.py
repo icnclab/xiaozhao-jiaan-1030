@@ -65,7 +65,7 @@ class LlmProvider(Protocol):
     name: str
     model: str | None
 
-    def answer(self, question: str, evidence: list[EvidenceItem]) -> CandidateAnswer:
+    def answer(self, question: str, evidence: list[EvidenceItem], *, role: str = "caregiver") -> CandidateAnswer:
         """依證據產出候選回答。"""
         ...
 
@@ -116,6 +116,18 @@ SYSTEM_PROMPT = """你是居家式長照服務的「規範查詢助理」，回�
 12. 使用者可能只輸入很短、口語、省略主詞或不使用正式法規名稱，例如「跌倒怎麼辦」、「這可以做嗎」、「要回報誰」。不要因問法不正式就要求使用者重問；只要現有證據足以判斷，就直接依證據回答。若真的缺少會影響結論的必要條件，才設定 needs_human=true。
 13. 不要為了顯得完整而把所有證據內容都寫進答案。優先保留「結論／行動」、「必要條件」與「重要限制」；其餘細節交由出處卡供使用者查看。
 14. 只輸出符合格式的 JSON，不要其他文字。"""
+
+ROLE_CONTEXT = {
+    "caregiver": "以第一線照服員角度，優先說明可執行的下一步與應回報事項。",
+    "supervisor": "以居家服務督導角度，依序說明：建議處理方式、規範依據、需要確認或轉交的事項；包含必要紀錄與督導追蹤。",
+    "director": "以機構主任管理角度，依序說明：管理判斷重點、建議管理措施、相關規範與注意事項；重大事件應明確升級。",
+    "admin": "以系統與知識庫管理角度回答；不得因此取得個案存取權，也不得自動核准來源或替機構做決定。",
+}
+
+
+def system_prompt_for_role(role: str) -> str:
+    """Only the authenticated backend role selects presentation context."""
+    return SYSTEM_PROMPT + "\n\n可信登入身分的回答角度：" + ROLE_CONTEXT.get(role, ROLE_CONTEXT["caregiver"])
 
 
 def build_user_prompt(question: str, evidence: list[EvidenceItem]) -> str:
@@ -191,7 +203,7 @@ class OllamaLlm:
         self.model = model
         self.timeout = timeout
 
-    def answer(self, question: str, evidence: list[EvidenceItem]) -> CandidateAnswer:
+    def answer(self, question: str, evidence: list[EvidenceItem], *, role: str = "caregiver") -> CandidateAnswer:
         """見 `LlmProvider.answer`。格式錯誤時回傳 raw_ok=False，由流程轉人工。"""
         response = _ollama_client(self.base_url, self.timeout).post(
             "/api/chat",
@@ -205,7 +217,7 @@ class OllamaLlm:
                 # num_ctx 6144：4 段證據（≤700 字）＋系統提示綽綽有餘；縮小 KV cache 讓 10 GB 顯存能與 STT 共存
                 "options": {"temperature": 0, "num_ctx": 6144, "num_predict": 400},
                 "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt_for_role(role)},
                     {"role": "user", "content": build_user_prompt(question, evidence)},
                 ],
             },
@@ -254,7 +266,7 @@ class ExtractiveLlm:
     name = "extractive"
     model = None
 
-    def answer(self, question: str, evidence: list[EvidenceItem]) -> CandidateAnswer:
+    def answer(self, question: str, evidence: list[EvidenceItem], *, role: str = "caregiver") -> CandidateAnswer:
         """見 `LlmProvider.answer`。"""
         question_tokens = set(bigrams(question))
         scored: list[tuple[float, int, str, str]] = []
@@ -288,13 +300,13 @@ class MockLlm:
     model = "mock"
     script: dict[str, Any] | Exception | None = None
 
-    def answer(self, question: str, evidence: list[EvidenceItem]) -> CandidateAnswer:
+    def answer(self, question: str, evidence: list[EvidenceItem], *, role: str = "caregiver") -> CandidateAnswer:
         """見 `LlmProvider.answer`。"""
         if isinstance(MockLlm.script, Exception):
             raise MockLlm.script
         if isinstance(MockLlm.script, dict):
             return _parse_candidate(MockLlm.script)
-        return ExtractiveLlm().answer(question, evidence)
+        return ExtractiveLlm().answer(question, evidence, role=role)
 
 
 def warmup() -> None:

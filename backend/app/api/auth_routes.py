@@ -81,6 +81,22 @@ def liff_bind(body: LiffBindIn, db: Session = Depends(get_db)) -> dict:
     return {"status": "ok", "session_token": token, "user": user_out(db, user), "dev": identity.dev}
 
 
+# XZ_SOS_STANDALONE_LOGIN_V1 - independent SOS login; original admin login remains unchanged.
+@router.post("/auth/sos/login")
+def sos_app_login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    # No caregiver access to the admin dashboard: this endpoint is for SOS only.
+    user = db.scalar(select(User).where(User.username == body.username.strip()))
+    if user is None or not user.is_active or (not user.password_hash) or not verify_password(body.password, user.password_hash):
+        audit.record(db, "auth.sos_login", outcome="denied", meta={"reason":"bad_credentials"})
+        db.commit()
+        raise HTTPException(status_code=401, detail={"code":"bad_credentials", "message":"帳號或密碼錯誤"})
+    if user.role not in {"caregiver", "supervisor", "director", "admin"} or user.org_id is None:
+        raise HTTPException(status_code=403, detail={"code":"forbidden", "message":"此帳號無法使用 SOS APP"})
+    token = issue_session(db, user, "web")
+    audit.record(db, "auth.sos_login", actor=user)
+    db.commit()
+    return {"status":"ok", "session_token":token, "user":user_out(db,user)}
+
 @router.post("/auth/login")
 def web_login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """後台帳密登入（照服員不可登入後台）。"""
@@ -130,3 +146,31 @@ def public_config() -> dict:
         "bot_name": settings.bot_name,
         "wake_words": wake_words(),
     }
+
+
+# SOPB_V11_SESSION_REVOCATION_20261110: opt-in, same-tenant, admin only.
+class RevokeSessionsIn(BaseModel):
+    deactivate: bool = False
+
+
+@router.post("/auth/admin/users/{target_user_id}/revoke-sessions")
+def admin_revoke_sessions(target_user_id: __import__("uuid").UUID, body: RevokeSessionsIn,
+                          actor: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
+    import os
+    from app.sso_revocation import revoke_user_sessions
+    if os.getenv("XZ_SOPB_REVOKE_ENDPOINT", "off").lower() != "on":
+        raise HTTPException(status_code=404, detail="not_found")
+    if actor.role != "admin":
+        raise HTTPException(status_code=403, detail="forbidden")
+    target = db.scalar(select(User).where(User.id == target_user_id,
+                                           User.org_id == actor.org_id).with_for_update())
+    if target is None:
+        raise HTTPException(status_code=404, detail="not_found")
+    if target.id == actor.id and body.deactivate:
+        raise HTTPException(status_code=409, detail="cannot_deactivate_self")
+    count = revoke_user_sessions(db, target.id, deactivate=body.deactivate)
+    audit.record(db, "auth.admin_revoke_sessions", actor=actor,
+                 target_type="user", target_id=target.id,
+                 meta={"deactivate": body.deactivate, "sessions_revoked": count})
+    db.commit()
+    return {"revoked_sessions": count, "deactivated": body.deactivate}

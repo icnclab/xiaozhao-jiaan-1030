@@ -119,14 +119,23 @@ class LineMenuTests(unittest.TestCase):
         actions = [item["action"] for item in message["quickReply"]["items"]]
         urls = [action["uri"] for action in actions]
         self.assertEqual(urls, [f"https://care.example.org/liff/{p}"
-                                for p in ("ask", "record", "report", "cases", "help")])
+                                for p in ("ask", "record", "report/entry", "cases", "help")])
         self.assertEqual([a["label"] for a in actions], ["問 AI", "錄音／談話", "問題分類", "我的案件", "使用說明"])
         visible = "\n".join(t["text"] for t in message["contents"]["body"]["contents"])
         self.assertEqual(visible, "小照｜功能選單\n請點選下方按鈕使用功能。")
         self.assertNotIn("http", visible + message["altText"])
         routes = (ROOT.parent / "frontend/src/main.tsx").read_text(encoding="utf-8")
-        for page in ("ask", "report", "cases", "help", "record"):
+        for page in ("ask", "report/entry", "cases", "help", "record"):
             self.assertIn(f'path: "{page}"', routes)
+
+    def test_report_entry_not_old_report_page(self):
+        # 問題分類按鈕必須指向選擇頁 report/entry，不是直接跳舊的 report 頁。
+        self.send("選單")
+        actions = [item["action"] for item in self.menu_message()["quickReply"]["items"]]
+        report_action = next(a for a in actions if a["label"] == "問題分類")
+        self.assertEqual(report_action["uri"], "https://care.example.org/liff/report/entry")
+        self.assertEqual(self.send("問題分類"), "menu")
+        self.assertEqual(self.reply_text(), "開啟問題分類回報頁：https://care.example.org/liff/report/entry")
 
     def test_normal_questions_keep_original_flow(self):
         error = type("FakeQaError", (Exception,), {})

@@ -26,12 +26,12 @@ W, H = 2500, 843
 CELLS = [
     ("問 AI", "💬", "ask"),
     ("錄音／談話", "🎙", "record"),
-    ("問題分類", "📋", "report"),
+    ("問題分類", "📋", "report/entry"),
     ("我的案件", "📂", "cases"),
     ("使用說明", "📖", "help"),
     ("小照你好", "👋", None),
 ]
-MENU_TEXT = {"ask": "問 AI", "record": "錄音", "report": "問題分類", "cases": "我的案件", "help": "使用說明"}
+MENU_TEXT = {"ask": "問 AI", "record": "錄音", "report/entry": "問題分類", "cases": "我的案件", "help": "使用說明"}
 
 
 def build_image(font_path: str) -> bytes:

@@ -139,6 +139,9 @@ def add_version(
     if source_url and not re.match(r"^https?://", source_url):
         raise DocumentError("invalid_source_url", "出處網址須為 http(s)")
     version_id = uuid.uuid4()
+    duplicate = session.scalar(
+        select(DocumentVersion).where(DocumentVersion.file_sha256 == hashlib.sha256(data).hexdigest()).limit(1)
+    )
     safe_name = re.sub(r"[^\w.\-一-鿿]", "_", Path(file_name).name)[:120] or "upload.bin"
     folder = settings.data_dir / "documents" / str(version_id)
     folder.mkdir(parents=True, exist_ok=True)
@@ -158,7 +161,8 @@ def add_version(
         file_sha256=hashlib.sha256(data).hexdigest(),
         mime="application/octet-stream",
         uploaded_by=actor.id,
-        warnings=[],
+        warnings=([f"內容與既有版本 {duplicate.file_name} 完全相同（SHA-256 相同），請人工確認是否重複上傳"]
+                  if duplicate else []),
     )
     session.add(version)
     session.flush()

@@ -57,28 +57,25 @@ function useCaseCounts(): CaseCounts | null {
 const NAV_GROUPS: { title: string; links: [string, string][] }[] = [
   { title: "案件管理", links: [
     ["/admin/cases", "案件列表與回報"],
-    ["/liff/service-clients", "服務個案與授權（測試）"],
   ] },
   { title: "服務表單", links: [
     ["/admin/categories", "問題分類設定"],
     ["/admin/catalog", "BA／GA09／SC09 核准"],
   ] },
   { title: "知識庫", links: [
-    ["/liff/ask", "法規查詢（問 AI）"],
+    ["/liff/supervisor-ask", "AI 照護助手"],
     ["/admin/documents", "知識庫文件"],
   ] },
   { title: "系統管理", links: [
-    ["/admin/feedback", "回答回饋"],
-    ["/admin/metrics", "治理指標"],
-    ["/admin/users", "帳號與綁定"],
+    ["/admin/feedback", "需要確認的 AI 回答"],
+    ["/admin/metrics", "服務品質與運作概況"],
+    ["/admin/users", "帳號與 LINE 綁定"],
   ] },
 ];
 
-// 主任（director）後端目前僅有「案件監督（唯讀）」「治理指標」「人員查看」權限；
-// 文件管理、回答回饋、問題分類設定未經會議紀錄確認，不在側邊選單提供入口，
-// 避免點擊後才被後端 403 擋下、誤以為系統故障。見 backend/app/api/admin_routes.py
-// 的 CASE_OVERSIGHT／GOVERNANCE／STAFF_VIEW。
-const DIRECTOR_HIDDEN_LINKS = new Set(["/admin/documents", "/admin/feedback", "/admin/categories"]);
+// 主任可管理本機構知識庫草稿與綁定碼，但不因此取得技術管理員權限。
+// 回饋與問題分類設定仍依既有核准範圍隱藏。
+const DIRECTOR_HIDDEN_LINKS = new Set(["/admin/feedback", "/admin/categories"]);
 function navGroupsForRole(role: string): typeof NAV_GROUPS {
   if (role !== "director") return NAV_GROUPS;
   return NAV_GROUPS.map((g) => ({ ...g, links: g.links.filter(([to]) => !DIRECTOR_HIDDEN_LINKS.has(to)) }))
@@ -118,10 +115,15 @@ export function AdminApp() {
 
   const groups = navGroupsForRole(user.role).map((g) => ({ ...g, links: g.links.slice() }));
   const systemGroup = groups[groups.length - 1];
-  if (user.role === "admin") systemGroup.links.push(["/admin/audit", "稽核紀錄"]);
-  if (config.dev_features) systemGroup.links.push(["/admin/simulator", "LINE 模擬器"]);
-  const roleLabels: Record<string, string> = { admin: "管理員", director: "主任", supervisor: "居督" };
-  const workspaceTitles: Record<string, string> = { admin: "系統管理工作台", director: "主任管理工作台", supervisor: "居督管理工作台" };
+  if (user.role === "admin") systemGroup.links.push(["/admin/audit", "操作紀錄"]);
+  if (config.dev_features) {
+    systemGroup.links.push(["/admin/simulator", "LINE 模擬器"]);
+    // GA09/SC09尚未經嘉安確認為正式表單（見11/11驗收報告），假個案建立入口只在測試環境顯示；
+    // 授權/撤銷的RBAC機制本身是正式功能，保留於後端，不因此隱藏而刪除。
+    systemGroup.links.push(["/liff/service-clients", "服務個案與授權（測試環境）"]);
+  }
+  const roleLabels: Record<string, string> = { admin: "管理員", director: "主任", supervisor: "督導" };
+  const workspaceTitles: Record<string, string> = { admin: "系統管理工作台", director: "主任工作台", supervisor: "督導工作台" };
   const roleLabel = roleLabels[user.role] ?? user.role;
   const workspaceTitle = workspaceTitles[user.role] ?? "管理工作台";
   const logout = () => {
@@ -167,6 +169,7 @@ export function AdminApp() {
 /** 居督首頁：以每日要處理的案件為中心。 */
 function SupervisorHome() {
   const counts = useCaseCounts();
+  const { config } = useAdmin();
   return (
     <section className="card workspace-card" aria-label="居督核心工作區">
       <h2>今日待處理</h2>
@@ -191,9 +194,10 @@ function SupervisorHome() {
       </div>
       <div className="action-grid">
         <NavLink className="btn" to="/admin/cases">案件回覆／接手／結案</NavLink>
-        <NavLink className="btn" to="/liff/service-clients">跨居督共享個案（測試）</NavLink>
-        <NavLink className="btn" to="/admin/users">檢視人員帳號與綁定</NavLink>
-        <a className="btn danger" href="/api/jiaan1030/emergency-ui">🚨 緊急事件入口</a>
+        <NavLink className="btn primary" to="/liff/supervisor-ask">🎙️ AI 照護助手</NavLink>
+        <NavLink className="btn" to="/admin/users">帳號與 LINE 綁定</NavLink>
+        {config.dev_features && <NavLink className="btn" to="/liff/service-clients">跨居督共享個案（測試環境）</NavLink>}
+        <a className="btn danger" target="_blank" rel="noopener noreferrer" href="https://stust.tail379935.ts.net:8443/api/jiaan1030/sos-app/">🚨 緊急事件管理（新分頁）</a>
       </div>
       <p className="small">緊急事件請依現場通報及電話求援流程處理；此頁不代表背景 APP 警報已完成。</p>
     </section>
@@ -222,13 +226,15 @@ function DirectorHome() {
         </NavLink>
       </div>
       <div className="action-grid">
-        <NavLink className="btn" to="/admin/users">人員與角色管理</NavLink>
-        <NavLink className="btn" to="/admin/catalog">BA／GA09／SC09 核准</NavLink>
         <NavLink className="btn" to="/admin/cases">跨居督案件監督</NavLink>
-        <NavLink className="btn" to="/admin/metrics">治理指標</NavLink>
-        <a className="btn danger" href="/api/jiaan1030/emergency-ui">🚨 緊急事件管理</a>
+        <NavLink className="btn" to="/admin/catalog">BA／GA09／SC09 核准</NavLink>
+        <NavLink className="btn" to="/admin/metrics">服務品質與運作概況</NavLink>
+        <NavLink className="btn" to="/admin/users">人員與角色管理</NavLink>
+        <NavLink className="btn" to="/admin/documents">知識庫管理</NavLink>
+        <NavLink className="btn primary" to="/liff/supervisor-ask">🎙️ AI 照護助手</NavLink>
+        <a className="btn danger" target="_blank" rel="noopener noreferrer" href="https://stust.tail379935.ts.net:8443/api/jiaan1030/sos-app/">🚨 緊急事件管理（新分頁）</a>
       </div>
-      <p className="small">稽核紀錄目前僅限系統管理員查看；如需主任也能查看，須先經嘉安確認權限範圍。</p>
+      <p className="small">操作紀錄目前僅限系統管理員查看；如需主任也能查看，須先經嘉安確認權限範圍。</p>
     </section>
   );
 }
@@ -239,11 +245,11 @@ function AdminHome() {
       <summary>系統管理導覽</summary>
       <p>技術管理與內容治理；不代替主任監督業務。</p>
       <div className="action-grid">
-        {[["/admin/users", "帳號管理"], ["/admin/documents", "知識庫與文件版本"], ["/admin/feedback", "AI 回答有誤審核"],
-          ["/admin/metrics", "治理指標與系統紀錄"], ["/admin/audit", "稽核紀錄"]].map(([to, label]) => (
+        {[["/liff/supervisor-ask", "AI 照護助手"], ["/admin/documents", "知識庫文件"], ["/admin/feedback", "需要確認的 AI 回答"],
+          ["/admin/metrics", "服務品質與運作概況"], ["/admin/users", "帳號與 LINE 綁定"], ["/admin/audit", "操作紀錄"]].map(([to, label]) => (
           <NavLink className="btn" key={to} to={to}>{label}</NavLink>
         ))}
-        <a className="btn" href="/api/fieldtest/dashboard">47 人場測管理（受測者對應／統計／匯出）</a>
+        <a className="btn" href="/api/fieldtest/dashboard">場測管理</a>
       </div>
       <p className="small">系統即時健康資訊未由此頁提供。回饋須經人工審核，不會自動訓練 AI。場測資料表尚未建立前，場測頁會顯示明確提示，不是系統故障。</p>
     </details>

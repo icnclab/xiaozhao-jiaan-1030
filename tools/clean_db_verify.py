@@ -67,7 +67,7 @@ with TestClient(app) as client:
     check(answer['outcome'] == 'answered' and bool(answer['citations']) and bool(answer['answer_text']), 'formal_rag_answer_with_sources')
     version = answer['citations'][0]['version_id']
     r = client.post(f'/api/sources/versions/{version}/download-url', headers=caregiver)
-    check(r.status_code == 200 and r.json()['url'].startswith('https://stust.tailee6e4a.ts.net/'), 'download_public_base')
+    check(r.status_code == 200 and r.json()['url'].startswith('https://stust.tail379935.ts.net/'), 'download_public_base')
     with new_session() as s:
         check(s.scalar(text('SELECT count(*) FROM cases')) == 0, 'normal_question_no_case')
     risk = ask('長輩突然胸痛呼吸困難，我可以給他吃藥嗎？')

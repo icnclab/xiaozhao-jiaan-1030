@@ -54,7 +54,7 @@ afterEach(() => {cleanup();vi.unstubAllGlobals();});
 describe.each(['admin','supervisor'] as const)('%s logout', (actor) => {
   it('leaves the context-dependent account page directly and clears token with authenticated revoke request', async () => {
     role=actor;setToken(token);const {router}=mount('/admin/users');
-    await screen.findByText('帳號與 LINE 綁定');
+    await screen.findByRole('heading', { name: '帳號與 LINE 綁定' });
     fireEvent.click(screen.getByText('登出'));
     await screen.findByText('督導後台登入');
     expect(router.state.location.pathname).toBe('/admin/login');
@@ -65,7 +65,7 @@ describe.each(['admin','supervisor'] as const)('%s logout', (actor) => {
   });
   it('refresh after logout and direct /admin both require login without protected renders', async () => {
     role=actor;setToken(token);let mounted=mount('/admin/users');
-    await screen.findByText('帳號與 LINE 綁定');fireEvent.click(screen.getByText('登出'));
+    await screen.findByRole('heading', { name: '帳號與 LINE 綁定' });fireEvent.click(screen.getByText('登出'));
     await screen.findByText('督導後台登入');mounted.view.unmount();
     const calls=meCalls;
     mounted=mount('/admin/login');await screen.findByText('督導後台登入');mounted.view.unmount();
@@ -75,7 +75,7 @@ describe.each(['admin','supervisor'] as const)('%s logout', (actor) => {
   });
   it('can log in again normally after logout', async () => {
     role=actor;setToken(token);const {router}=mount('/admin/users');
-    await screen.findByText('帳號與 LINE 綁定');fireEvent.click(screen.getByText('登出'));
+    await screen.findByRole('heading', { name: '帳號與 LINE 綁定' });fireEvent.click(screen.getByText('登出'));
     await screen.findByText('督導後台登入');
     fireEvent.change(screen.getByPlaceholderText('帳號'),{target:{value:'test'}});
     fireEvent.change(screen.getByPlaceholderText('密碼'),{target:{value:'test-password'}});
@@ -91,7 +91,7 @@ it('expired session clears token and redirects before rendering protected childr
 });
 it('local logout still completes when server revoke is unreachable', async () => {
   setToken(token);failLogout=true;const {router}=mount('/admin/users');
-  await screen.findByText('帳號與 LINE 綁定');fireEvent.click(screen.getByText('登出'));
+  await screen.findByRole('heading', { name: '帳號與 LINE 綁定' });fireEvent.click(screen.getByText('登出'));
   await waitFor(()=>expect(router.state.location.pathname).toBe('/admin/login'));
   expect(getToken()).toBeNull();await screen.findByText('督導後台登入');
 });

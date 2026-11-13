@@ -25,6 +25,24 @@ def enabled() -> bool:
     return os.getenv('JIAAN_WEBPUSH_DISPATCH', 'off').strip().lower() == 'on'
 
 
+def activation_cutoff() -> datetime | None:
+    """Only incidents created after an explicit rollout time can be pushed.
+
+    Fail closed on empty, naive, or invalid times. This protects pre-existing
+    open incidents when the feature flag is first enabled.
+    """
+    raw = os.getenv('JIAAN_WEBPUSH_MIN_CREATED_AT', '').strip()
+    if not raw:
+        return None
+    try:
+        cutoff = datetime.fromisoformat(raw.replace('Z', '+00:00'))
+    except ValueError:
+        return None
+    if cutoff.tzinfo is None:
+        return None
+    return cutoff.astimezone(timezone.utc)
+
+
 def public_key() -> str:
     return os.getenv('JIAAN_VAPID_PUBLIC_KEY', '').strip()
 
@@ -84,7 +102,7 @@ def alert_payload(eid: uuid.UUID, stage: str) -> dict:
     titles = {'new':'嘉安緊急通報待接手', 'unacknowledged_60s':'嘉安緊急通報尚未接手（60秒）',
               'unacknowledged_180s':'嘉安緊急通報逾時（180秒）'}
     return {'title': titles[stage], 'body': '有一筆緊急通報，請立即開啟小照確認；危急情況依機構流程聯絡119／110。',
-            'emergency_id':str(eid), 'stage':stage, 'url':'/api/jiaan1030/emergency-ui'}
+            'emergency_id':str(eid), 'stage':stage, 'url':'/api/jiaan1030/sos-app/'}
 
 
 def sweep(db: Session, now: datetime | None = None) -> int:
@@ -94,13 +112,19 @@ def sweep(db: Session, now: datetime | None = None) -> int:
     """
     if not enabled():
         return 0
+    cutoff = activation_cutoff()
+    if cutoff is None:
+        log.warning('Web Push remains inactive: rollout cutoff absent or invalid')
+        return 0
     now = now or datetime.now(timezone.utc)
+    if now < cutoff:
+        return 0
     if not db.execute(text('SELECT pg_try_advisory_xact_lock(16430103, 20261103)')).scalar_one():
         return 0
     incidents = db.execute(text('''
         SELECT id, org_id, created_at FROM jiaan1030_emergencies
-        WHERE status='open' AND created_at<=:now ORDER BY created_at LIMIT 100
-    '''), {'now':now}).mappings().all()
+        WHERE status='open' AND created_at>=:cutoff AND created_at<=:now ORDER BY created_at LIMIT 100
+    '''), {'now':now, 'cutoff':cutoff}).mappings().all()
     count=0
     for incident in incidents:
         age = max(0, (now - incident['created_at']).total_seconds())
@@ -115,7 +139,7 @@ def sweep(db: Session, now: datetime | None = None) -> int:
                 WHERE s.org_id=:org AND u.org_id=:org
                   AND s.is_active=true AND u.is_active=true
                   AND u.role IN ('supervisor','director','admin')
-                  AND (:stage = 'unacknowledged_180s' OR u.role = 'supervisor')
+                  AND ((:stage = 'unacknowledged_180s' AND u.role IN ('director','admin')) OR (:stage != 'unacknowledged_180s' AND u.role = 'supervisor'))
                 ON CONFLICT (emergency_id,subscription_id,stage) DO NOTHING
             '''), {'eid':incident['id'], 'org':incident['org_id'], 'stage':stage}).rowcount or 0
     return count
@@ -127,15 +151,22 @@ def _send_one(db: Session, delivery: dict) -> None:
     row = db.execute(text('''
         SELECT a.status AS incident_status, a.org_id AS incident_org,
                s.endpoint,s.p256dh,s.auth,s.is_active AS sub_active,
-               s.org_id AS subscription_org,
+               s.org_id AS subscription_org, a.created_at AS incident_created_at,
                u.is_active AS user_active, u.role AS user_role,u.org_id AS user_org
         FROM jiaan1030_emergencies a
         JOIN jiaan_webpush_subscriptions s ON s.id=:sid
         JOIN users u ON u.id=s.user_id
         WHERE a.id=:eid
     '''), {'sid':delivery['subscription_id'],'eid':delivery['emergency_id']}).mappings().first()
-    if (not row or row['incident_status'] != 'open' or not row['sub_active']
+    cutoff = activation_cutoff()
+    # Re-check even for already queued rows before any external network call.
+    if (cutoff is None or not row or row['incident_status'] != 'open'
+            or row['incident_created_at'] < cutoff or not row['sub_active']
             or not row['user_active'] or row['user_role'] not in MANAGERS
+            # XZ_SOS45_STAGE_ROUTING_V1: recheck delivery role before external send.
+            or (delivery['stage'] == 'unacknowledged_180s' and row['user_role'] not in ('director','admin'))
+            or (delivery['stage'] in ('new','unacknowledged_60s') and row['user_role'] != 'supervisor')
+            or delivery['stage'] not in ('new','unacknowledged_60s','unacknowledged_180s')
             or row['incident_org'] != row['user_org']
             or row['incident_org'] != row['subscription_org']
             ):
@@ -185,7 +216,7 @@ def _send_one(db: Session, delivery: dict) -> None:
 
 
 def dispatch_due(db: Session, limit: int=10) -> int:
-    if not enabled():
+    if not enabled() or activation_cutoff() is None:
         return 0
     if not all(os.environ.get(k) for k in ('JIAAN_VAPID_PRIVATE_KEY','JIAAN_VAPID_PUBLIC_KEY','JIAAN_VAPID_SUBJECT')):
         return 0

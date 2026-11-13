@@ -1,7 +1,7 @@
 import { publicDisplayText } from '../publicText';
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, errorMessage, newRequestId, post, type Answer, type Citation } from "../api";
+import { api, errorMessage, isApiError, newRequestId, post, type Answer, type Citation } from "../api";
 import { isInLineApp } from "./auth";
 import { FeedbackCollector } from "../quality/FeedbackCollector";
 
@@ -13,24 +13,33 @@ export function ErrorBox({ error }: { error: unknown }) {
 export function CitationCard({ c, index }: { c: Citation; index: number }) {
   const sourceTypes: Record<string, string> = { regulation: '政府法規', internal_rule: '機構內規', sop: '作業程序', other: '其他文件' };
   const [open, setOpen] = useState(false);
-  const [full, setFull] = useState<{ chunk: { text: string }; context: { locator: string; text: string; is_target: boolean }[]; version: { file_url: string; source_url: string | null }; official_source?: { title: string; official_url: string; verified: boolean } | null } | null>(null);
+  const [full, setFull] = useState<{
+    chunk: { text: string };
+    context: { locator: string; text: string; is_target: boolean }[];
+    document: { title: string; doc_type: string };
+    version: { file_url: string; source_url: string | null; version_label: string; status: string; effective_from: string | null; effective_to: string | null; source: string | null };
+    official_source?: { title: string; official_url: string; verified: boolean } | null;
+  } | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const publicTitle = /^STUST[_-]/i.test(c.document_title) ? "系統保存文件" : c.document_title;
+  const publicLocator = /(?:chunk|segment|uuid|[0-9a-f]{8}-[0-9a-f-]{27,})/i.test(c.locator) ? "" : c.locator;
+  const publicExcerpt = c.excerpt.replace(/\s+/g, " ").trim();
   const load = () => {
     setOpen(true);
     if (!full) api<typeof full>(c.source_url).then(setFull).catch(setError);
   };
   return (
     <div className="cite">
-      <div className="title">出處 {index}：{c.document_title}</div>
+      <div className="title">出處 {index}：{publicTitle}</div>
       <span className="tag">{sourceTypes[c.doc_type] ?? '來源類型待確認'}</span>
       <div className="small">
-        {c.locator}｜版本 {c.version_label}｜生效日 {c.effective_from ?? "未填"}
+        {publicLocator ? `${publicLocator}｜` : ""}版本 {c.version_label}｜生效日 {c.effective_from ?? "未填"}
         {c.effective_to ? `～${c.effective_to}` : ""}
         {c.version_status !== "published" ? <span className="tag warn">此版本已{c.version_status === "deactivated" ? "停用" : "變更"}（歷史引用）</span> : null}
       </div>
-      <p className="small muted">{c.excerpt}</p>
+      <p className="small muted">{publicExcerpt}</p>
       {!open ? (
-        <button className="btn" onClick={load}>查看原文</button>
+        <button className="btn" onClick={load}>查看引用與文件來源</button>
       ) : (
         <div className="stack">
           <ErrorBox error={error} />
@@ -42,41 +51,64 @@ export function CitationCard({ c, index }: { c: Citation; index: number }) {
             </p>
           ))}
           {full && (
-            <div className="row">
-              <button
-                className="btn"
-                onClick={async () => {
-                  // Reserve a window while the click still has browser user activation.
-                  const reserved = isInLineApp() ? null : window.open("about:blank", "_blank");
-                  if (reserved) reserved.opener = null;
-                  try {
-                    setError(null);
-                    const liff = (await import("@line/liff")).default;
-                    const result = await post<{ url: string }>(
-                      full.version.file_url.replace(/\/file$/, "/download-url"), {},
-                    );
-                    if (liff.isInClient()) {
+            <div className="stack">
+              <div className="row">
+                {full.official_source?.verified === true && full.official_source.official_url ? (
+                  <a className="btn primary" href={full.official_source.official_url} target="_blank" rel="noopener noreferrer">查看官方原文</a>
+                ) : (
+                  <span className="notice warn small">官方來源尚待確認，目前可查看系統保存的文件。</span>
+                )}
+                {full.version.file_url ? (
+                <button
+                  className="btn"
+                  onClick={async () => {
+                    // Reserve a window while the click still has browser user activation.
+                    const reserved = isInLineApp() ? null : window.open("about:blank", "_blank");
+                    if (reserved) reserved.opener = null;
+                    try {
+                      setError(null);
+                      const liff = (await import("@line/liff")).default;
+                      const result = await post<{ url: string }>(
+                        full.version.file_url.replace(/\/file$/, "/download-url"), {},
+                      );
+                      if (liff.isInClient()) {
+                        reserved?.close();
+                        liff.openWindow({ url: result.url, external: true });
+                      } else {
+                        const opened = reserved ?? window.open(result.url, "_blank");
+                        if (!opened) throw new Error("blocked");
+                        opened.opener = null;
+                        if (reserved) reserved.location.href = result.url;
+                      }
+                    } catch (e) {
                       reserved?.close();
-                      liff.openWindow({ url: result.url, external: true });
-                    } else {
-                      const opened = reserved ?? window.open(result.url, "_blank");
-                      if (!opened) throw new Error("blocked");
-                      opened.opener = null;
-                      if (reserved) reserved.location.href = result.url;
+                      if (isApiError(e) && e.status === 404) {
+                        setError(new Error("目前未提供原文連結"));
+                      } else {
+                        setError(new Error("無法開啟原文連結，請稍後再試。"));
+                      }
                     }
-                  } catch (e) {
-                    reserved?.close();
-                    setError(new Error("無法開啟下載，請稍後再試。"));
-                  }
-                }}
-              >
-                下載原始檔
-              </button>
-              {full.official_source?.verified === true && full.official_source.official_url ? (
-                <a className="btn" href={full.official_source.official_url} target="_blank" rel="noopener noreferrer">開啟已審核官方原文</a>
+                  }}
+                >
+                  查看系統保存版本
+                </button>
               ) : (
-                <span className="tag warn">尚無已審核官方原文連結，請以上方原文或「下載原始檔」為準</span>
+                <span className="tag warn">系統保存版本目前無法開啟</span>
               )}
+              </div>
+              <details>
+                <summary>查看文件資訊</summary>
+                <dl className="small" style={{ margin: "8px 0 0" }}>
+                  <dt><strong>文件正式名稱</strong></dt><dd>{full.document.title}</dd>
+                  <dt><strong>來源機關</strong></dt><dd>{full.version.source ?? "尚未填寫"}</dd>
+                  <dt><strong>文件類型</strong></dt><dd>{sourceTypes[full.document.doc_type] ?? "其他文件"}</dd>
+                  <dt><strong>版本／生效日期</strong></dt><dd>{full.version.version_label}／{full.version.effective_from ?? "尚未填寫"}</dd>
+                  <dt><strong>官方來源審核狀態</strong></dt><dd>{full.official_source?.verified === true ? "已核准" : "待確認"}</dd>
+                  <dt><strong>差異提醒</strong></dt><dd>{full.official_source?.verified === true
+                    ? "官方網站可能持續更新；系統保存版本是本次回答實際引用的固定版本。"
+                    : "尚未完成官方來源核對；系統保存版本是本次回答實際引用的文件，不代表已核准的官方原文。"}</dd>
+                </dl>
+              </details>
             </div>
           )}
         </div>

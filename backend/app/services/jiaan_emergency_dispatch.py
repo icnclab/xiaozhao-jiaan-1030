@@ -22,6 +22,24 @@ def is_enabled() -> bool:
     return os.environ.get("JIAAN_EMERGENCY_LINE_DISPATCH", "off").strip().lower() == "on"
 
 
+def activation_cutoff() -> datetime | None:
+    """UTC-aware rollout cutoff. Fail closed unless explicitly set.
+
+    Existing old open incidents must not generate a burst of stale LINE alerts
+    when a worker is restarted with the feature flag enabled.
+    """
+    raw = os.environ.get('JIAAN_EMERGENCY_LINE_MIN_CREATED_AT', '').strip()
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw.replace('Z', '+00:00'))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return None
+    return parsed.astimezone(timezone.utc)
+
+
 def sweep(session: Session, *, now: datetime | None = None) -> int:
     """Enqueue due stages for *bound* active managers, atomically under advisory lock.
 
@@ -29,15 +47,21 @@ def sweep(session: Session, *, now: datetime | None = None) -> int:
     """
     if not is_enabled():
         return 0
+    cutoff = activation_cutoff()
+    if cutoff is None:
+        log.error('Emergency LINE dispatch remains inactive: missing/invalid UTC activation cutoff')
+        return 0
     now = now or datetime.now(timezone.utc)
+    if cutoff > now:
+        return 0
     # Serializes sweep workers within one transaction and makes re-runs idempotent.
     acquired = session.execute(text("SELECT pg_try_advisory_xact_lock(16430102, 20261102) ")).scalar_one()
     if not acquired:
         return 0
     items = session.execute(text("""SELECT id, org_id, category, created_at
         FROM public.jiaan1030_emergencies
-        WHERE status='open' AND created_at <= :now
-        ORDER BY created_at LIMIT 100"""), {'now': now}).mappings().all()
+        WHERE status='open' AND created_at >= :cutoff AND created_at <= :now
+        ORDER BY created_at LIMIT 100"""), {'now': now, 'cutoff': cutoff}).mappings().all()
     created = 0
     for incident in items:
         age = max(0, (now - incident['created_at']).total_seconds())

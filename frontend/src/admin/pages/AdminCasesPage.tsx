@@ -57,7 +57,7 @@ export function AdminCasesPage() {
     <div className="stack">
       <h1>案件查詢與處理</h1>
       <p className="notice info">預設顯示目前狀態為待處理或處理中的同機構案件。「只看指派給我」會排除未指派案件。日期僅篩選目前載入的最近 200 筆。
-        　<a href="/api/jiaan1030/emergency-ui" className="small">🚨 緊急通報／督導接手（獨立於此處的待確認案件）</a>
+        　<a target="_blank" rel="noopener noreferrer" href="https://stust.tail379935.ts.net:8443/api/jiaan1030/sos-app/" className="small">🚨 新分頁開啟緊急事件管理（需在8443安全登入）</a>
       </p>
 
       <div className="card toolbar">
