@@ -18,7 +18,7 @@ ps1("install.ps1", r'''
 # 用法（在解壓後的資料夾根目錄）：
 #   powershell -ExecutionPolicy Bypass -File deploy\install\install.ps1
 #   可選：-DataDir <路徑> -WslDistro <名稱> -DbPort 55432 -WithStt -PullModel -ResetDemo -DatabaseUrl <外部 PG 連線字串>
-# 做的事：找 Python → 建 venv（優先離線 wheels）→ 產 .env → 起 pgvector（Docker Desktop 或 WSL 內 docker）
+# 做的事：找 Python → 建 venv（優先離線 wheels）→ 產 .env → 起 pgvector（WSL2 原生 PostgreSQL，apt 安裝，非容器）
 #         → migration → 合成展示資料 → 偵測 Ollama／SAPI／ffmpeg 決定 provider。
 param(
     [string]$DataDir = "",
@@ -88,37 +88,77 @@ else { $sets += "DATABASE_URL=postgresql+psycopg://ltc:$pgPassValue@127.0.0.1:$D
 if ($ffmpegDir) { $sets += "FFMPEG_DIR=$($ffmpegDir -replace '\\','/')" }
 & $vpy $envSet @sets | Out-Null
 
-Step "4/7 資料庫（PostgreSQL 16 + pgvector）"
-$compose = Join-Path $Root "docker-compose.yml"
+Step "4/7 資料庫（WSL2 原生 PostgreSQL 16 + pgvector，非 Docker）"
 if ($DatabaseUrl) { Ok "使用外部資料庫（須已裝 pgvector 擴充）" }
 else {
-    $dockerCmd = $null
-    if (Get-Command docker -ErrorAction SilentlyContinue) {
-        try { docker info 2>$null | Out-Null; if ($LASTEXITCODE -eq 0) { $dockerCmd = "desktop" } } catch {}
+    if (-not (Get-Command wsl -ErrorAction SilentlyContinue)) { throw "找不到 wsl.exe；請先啟用 WSL2（系統管理員 PowerShell 執行：wsl --install），重開機後再重跑本腳本。" }
+    if (-not $WslDistro) {
+        $distros = ((wsl -l -q 2>$null) -replace "`0", "") | Where-Object { $_.Trim() }
+        if (-not $distros) { throw "找不到任何 WSL distro；請先執行「wsl --install」（預設會裝 Ubuntu），重開機後再重跑本腳本，或用 -WslDistro 指定已有的 distro 名稱。" }
+        $WslDistro = "$($distros[0])".Trim()
     }
-    if (-not $dockerCmd) {
-        $distros = if ($WslDistro) { @($WslDistro) } else { ((wsl -l -q 2>$null) -replace "`0", "") | Where-Object { $_.Trim() } }
-        foreach ($d in $distros) {
-            $d = "$d".Trim(); if (-not $d) { continue }
-            $t = wsl -d $d -- bash -lc "docker compose version >/dev/null 2>&1 && echo yes" 2>$null
-            if ("$t" -match "yes") { $dockerCmd = "wsl"; $WslDistro = $d; break }
-        }
+    Ok "使用 WSL distro：$WslDistro"
+    if ((wsl -d $WslDistro -- bash -c "command -v apt-get >/dev/null 2>&1 && echo yes || echo no").Trim() -ne "yes") {
+        throw "WSL distro「$WslDistro」不是 Debian/Ubuntu 系（沒有 apt-get），本安裝腳本目前只支援 apt 系。請改用 -WslDistro 指定一個 Ubuntu/Debian distro，或用 -DatabaseUrl 指向既有的 PostgreSQL+pgvector。"
     }
-    if (-not $dockerCmd) { throw "找不到可用的 Docker（Docker Desktop 未啟動，或沒有裝了 docker 的 WSL distro）。請安裝並啟動 Docker Desktop 後重跑，或用 -DatabaseUrl 指向既有的 PostgreSQL+pgvector。" }
-    if ($dockerCmd -eq "desktop") { docker compose -f "$compose" up -d db | Out-Null; Ok "Docker Desktop：db 容器已啟動" }
-    else {
-        $wslPath = "/mnt/" + $compose.Substring(0,1).ToLower() + ($compose.Substring(2) -replace "\\", "/")
-        wsl -d $WslDistro -- bash -lc "docker compose -f '$wslPath' up -d db" | Out-Null
-        Ok "WSL（$WslDistro）：db 容器已啟動"
+    if ((wsl -d $WslDistro -- bash -c "sudo -n true 2>/dev/null && echo yes || echo no").Trim() -ne "yes") {
+        throw "WSL（$WslDistro）目前的使用者執行 sudo 需要密碼，自動安裝無法輸入密碼。請先在該 distro 跑一次（會跳密碼輸入）：echo `"`$USER ALL=(ALL) NOPASSWD:ALL`" | sudo tee /etc/sudoers.d/90-nopasswd；完成後重跑本腳本。"
     }
+    $hasPg = (wsl -d $WslDistro -- bash -c "dpkg -s postgresql-16 postgresql-16-pgvector >/dev/null 2>&1 && echo yes || echo no").Trim()
+    if ($hasPg -ne "yes") {
+        Warn "WSL（$WslDistro）尚未裝 PostgreSQL 16＋pgvector，透過 PGDG 官方套件庫安裝（需網路，約 1-2 分鐘）…"
+        # Written to a temp file and run by path (not passed inline as a -c argument):
+        # a multi-line string handed straight to `wsl -- bash -c $script` does not survive
+        # PowerShell's native-argument marshalling intact (observed: embedded $$ and quotes
+        # get corrupted in transit), so every multi-line WSL script here goes through a file.
+        $setupScript = @'
+set -e
+sudo install -d /usr/share/postgresql-common/pgdg
+sudo curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+. /etc/os-release
+echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+sudo apt-get update -qq
+sudo apt-get install -y -qq postgresql-16 postgresql-16-pgvector
+'@
+        $setupPath = Join-Path $Log "wsl_pg_setup.sh"
+        Set-Content -LiteralPath $setupPath -Value $setupScript -Encoding UTF8 -NoNewline
+        $wslSetupPath = "/mnt/" + $setupPath.Substring(0,1).ToLower() + ($setupPath.Substring(2) -replace "\\","/")
+        wsl -d $WslDistro -- bash "$wslSetupPath"
+        if ($LASTEXITCODE -ne 0) { throw "PostgreSQL 16＋pgvector 透過 apt 安裝失敗（$WslDistro 需要網路才能連 apt.postgresql.org；見上方 apt 錯誤訊息）" }
+        Ok "PostgreSQL 16＋pgvector 已透過 apt 安裝"
+    } else { Ok "PostgreSQL 16＋pgvector 已存在，略過安裝" }
+    wsl -d $WslDistro -- bash -c "sudo pg_conftool 16 main set port $DbPort" | Out-Null
+    wsl -d $WslDistro -- bash -c "sudo service postgresql restart" | Out-Null
+    $pgPassSql = $pgPassValue -replace "'", "''"
+    $bootstrapSql = @"
+DO `$`$ BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'ltc') THEN
+    CREATE ROLE ltc LOGIN PASSWORD '$pgPassSql';
+  ELSE
+    ALTER ROLE ltc PASSWORD '$pgPassSql';
+  END IF;
+END `$`$;
+SELECT 'CREATE DATABASE ltc OWNER ltc' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ltc')\gexec
+SELECT 'CREATE DATABASE ltc_test OWNER ltc' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ltc_test')\gexec
+\connect ltc
+CREATE EXTENSION IF NOT EXISTS vector;
+\connect ltc_test
+CREATE EXTENSION IF NOT EXISTS vector;
+"@
+    $sqlPath = Join-Path $Log "wsl_pg_bootstrap.sql"
+    Set-Content -LiteralPath $sqlPath -Value $bootstrapSql -Encoding UTF8 -NoNewline
+    $wslSqlPath = "/mnt/" + $sqlPath.Substring(0,1).ToLower() + ($sqlPath.Substring(2) -replace "\\","/")
+    wsl -d $WslDistro -- bash -c "sudo -u postgres psql -p $DbPort -v ON_ERROR_STOP=1 -f '$wslSqlPath'" | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "建立 ltc 使用者／資料庫／pgvector 擴充失敗，見上方 psql 錯誤訊息" }
+    Ok "ltc／ltc_test 資料庫與 pgvector 擴充已就位"
     $ready = $false
     for ($i = 0; $i -lt 40; $i++) {
         Start-Sleep 3
         $r = & $vpy -c "import psycopg; psycopg.connect('postgresql://ltc:$pgPassValue@127.0.0.1:$DbPort/ltc', connect_timeout=3).close(); print('ok')" 2>$null
         if ("$r" -eq "ok") { $ready = $true; break }
     }
-    if (-not $ready) { throw "資料庫 2 分鐘內未就緒；請檢查 docker compose ps 與埠 $DbPort" }
-    Ok "資料庫可連線（127.0.0.1:$DbPort）"
+    if (-not $ready) { throw "資料庫 2 分鐘內未就緒；請在 WSL（$WslDistro）用「sudo service postgresql status」檢查，並確認埠 $DbPort 沒被佔用" }
+    Ok "資料庫可連線（127.0.0.1:$DbPort，WSL：$WslDistro）"
 }
 
 Step "5/7 Migration"
@@ -228,7 +268,7 @@ foreach ($port in 8140, 8147) {
     if ($c) { Stop-Process -Id $c.OwningProcess -Force -ErrorAction SilentlyContinue; Write-Host "已停止埠 $port 的程序" }
 }
 Get-CimInstance Win32_Process -Filter "Name='python.exe'" | Where-Object { $_.CommandLine -match "app\.worker" -and $_.CommandLine -match [regex]::Escape($Root) } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; Write-Host "已停止 worker pid $($_.ProcessId)" }
-Write-Host "資料庫容器未停止（要停：docker compose down；資料保留在 volume）"
+Write-Host "WSL 內的 PostgreSQL 未停止（資料保留；要停：wsl -d <distro> -- sudo service postgresql stop）"
 ''')
 
 ps1("status.ps1", r'''
@@ -301,7 +341,7 @@ Write-Host "完成：$zip（$mb MB）" -ForegroundColor Green
 
 (OUT / "README_安裝.md").write_text(r'''# 長照 AI 照護小幫手「小照」— 安裝說明（實驗室／個人電腦版）
 
-> 解壓後整個資料夾就是系統；資料放在同一資料夾內（`data\`、`logs\`），刪掉資料夾＝解除安裝（資料庫在 Docker volume，另需 `docker compose down -v`）。
+> 解壓後整個資料夾就是系統；資料放在同一資料夾內（`data\`、`logs\`），刪掉資料夾＝解除安裝（資料庫資料在 WSL 內的 PostgreSQL data 目錄，不在這個資料夾裡；要連資料庫一起清掉，另外在 WSL 裡移除該 distro 或資料目錄）。
 
 ## 需要先有的東西
 
@@ -309,7 +349,7 @@ Write-Host "完成：$zip（$mb MB）" -ForegroundColor Green
 |---|---|---|
 | Windows 10/11 64 位元 | 必要 | PowerShell 5.1 以上（內建） |
 | Python 3.11 或 3.12 | 必要 | https://www.python.org/downloads/ ，安裝時勾選 **Add python.exe to PATH** |
-| Docker Desktop（或 WSL 內已裝 docker） | 必要 | 只用來跑 PostgreSQL＋pgvector 資料庫；https://www.docker.com/products/docker-desktop/ 安裝後**要先打開一次** |
+| WSL2＋一個 Ubuntu/Debian distro | 必要 | 只用來跑 PostgreSQL 16＋pgvector 資料庫（非容器，透過 apt 裝）；沒有就先跑 `wsl --install`（預設裝 Ubuntu）後重開機。該 distro 內目前登入的使用者要能免密碼 `sudo`（安裝腳本會自動檢查，沒有的話會印出要跑哪一行指令） |
 | ffmpeg | 內建 | 安裝包 `bin\` 已附；若沒有，安裝腳本會用 winget 裝 |
 | Ollama＋模型 | 選用 | 沒有就走「摘錄模式」（不生成、只摘錄條文、仍附出處）。要用 LLM：安裝 https://ollama.com → `ollama pull gemma4:e4b` |
 | NVIDIA GPU | 選用 | 語音辨識加速；沒有 GPU 也能用 CPU 跑 `small` 模型 |
@@ -349,7 +389,8 @@ Write-Host "完成：$zip（$mb MB）" -ForegroundColor Green
 ## 常見問題
 
 - **找不到 Python 3.11 或 3.12**：裝好 Python 後關掉 PowerShell 重開。
-- **資料庫未就緒**：Docker Desktop 沒開，或 55432 埠被占用（改 `-DbPort 55433`）。
+- **資料庫未就緒**：WSL 內 PostgreSQL 沒啟動成功，或 55432 埠被占用（改 `-DbPort 55433`）；可在 WSL 裡用 `sudo service postgresql status` 檢查。
+- **sudo 需要密碼，安裝中斷**：先在該 WSL distro 跑一次腳本印出的那行 `echo "$USER ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/90-nopasswd`（會跳密碼輸入一次），再重跑安裝。
 - **語音上傳回「找不到 ffmpeg」**：`.env` 的 `FFMPEG_DIR` 應指向 `bin\`；或把 ffmpeg 加到 PATH 後重啟。
 - **回答都是「摘錄模式」**：沒偵測到 Ollama 模型；裝好後把 `.env` 的 `LLM_PROVIDER` 改 `ollama`。
 - **畫面頂端出現「模擬登入／line=mock」**：正常，代表未接真實 LINE。

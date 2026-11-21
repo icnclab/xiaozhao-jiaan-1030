@@ -10,4 +10,4 @@ foreach ($port in 8140, 8147) {
     if ($c) { Stop-Process -Id $c.OwningProcess -Force -ErrorAction SilentlyContinue; Write-Host "已停止埠 $port 的程序" }
 }
 Get-CimInstance Win32_Process -Filter "Name='python.exe'" | Where-Object { $_.CommandLine -match "app\.worker" -and $_.CommandLine -match [regex]::Escape($Root) } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; Write-Host "已停止 worker pid $($_.ProcessId)" }
-Write-Host "資料庫容器未停止（要停：docker compose down；資料保留在 volume）"
+Write-Host "WSL 內的 PostgreSQL 未停止（資料保留；要停：wsl -d <distro> -- sudo service postgresql stop）"

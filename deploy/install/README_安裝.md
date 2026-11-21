@@ -1,6 +1,6 @@
 # 長照 AI 照護小幫手「小照」— 安裝說明（實驗室／個人電腦版）
 
-> 解壓後整個資料夾就是系統；資料放在同一資料夾內（`data\`、`logs\`），刪掉資料夾＝解除安裝（資料庫在 Docker volume，另需 `docker compose down -v`）。
+> 解壓後整個資料夾就是系統；資料放在同一資料夾內（`data\`、`logs\`），刪掉資料夾＝解除安裝（資料庫資料在 WSL 內的 PostgreSQL data 目錄，不在這個資料夾裡；要連資料庫一起清掉，另外在 WSL 裡移除該 distro 或資料目錄）。
 
 ## 需要先有的東西
 
@@ -8,7 +8,7 @@
 |---|---|---|
 | Windows 10/11 64 位元 | 必要 | PowerShell 5.1 以上（內建） |
 | Python 3.11 或 3.12 | 必要 | https://www.python.org/downloads/ ，安裝時勾選 **Add python.exe to PATH** |
-| Docker Desktop（或 WSL 內已裝 docker） | 必要 | 只用來跑 PostgreSQL＋pgvector 資料庫；https://www.docker.com/products/docker-desktop/ 安裝後**要先打開一次** |
+| WSL2＋一個 Ubuntu/Debian distro | 必要 | 只用來跑 PostgreSQL 16＋pgvector 資料庫（非容器，透過 apt 裝）；沒有就先跑 `wsl --install`（預設裝 Ubuntu）後重開機。該 distro 內目前登入的使用者要能免密碼 `sudo`（安裝腳本會自動檢查，沒有的話會印出要跑哪一行指令） |
 | ffmpeg | 內建 | 安裝包 `bin\` 已附；若沒有，安裝腳本會用 winget 裝 |
 | Ollama＋模型 | 選用 | 沒有就走「摘錄模式」（不生成、只摘錄條文、仍附出處）。要用 LLM：安裝 https://ollama.com → `ollama pull gemma4:e4b` |
 | NVIDIA GPU | 選用 | 語音辨識加速；沒有 GPU 也能用 CPU 跑 `small` 模型 |
@@ -48,7 +48,8 @@
 ## 常見問題
 
 - **找不到 Python 3.11 或 3.12**：裝好 Python 後關掉 PowerShell 重開。
-- **資料庫未就緒**：Docker Desktop 沒開，或 55432 埠被占用（改 `-DbPort 55433`）。
+- **資料庫未就緒**：WSL 內 PostgreSQL 沒啟動成功，或 55432 埠被占用（改 `-DbPort 55433`）；可在 WSL 裡用 `sudo service postgresql status` 檢查。
+- **sudo 需要密碼，安裝中斷**：先在該 WSL distro 跑一次腳本印出的那行 `echo "$USER ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/90-nopasswd`（會跳密碼輸入一次），再重跑安裝。
 - **語音上傳回「找不到 ffmpeg」**：`.env` 的 `FFMPEG_DIR` 應指向 `bin\`；或把 ffmpeg 加到 PATH 後重啟。
 - **回答都是「摘錄模式」**：沒偵測到 Ollama 模型；裝好後把 `.env` 的 `LLM_PROVIDER` 改 `ollama`。
 - **畫面頂端出現「模擬登入／line=mock」**：正常，代表未接真實 LINE。
