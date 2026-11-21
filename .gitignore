@@ -63,6 +63,10 @@ id_ed25519*
 *.sql.zip
 *.bak
 *.backup
+*.tar.gz
+*.zip
+db_migration_backup.sql
+pg16_bundle*.tar.gz
 
 # Build outputs, caches and coverage
 dist/
