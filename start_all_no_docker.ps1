@@ -17,6 +17,11 @@ function Get-PortOwner([int]$Port) {
 Log 'DB: checking WSL native PostgreSQL on 127.0.0.1:55432 ...'
 if (-not @(Get-PortOwner 55432).Count) {
     Log 'DB: not listening yet; starting postgres inside WSL (Ubuntu-22.04) ...'
+    # /var/run/postgresql is tmpfs and is wiped on every WSL instance restart, so pg_ctl
+    # fails with "could not create lock file ... No such file or directory" after a reboot
+    # unless it is recreated first. A stale postmaster.pid from an unclean shutdown can also
+    # block startup, so clear it before starting.
+    wsl -d Ubuntu-22.04 -- bash -c "sudo mkdir -p /var/run/postgresql && sudo chown postgres:postgres /var/run/postgresql && sudo chmod 2775 /var/run/postgresql && if [ -f /var/lib/pgsql16/data/postmaster.pid ] && ! sudo -u postgres kill -0 \$(sudo head -n1 /var/lib/pgsql16/data/postmaster.pid) 2>/dev/null; then sudo rm -f /var/lib/pgsql16/data/postmaster.pid; fi" | Out-Null
     wsl -d Ubuntu-22.04 -- bash -c "sudo -u postgres env LD_LIBRARY_PATH=/opt/pgsql16/icu72/usr/lib/x86_64-linux-gnu /opt/pgsql16/usr/lib/postgresql/16/bin/pg_ctl -D /var/lib/pgsql16/data -l /var/lib/pgsql16/pg16.log start" | Out-Null
     Start-Sleep -Seconds 3
 }
