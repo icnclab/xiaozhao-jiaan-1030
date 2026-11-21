@@ -8,13 +8,13 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.serializers import case_out, qa_out, transcript_out
+from app.api.serializers import case_out, qa_out, qa_out_hud, transcript_out
 from app.auth import current_user, deny_not_found, require_roles
 from app.config import get_settings
 from app.db import get_db
@@ -109,8 +109,18 @@ class AskIn(BaseModel):
 
 
 @router.post("/qa/ask")
-def ask(body: AskIn, user: User = Depends(require_roles(*ANY_ROLE)), db: Session = Depends(get_db)) -> dict:
-    """提問：附出處回答或轉督導（見 docs/api-contract.md §2）。"""
+def ask(
+    body: AskIn,
+    format: str | None = Query(None, description="省略或 'full'=原有完整回應；'hud'=AR眼鏡精簡回應"),
+    user: User = Depends(require_roles(*ANY_ROLE)),
+    db: Session = Depends(get_db),
+) -> dict:
+    """提問：附出處回答或轉督導（見 docs/api-contract.md §2）。
+
+    format 參數是加法擴充：省略時行為與原本完全相同（回 qa_out 完整結構），
+    LIFF／網頁既有呼叫方式不用改。只有明確傳 format=hud 才會改回精簡的
+    qa_out_hud() 結構，供穿戴式裝置（AR眼鏡）小螢幕顯示用。
+    """
     transcript_id = None
     if body.transcript_id:
         transcript = _own_transcript(db, user, body.transcript_id)
@@ -131,6 +141,8 @@ def ask(body: AskIn, user: User = Depends(require_roles(*ANY_ROLE)), db: Session
         )
     except qa_service.QaError as exc:
         raise _err(422, exc.code, str(exc)) from exc
+    if format == "hud":
+        return qa_out_hud(db, item)
     return qa_out(db, item, case)
 
 

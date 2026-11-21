@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from sqlalchemy import select
@@ -107,6 +108,38 @@ def qa_out(db: Session, item: QaItem, case: Case | None = None) -> dict[str, Any
         "modes": {"llm": item.llm_provider, "embedding": item.embedding_provider, "line": settings.line_mode},
         "qa_policy_version": item.qa_policy_version,
         "wake_word": bool((item.checks or {}).get("wake_word")),
+    }
+
+
+_HUD_SUMMARY_MAX_CHARS = 60
+
+
+def _hud_summary(answer_text: str | None) -> str | None:
+    """把完整回答濃縮成 AR 眼鏡小螢幕能顯示的一句話摘要。"""
+    if not answer_text:
+        return None
+    first_sentence = re.split(r"(?<=[。！？!?])\s*", answer_text.strip(), maxsplit=1)[0]
+    text = first_sentence or answer_text.strip()
+    if len(text) > _HUD_SUMMARY_MAX_CHARS:
+        text = text[:_HUD_SUMMARY_MAX_CHARS] + "…"
+    return text
+
+
+def qa_out_hud(db: Session, item: QaItem) -> dict[str, Any]:
+    """AR 眼鏡 HUD 專用精簡回應：只回傳狀態燈號、一句話摘要與最關鍵一筆來源。
+
+    刻意不重用 qa_out() 的回傳 dict 做欄位裁切——欄位集合不同（HUD 沒有
+    case/tts/claims 等），分開定義避免未來改 qa_out() 時不小心牽動這裡。
+    """
+    citations = citations_out(db, item.id) if item.outcome == "answered" else []
+    top = citations[0] if citations else None
+    return {
+        "outcome": item.outcome,
+        "escalation_reason_text": REASON_TEXT.get(item.escalation_reason or "") if item.escalation_reason else None,
+        "hud_summary": _hud_summary(item.answer_text) if item.outcome == "answered" else None,
+        "top_citation": (
+            {"document_title": top["document_title"], "locator": top["locator"]} if top else None
+        ),
     }
 
 
