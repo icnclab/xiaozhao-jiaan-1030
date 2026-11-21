@@ -10,20 +10,6 @@ function Wait-JiaanReady {
     }
     throw "$Name readiness exhausted ($Attempts attempts); supervisor will retry; no model download or DB replacement"
 }
-function Start-JiaanDocker {
-    # Use the installed CLI with a bounded wait. Do not confuse the helper service with the engine.
-    $docker=(Get-Command docker -ErrorAction Stop).Source
-    $r=Invoke-JiaanNative $docker @('desktop','start','--detach','--timeout','20')
-    if($r.ExitCode -eq 0){return}
-    $candidates=@(
-        (Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\Docker Desktop.exe'),
-        (Join-Path $env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'))
-    $desktop=$candidates | Where-Object {Test-Path -LiteralPath $_} | Select-Object -First 1
-    if(-not $desktop){throw 'Docker Desktop executable missing'}
-    if(-not @(Get-Process 'Docker Desktop' -ErrorAction SilentlyContinue).Count){
-        Start-Process -FilePath $desktop -WindowStyle Hidden | Out-Null
-    }
-}
 function Ensure-JiaanTailscale {
     Wait-JiaanReady 'Tailscale' {
         $r=Invoke-JiaanNative $script:Tailscale @('status','--json')

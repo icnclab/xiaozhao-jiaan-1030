@@ -39,7 +39,7 @@ try {
                 foreach($kind in 'stt','api','worker'){
                     $row=$rows|Where-Object Service -eq $kind.ToUpper()
                     if($row.Result -eq 'FAIL'){$failures[$kind]=1+[int]$failures[$kind]}else{$failures[$kind]=0}
-                    $depsOk=@($rows|Where-Object {$_.Service -in @('DB','Docker','Ollama','Model') -and $_.Result -eq 'FAIL'}).Count -eq 0
+                    $depsOk=@($rows|Where-Object {$_.Service -in @('DB','Ollama','Model') -and $_.Result -eq 'FAIL'}).Count -eq 0
                     if($kind -eq 'worker'){$depsOk=$depsOk -and ($rows|Where-Object Service -eq 'API').Result -eq 'PASS'}
                     if($failures[$kind] -ge 3 -and $depsOk -and @(Get-AaProcesses $kind).Count){
                         $code=Invoke-ManagedScript 'stop_jiaan.ps1' @('-Services',$kind)

@@ -149,24 +149,12 @@ function Test-SosHealthy([string]$Kind, [hashtable]$Headers) {
 }
 function Get-JiaanStatus {
     $rows = @()
-    $dockerOk = $false; $dbOk = $false
-    if (Get-Command docker -ErrorAction SilentlyContinue) {
-        $native = Invoke-JiaanNative (Get-Command docker).Source @('info','--format','{{.ServerVersion}}')
-        $dockerOk = $native.ExitCode -eq 0
-        if ($dockerOk) {
-            $native = Invoke-JiaanNative (Get-Command docker).Source @('inspect','ltc_care-db-1')
-            $raw = $native.Output
-            if ($native.ExitCode -eq 0) {
-                $db = @(($raw -join "`n") | ConvertFrom-Json)[0]
-                $dbOk = $db.Config.Labels.'com.docker.compose.project' -eq 'ltc_care' -and
-                    $db.Config.Labels.'com.docker.compose.service' -eq 'db' -and
-                    @($db.Mounts | Where-Object {$_.Name -eq 'ltc_care_ltc_pgdata' -and $_.Destination -eq '/var/lib/postgresql/data'}).Count -eq 1 -and
-                    $db.State.Running -and $db.State.Health.Status -eq 'healthy'
-            }
-        }
-    }
-    $rows += [pscustomobject]@{Service='Docker';Result=$(if($dockerOk){'PASS'}else{'FAIL'});Detail='Docker engine'}
-    $rows += [pscustomobject]@{Service='DB';Result=$(if($dbOk){'PASS'}else{'FAIL'});Detail='aa: ltc_care-db-1 / 55432'}
+    # Migrated off Docker (2026-11-21): DB is WSL-native PostgreSQL (Ubuntu-22.04, port 55432),
+    # the same instance start_all_no_docker.ps1 manages. A listening port plus the API's own
+    # db='ok' healthz check (done in the 'api' row below) together stand in for the old
+    # docker inspect health check; this row only confirms the port side.
+    $dbOk = @(Get-PortOwner 55432).Count -gt 0
+    $rows += [pscustomobject]@{Service='DB';Result=$(if($dbOk){'PASS'}else{'FAIL'});Detail='aa: WSL native PostgreSQL / 127.0.0.1:55432'}
     $ollama = Get-HttpJson 'http://127.0.0.1:11434/api/tags'
     $modelOk = $ollama -and @($ollama.models | Where-Object name -eq 'gemma4:e4b').Count -gt 0
     $rows += [pscustomobject]@{Service='Ollama';Result=$(if($ollama){'PASS'}else{'FAIL'});Detail='127.0.0.1:11434'}

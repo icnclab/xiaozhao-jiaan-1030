@@ -28,36 +28,23 @@ function Start-Owned([string]$Kind) {
 }
 try {
     $lock = [IO.File]::Open((Join-Path $script:RunDir 'launcher.lock'),[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
-    foreach($path in $script:BackendPython,$script:AsrPython,$script:Tailscale,(Join-Path $script:Root 'frontend\dist\index.html'),(Join-Path $script:Root 'docker-compose.yml')) {
+    foreach($path in $script:BackendPython,$script:AsrPython,$script:Tailscale,(Join-Path $script:Root 'frontend\dist\index.html')) {
         if(-not (Test-Path -LiteralPath $path -PathType Leaf)){ throw 'Required project file or executable missing' }
     }
-    $docker = Get-Command docker -ErrorAction Stop
     $ollama = Get-Command ollama -ErrorAction SilentlyContinue
     if(-not $ollama){ $candidate=Join-Path $env:LOCALAPPDATA 'Programs\Ollama\ollama.exe'; if(Test-Path $candidate){$ollama=Get-Item $candidate}else{throw 'Ollama executable missing'} }
-    Wait-JiaanReady 'Docker' {
-        (Invoke-JiaanNative $docker.Source @('info','--format','{{.ServerVersion}}')).ExitCode -eq 0
-    } { Start-JiaanDocker } 30 10
-    Push-Location $script:Root
-    try {
-        # Existing-volume guard: never initialize a replacement empty DB.
-        $native = Invoke-JiaanNative $docker.Source @('volume','inspect','ltc_care_ltc_pgdata')
-        if($native.ExitCode -ne 0){throw 'Existing aa DB volume missing; refusing to initialize DB'}
-        $native = Invoke-JiaanNative $docker.Source @('inspect','ltc_care-db-1')
-        $dbRaw = $native.Output
-        if($native.ExitCode -ne 0){throw 'Existing aa DB container missing; refusing to initialize a replacement'}
-        $dbIdentity = @(($dbRaw -join "`n") | ConvertFrom-Json)[0]
-        if($dbIdentity.Config.Labels.'com.docker.compose.project' -ne 'ltc_care' -or
-           $dbIdentity.Config.Labels.'com.docker.compose.service' -ne 'db' -or
-           -not @($dbIdentity.Mounts | Where-Object {$_.Name -eq 'ltc_care_ltc_pgdata' -and $_.Destination -eq '/var/lib/postgresql/data'}).Count){throw 'aa DB container identity/volume mismatch'}
-        Log-Start 'DB: checking existing aa container; compose progress on stderr is not a failure.'
-        $native = Invoke-JiaanNative $docker.Source @('compose','-p','ltc_care','up','-d','--no-build','--no-recreate','db')
-        Log-Start "DB compose exit=$($native.ExitCode); proceeding to actual container health check"
-        if($native.ExitCode -ne 0){throw "aa DB startup failed (exit=$($native.ExitCode)); no raw native output logged"}
-    } finally { Pop-Location }
+    # Migrated off Docker (2026-11-21): DB is WSL-native PostgreSQL (Ubuntu-22.04, port 55432),
+    # the same instance start_all_no_docker.ps1 manages. /var/run/postgresql is tmpfs and is
+    # wiped on every WSL instance restart, so pg_ctl needs it recreated (and any stale
+    # postmaster.pid from a dead process cleared) before each start attempt.
     Wait-JiaanReady 'DB' {
-        $n=Invoke-JiaanNative $docker.Source @('inspect','--format','{{.State.Health.Status}}','ltc_care-db-1')
-        $n.ExitCode -eq 0 -and ($n.Output -join '').Trim() -eq 'healthy'
-    } {} 30 5
+        @(Get-PortOwner 55432).Count -gt 0
+    } {
+        Invoke-JiaanNative 'wsl' @('-d','Ubuntu-22.04','--','bash','-c',
+            "sudo mkdir -p /var/run/postgresql && sudo chown postgres:postgres /var/run/postgresql && sudo chmod 2775 /var/run/postgresql && if [ -f /var/lib/pgsql16/data/postmaster.pid ] && ! sudo -u postgres kill -0 `$(sudo head -n1 /var/lib/pgsql16/data/postmaster.pid) 2>/dev/null; then sudo rm -f /var/lib/pgsql16/data/postmaster.pid; fi") | Out-Null
+        Invoke-JiaanNative 'wsl' @('-d','Ubuntu-22.04','--','bash','-c',
+            'sudo -u postgres env LD_LIBRARY_PATH=/opt/pgsql16/icu72/usr/lib/x86_64-linux-gnu /opt/pgsql16/usr/lib/postgresql/16/bin/pg_ctl -D /var/lib/pgsql16/data -l /var/lib/pgsql16/pg16.log start') | Out-Null
+    } 30 5
     if(-not (Get-HttpJson 'http://127.0.0.1:11434/api/tags')) {
         $ollamaPath = if($ollama.Source){$ollama.Source}else{$ollama.FullName}
         Wait-JiaanReady 'Ollama' { Get-HttpJson 'http://127.0.0.1:11434/api/tags' } {
