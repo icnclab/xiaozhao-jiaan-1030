@@ -59,13 +59,16 @@ try {
     Write-Host "Preflight PASS. service.py SHA256=$sourceHash"
     if(-not $Execute){Write-Host 'Read-only preflight complete; no Worker stopped.'; exit 0}
 
-    # Capture all unrelated Python, Docker, Ollama and WSL processes, plus supervisor.
+    # Capture all unrelated Python, Ollama and WSL processes, plus supervisor.
     $protected=@($all|Where-Object {
-        ($_.Name -match 'docker|ollama|wsl|^python\.exe$' -or $_.ProcessId -eq $supervisors[0].ProcessId) -and
+        ($_.Name -match 'ollama|wsl|^python\.exe$' -or $_.ProcessId -eq $supervisors[0].ProcessId) -and
         $_.ProcessId -notin $tree.Members.ProcessId
     })
-    $docker=(Get-Command docker -ErrorAction Stop).Source
-    $dbBefore=Invoke-JiaanNative $docker @('inspect','--format','{{.State.StartedAt}}','ltc_care-db-1')
+    # DB is WSL-native PostgreSQL (migrated off Docker 2026-11-21): instead of docker inspect
+    # StartedAt, read postmaster's own start time. Same purpose as the old container check --
+    # prove the DB was not restarted/replaced underneath the Worker during this deploy.
+    $dbBefore=Invoke-JiaanNative 'wsl' @('-d','Ubuntu-22.04','--','bash','-c',
+        'sudo -u postgres env LD_LIBRARY_PATH=/opt/pgsql16/icu72/usr/lib/x86_64-linux-gnu /opt/pgsql16/usr/lib/postgresql/16/bin/psql -h 127.0.0.1 -p 55432 -t -A -c "select pg_postmaster_start_time()"')
     if($dbBefore.ExitCode -ne 0){throw 'DB identity read failed'}
     $log=Join-Path $script:LogDir 'worker.log'
     $logLines=if(Test-Path -LiteralPath $log){@(Get-Content -LiteralPath $log).Count}else{0}
@@ -109,7 +112,8 @@ try {
     $runtime=$newTree.Targets[0]
     if(-not @($newLog|Where-Object {$_ -match "worker [^ ]+-$($runtime.ProcessId) started"}).Count){throw 'New runtime startup log not found'}
     if(@($newLog|Where-Object {$_ -match 'Traceback|\bERROR\b|worker loop error|attempt \d+ failed|retention sweep failed'}).Count){throw 'New Worker log contains errors; inspect log'}
-    $dbAfter=Invoke-JiaanNative $docker @('inspect','--format','{{.State.StartedAt}}','ltc_care-db-1')
+    $dbAfter=Invoke-JiaanNative 'wsl' @('-d','Ubuntu-22.04','--','bash','-c',
+        'sudo -u postgres env LD_LIBRARY_PATH=/opt/pgsql16/icu72/usr/lib/x86_64-linux-gnu /opt/pgsql16/usr/lib/postgresql/16/bin/psql -h 127.0.0.1 -p 55432 -t -A -c "select pg_postmaster_start_time()"')
     if($dbAfter.ExitCode -ne 0 -or ($dbBefore.Output -join '') -cne ($dbAfter.Output -join '')){throw 'DB startup time changed/unavailable'}
     Assert-ProtectedProcesses $protected @(Get-CimInstance Win32_Process)
     if((Get-FileHash $source -Algorithm SHA256).Hash -ne $sourceHash){throw 'Source changed during deployment'}

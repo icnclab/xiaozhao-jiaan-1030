@@ -15,14 +15,14 @@ docs/        需求對照、架構、資料流、API 契約、驗收、部署、
 deploy/      資料庫初始化 SQL
 ```
 
-## 快速啟動（開發機：Windows＋WSL Docker；API／worker 跑在主機以使用 GPU、SAPI、Ollama）
+## 快速啟動（開發機：Windows＋WSL2 原生 PostgreSQL；API／worker 跑在主機以使用 GPU、SAPI、Ollama）
 
 ```bash
 # 1. 產生 .env（隨機密鑰；已存在不覆寫）
 python backend/scripts/gen_env.py
 
-# 2. 資料庫（pgvector）
-docker compose up -d db
+# 2. 資料庫（PostgreSQL 16 + pgvector，WSL2 Ubuntu-22.04 原生安裝，非容器；一鍵啟動見 start_all_no_docker.ps1）
+wsl -d Ubuntu-22.04 -- bash -c "sudo -u postgres env LD_LIBRARY_PATH=/opt/pgsql16/icu72/usr/lib/x86_64-linux-gnu /opt/pgsql16/usr/lib/postgresql/16/bin/pg_ctl -D /var/lib/pgsql16/data -l /var/lib/pgsql16/pg16.log start"
 
 # 3. 後端相依與 migration
 cd backend && uv sync && uv run alembic upgrade head
@@ -63,7 +63,9 @@ uv run python scripts/eval_run.py --llm ollama
 
 結果寫入 `docs/eval-results.md`；引用是否支持主張需人工標註 `docs/eval-citation-review.csv`。
 
-## Docker Compose 展示（全部容器化）
+## Docker Compose 展示（選用、非正式環境；2026-11-21 起正式環境已 100% 無 Docker）
+
+> 正式環境與上面的快速啟動都已改用 WSL2 原生 PostgreSQL；下面這個全容器化 profile 僅保留作展示／回退之用，未隨遷移更新驗證。
 
 ```bash
 docker compose --profile app up -d --build   # web:8141 → api:8140；推論預設 extractive／hash／mock
