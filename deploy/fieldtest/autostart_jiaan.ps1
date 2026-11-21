@@ -22,9 +22,9 @@ try {
     # Boot order is deliberate: prepare the existing DB/worker dependencies without
     # touching Funnel, start/retain sixth on 29140/29165 once, then enter route guard.
     $bootstrap=Invoke-ManagedScript 'start_jiaan.ps1'
-    if($bootstrap -ne 0){Log-Start "Sixth boot gate stopped: dependency bootstrap exit=$bootstrap; no route changes or retries";exit 0}
+    if($bootstrap -ne 0){Log-Start "Sixth boot gate stopped: dependency bootstrap exit=$bootstrap; no route changes; exiting non-zero so Task Scheduler's RestartCount/RestartInterval retries";exit 1}
     $sixth=Invoke-ManagedScript 'start_sixth_formal.ps1'
-    if($sixth -ne 0){Log-Start "Sixth boot gate stopped: startup exit=$sixth; no route changes or retries";exit 0}
+    if($sixth -ne 0){Log-Start "Sixth boot gate stopped: startup exit=$sixth; no route changes; exiting non-zero so Task Scheduler's RestartCount/RestartInterval retries";exit 1}
     Log-Start 'Sixth boot gate PASS: 29140/29165 healthy before route guardian'
     $failures=@{}; $cycle=0; $lastSummary=''
     do {

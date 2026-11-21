@@ -44,7 +44,7 @@ try {
             "sudo mkdir -p /var/run/postgresql && sudo chown postgres:postgres /var/run/postgresql && sudo chmod 2775 /var/run/postgresql && if [ -f /var/lib/pgsql16/data/postmaster.pid ] && ! sudo -u postgres kill -0 `$(sudo head -n1 /var/lib/pgsql16/data/postmaster.pid) 2>/dev/null; then sudo rm -f /var/lib/pgsql16/data/postmaster.pid; fi") | Out-Null
         Invoke-JiaanNative 'wsl' @('-d','Ubuntu-22.04','--','bash','-c',
             'sudo -u postgres env LD_LIBRARY_PATH=/opt/pgsql16/icu72/usr/lib/x86_64-linux-gnu /opt/pgsql16/usr/lib/postgresql/16/bin/pg_ctl -D /var/lib/pgsql16/data -l /var/lib/pgsql16/pg16.log start') | Out-Null
-    } 30 5
+    } 60 5
     if(-not (Get-HttpJson 'http://127.0.0.1:11434/api/tags')) {
         $ollamaPath = if($ollama.Source){$ollama.Source}else{$ollama.FullName}
         Wait-JiaanReady 'Ollama' { Get-HttpJson 'http://127.0.0.1:11434/api/tags' } {

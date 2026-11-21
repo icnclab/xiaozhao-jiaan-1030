@@ -19,8 +19,12 @@ function Invoke-JiaanNative([string]$Executable, [string[]]$Arguments, [int]$Tim
         $info=New-Object System.Diagnostics.ProcessStartInfo
         $info.FileName=$Executable
         $info.Arguments=($Arguments | ForEach-Object {
-            # Windows CommandLineToArgvW quoting, including trailing backslashes.
-            '"' + [regex]::Replace([regex]::Replace($_,'(\\*)"','$1$1\"'),'(\\+)$','$1$1') + '"'
+            # Only quote args containing whitespace/quotes. wsl.exe does its own
+            # command-line re-parsing and mishandles short flags (-d, --) when every
+            # argument is unconditionally quoted (seen as exit=127 "-d: command not found").
+            if($_ -match '[\s"]') {
+                '"' + [regex]::Replace([regex]::Replace($_,'(\\*)"','$1$1\"'),'(\\+)$','$1$1') + '"'
+            } else { $_ }
         }) -join ' '
         $info.UseShellExecute=$false; $info.CreateNoWindow=$true
         $info.RedirectStandardOutput=$true; $info.RedirectStandardError=$true
