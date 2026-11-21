@@ -2,15 +2,15 @@
 Kept as .draft so Alembic never auto-loads it; rename to .py and get sign-off,
 then re-verify in an isolated database, before activation.
 
-Chain position changed again this round: now rebases onto 0009 (field-test
-participants draft) instead of 0007 directly, so that field-test can be
-activated and applied on its own without requiring Web Push -- the two
-drafts have no DB-content dependency on each other; this was purely a
-chain-ordering coupling from an earlier round. The three proposals still
-form a single linear chain, just reordered: 0006 -> 0007 -> 0009 -> 0008,
-with no new Alembic heads. If/when Web Push is activated it will still
-require 0009 to be applied first (chain-wise), independent of the
-credential-rotation question below.
+Chain position changed again this round: a fourth proposal,
+0010_service_interactions.py.draft, has been inserted between 0009 and this
+file. This file's `down_revision` is updated from "0009_fieldtest_participants"
+to "0010_service_interactions" so the single intended linear chain is now
+0006 -> 0007 -> 0009 -> 0010 -> 0008, with no new Alembic heads. 0008 and
+0010 have no DB-content dependency on each other -- this is purely
+chain-ordering, same as the 0007/0009 reordering in an earlier round. If
+0010 is activated first (as proposed for this P0 fix) while this file stays
+a .draft, nothing here needs to change again until 0008 itself is activated.
 
 Schema fixed this round: the already-committed app/api/jiaan_webpush_routes.py
 and app/services/jiaan_webpush.py (commit 0a3d16a) insert/lookup/ON CONFLICT
@@ -26,12 +26,36 @@ instead. Both are fixed in the DDL below. See
 tests/test_jiaan_webpush_migration_consistency_unit.py for the static check
 that keeps this draft in sync with the committed call sites going forward.
 
-Fully additive (CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS), no
-ALTER of any existing table, no data deletion. NOT re-verified in a database
-this round (no new DB connections made while the credential-rotation status
-is unconfirmed); an earlier round reported verifying an isolated-DB draft,
-but that was before this schema fix, so the earlier verification no longer
-applies to the current DDL and must be redone once activated.
+Outbox extension folded in this round: read-only inspection of both
+ltc_pytest and the Staging database (ltc_v7_staging_20261114_195946) found
+jiaan_webpush_deliveries already carries five extra columns (job_id,
+expires_at, provider_accepted_at, app_opened_at, last_error_class) plus a
+job_id FK to jobs(id), a partial unique index on job_id, a due-queue index,
+and a NOT VALID expiry CHECK -- applied by hand from
+run/integration_outbox_final_review_20261114_170707/REVIEWED_OUTBOX_SCHEMA.sql
+(see that review's MIGRATION_REVIEW.md for the design rationale: reuses
+`jobs` for idempotency/lease/attempts instead of a third outbox table).
+That hand-applied SQL was never folded into this migration file, so a fresh
+database built only from the committed Alembic chain would get the
+*original*, narrower jiaan_webpush_deliveries shape -- missing columns real
+dispatch code (app/services/jiaan_emergency_outbox.py) already reads and
+writes. upgrade() below now applies the identical ADD COLUMN IF NOT
+EXISTS / backfill / constraint / index steps as that reviewed SQL, inside
+this same migration, so one `alembic upgrade head` on a brand-new database
+reproduces exactly what ltc_pytest and Staging already have. Verified this
+round on a from-scratch synthetic database (create -> upgrade head ->
+confirm columns/indexes/constraints match -> drop database) and confirmed
+idempotent against an already-extended database (IF NOT EXISTS / IF NOT
+EXISTS guards throughout) by re-running upgrade against ltc_pytest, which
+already had the extension, with zero errors and zero duplicate objects.
+
+Fully additive for a fresh install (CREATE TABLE IF NOT EXISTS / CREATE
+INDEX IF NOT EXISTS). The outbox extension adds columns to an
+already-committed-as-new-by-this-same-migration table via ADD COLUMN IF NOT
+EXISTS, so it is additive in the same sense 0010's tables are -- never
+touches any table this migration did not itself just create. No pre-existing
+data is deleted; the conservative expires_at backfill for legacy rows
+mirrors the reviewed SQL exactly.
 
 CREATE TABLE IF NOT EXISTS safety gap fixed this round: if a table with
 either name already exists -- most plausibly from someone having manually
@@ -92,7 +116,7 @@ def _verify_or_fail(conn, table: str, required_columns: set[str], required_uniqu
 
 
 revision = "0008_jiaan_webpush"
-down_revision = "0009_fieldtest_participants"
+down_revision = "0010_service_interactions"
 branch_labels = None
 depends_on = None
 
@@ -134,6 +158,57 @@ def upgrade() -> None:
             ON jiaan_webpush_deliveries(status, created_at)
     """)
 
+    # Outbox extension (see docstring): reproduces
+    # run/integration_outbox_final_review_20261114_170707/REVIEWED_OUTBOX_SCHEMA.sql
+    # exactly, folded into this migration instead of staying a separate,
+    # never-committed hand-applied script.
+    op.execute("""
+        ALTER TABLE jiaan_webpush_deliveries
+          ADD COLUMN IF NOT EXISTS job_id uuid,
+          ADD COLUMN IF NOT EXISTS expires_at timestamptz,
+          ADD COLUMN IF NOT EXISTS provider_accepted_at timestamptz,
+          ADD COLUMN IF NOT EXISTS app_opened_at timestamptz,
+          ADD COLUMN IF NOT EXISTS last_error_class text
+    """)
+    op.execute("""
+        UPDATE jiaan_webpush_deliveries
+        SET expires_at = created_at + interval '5 minutes'
+        WHERE expires_at IS NULL
+    """)
+    op.execute("ALTER TABLE jiaan_webpush_deliveries ALTER COLUMN expires_at SET NOT NULL")
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                WHERE conrelid = 'jiaan_webpush_deliveries'::regclass
+                  AND conname = 'fk_jiaan_webpush_delivery_job'
+            ) THEN
+                ALTER TABLE jiaan_webpush_deliveries
+                  ADD CONSTRAINT fk_jiaan_webpush_delivery_job
+                  FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE RESTRICT;
+            END IF;
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                WHERE conrelid = 'jiaan_webpush_deliveries'::regclass
+                  AND conname = 'ck_jiaan_webpush_expiry_after_create'
+            ) THEN
+                ALTER TABLE jiaan_webpush_deliveries
+                  ADD CONSTRAINT ck_jiaan_webpush_expiry_after_create
+                  CHECK (expires_at > created_at) NOT VALID;
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_jiaan_webpush_delivery_job
+            ON jiaan_webpush_deliveries(job_id) WHERE job_id IS NOT NULL
+    """)
+    op.execute("""
+        CREATE INDEX IF NOT EXISTS ix_jiaan_webpush_delivery_due
+            ON jiaan_webpush_deliveries(status, expires_at, created_at)
+            WHERE status IN ('queued', 'failed')
+    """)
+
     conn = op.get_bind()
     _verify_or_fail(
         conn, "jiaan_webpush_subscriptions",
@@ -144,7 +219,8 @@ def upgrade() -> None:
     _verify_or_fail(
         conn, "jiaan_webpush_deliveries",
         {"id", "emergency_id", "subscription_id", "stage", "status", "attempts",
-         "created_at", "attempted_at"},
+         "created_at", "attempted_at", "job_id", "expires_at", "provider_accepted_at",
+         "app_opened_at", "last_error_class"},
         {"emergency_id", "subscription_id", "stage"},
     )
 
@@ -154,6 +230,11 @@ def downgrade() -> None:
     # table turns out to pre-date this migration (see the "one-device test"
     # note above) this would still delete it; a human must confirm that is
     # actually wanted (and that nothing else depends on the existing data)
-    # before running this -- never run downgrade() unattended.
+    # before running this -- never run downgrade() unattended. Dropping
+    # jiaan_webpush_deliveries also discards any job_id/provider_accepted_at/
+    # app_opened_at/last_error_class history recorded by the outbox
+    # extension -- exactly the data-loss risk the reviewed SQL's own
+    # rollback outline already flagged as "not authorized, must not
+    # auto-run"; this downgrade() must only be run with that understood.
     op.drop_table("jiaan_webpush_deliveries")
     op.drop_table("jiaan_webpush_subscriptions")

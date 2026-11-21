@@ -40,6 +40,7 @@ class SendResult:
     status_code: int
     error_code: str | None = None
     retryable: bool = False
+    accepted_request_id: str | None = None
 
 
 class ContentUnavailable(Exception):
@@ -68,9 +69,17 @@ class LineClient(Protocol):
         ...
 
 
-def _classify(status: int) -> SendResult:
-    if status == 200 or status == 409:
+def _classify(status: int, *, accepted_request_id: str | None = None) -> SendResult:
+    if status == 200:
         return SendResult(accepted=True, status_code=status)
+    if status == 409:
+        # LINE's documented accepted-retry response includes this header.  A
+        # bare/unrelated 409 must not be promoted to an accepted request.
+        verified_id = (accepted_request_id or "").strip() or None
+        if verified_id is not None:
+            return SendResult(accepted=True, status_code=status,
+                              accepted_request_id=verified_id)
+        return SendResult(False, status, "retry_conflict_unverified", retryable=False)
     if status == 429:
         return SendResult(False, status, "rate_limited_or_quota", retryable=True)
     if status in (401, 403):
@@ -109,7 +118,10 @@ class RealLineClient:
                                   json={"to": to, "messages": messages}, timeout=10)
         except httpx.HTTPError:
             return SendResult(False, 0, "network", retryable=True)
-        return _classify(response.status_code)
+        return _classify(
+            response.status_code,
+            accepted_request_id=response.headers.get("x-line-accepted-request-id"),
+        )
 
     def get_content(self, message_id: str) -> bytes:
         """見 `LineClient.get_content`。只打官方內容端點，限制大小。"""

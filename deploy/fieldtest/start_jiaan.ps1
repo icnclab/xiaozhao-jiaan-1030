@@ -79,10 +79,43 @@ try {
         if(@(Get-PortOwner $port).Count -or @(Get-AaProcesses $kind).Count){Log-Start "$kind retained; existing listener/process requires health validation"}
         else {Log-Start "$kind missing: launching aa process"; Start-Owned $kind}
         Wait-JiaanReady $kind {
-            $h=Get-HttpJson $url
+            $h=Get-HttpJson $url (Get-InternalHealthHeaders)
             if($kind -eq 'stt'){ $h.ok -and $h.model -eq 'medium' -and $h.device -eq 'cuda' -and 'medium' -in $h.loaded }
             else { $h.db -eq 'ok' -and $h.modes.line -eq 'real' }
         } { if(-not @(Get-PortOwner $port).Count -and -not @(Get-AaProcesses $kind).Count){Start-Owned $kind} } 30 10
+    }
+    # SOS(8165)/SOS45(8166) autostart. Deliberately placed BEFORE the Worker step below:
+    # Worker's own identity check can throw and abort this entire script (see the next
+    # block), and SOS/SOS45 depend on neither Worker nor each other, so they must not be
+    # starved by an unrelated Worker-step failure. Isolated in its own try/catch: a problem
+    # here must never abort api/worker/stt verification, and must never touch 8140/Worker/DB.
+    # Kill switch: create deploy/fieldtest/run/.disable_sos_autostart to opt out entirely
+    # (e.g. while debugging by hand) without touching this script or the scheduled task.
+    $sosDisableFlag = Join-Path $script:RunDir '.disable_sos_autostart'
+    if (Test-Path -LiteralPath $sosDisableFlag) {
+        Log-Start 'SOS/SOS45 autostart disabled (run\.disable_sos_autostart present); skipping'
+    } else {
+        foreach ($kind in 'sos','sos45') {
+            try {
+                $decision = Get-SosStartDecision $kind
+                switch ($decision.Action) {
+                    'warn_unidentified_occupant' {
+                        Log-Start "$kind WARNING: port $($decision.Port) is occupied by a process this launcher cannot verify as its own; refusing to start or claim ownership (manual review required)"
+                        continue
+                    }
+                    'retain' { Log-Start "$kind retained: existing verified aa process; no duplicate launch" }
+                    'start' { Log-Start "$kind missing: launching aa process"; Start-Owned $kind }
+                }
+                Wait-JiaanReady $kind { Test-SosHealthy $kind (Get-InternalHealthHeaders) } {
+                    $redecide = Get-SosStartDecision $kind
+                    if ($redecide.Action -eq 'start') { Start-Owned $kind }
+                } 6 10
+            } catch {
+                # Bounded retry already exhausted inside Wait-JiaanReady; log and move on.
+                # SOS/SOS45 are independent of the core pipeline and must not fail the run.
+                Log-Start "$kind FAIL (non-fatal to core services): $($_.Exception.Message)"
+            }
+        }
     }
     Start-Owned 'worker'
     if(-not (Wait-Check { $h=Get-HttpJson 'http://127.0.0.1:8140/api/healthz'; $null -ne $h.worker_heartbeat_age_sec -and $h.worker_heartbeat_age_sec -ge 0 -and $h.worker_heartbeat_age_sec -lt 60 })){

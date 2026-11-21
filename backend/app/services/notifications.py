@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -25,6 +25,24 @@ EMERGENCY_CATEGORY_LABELS = {
     'fall': '跌倒', 'violence': '暴力／受威脅', 'injury': '傷口／受傷',
     'unresponsive': '昏倒／意識異常', 'traffic': '車禍', 'self_harm': '自傷風險', 'other': '重大緊急事件',
 }
+
+# Staging hotfix 2026-11-14: automatic retry must stop before LINE's own
+# retry-key/push dedup window expires, instead of retrying forever against a
+# retry_key LINE may have already forgotten. A job past this deadline is not
+# "failed" (we may never learn whether an earlier attempt was accepted) --
+# it goes to "unconfirmed" and a human reviews it via manual_review_status.
+RETRY_WINDOW = timedelta(hours=23)
+
+
+def retry_deadline(notification: NotificationJob) -> datetime | None:
+    if notification.first_api_attempt_at is None:
+        return None
+    return notification.first_api_attempt_at + RETRY_WINDOW
+
+
+def retry_window_expired(notification: NotificationJob, *, now: datetime | None = None) -> bool:
+    deadline = retry_deadline(notification)
+    return deadline is not None and (now or jobs.utcnow()) >= deadline
 
 
 def short_incident_id(value: uuid.UUID) -> str:
@@ -97,8 +115,16 @@ def send(session: Session, notification_id: uuid.UUID) -> tuple[bool, bool]:
     Returns:
         (是否成功或已終結, 失敗時是否可重試)。
     """
-    notification = session.get(NotificationJob, notification_id)
+    notification = session.scalar(
+        select(NotificationJob).where(NotificationJob.id == notification_id).with_for_update()
+    )
     if notification is None or notification.status in {"accepted", "skipped"}:
+        return True, False
+    if retry_window_expired(notification):
+        notification.status = "unconfirmed"
+        notification.manual_review_status = "needs_action"
+        notification.last_error_code = "retry_window_expired"
+        notification.last_error = "automatic retry stopped before LINE retry-key expiry"
         return True, False
     if notification.payload.get("kind") == "jiaan_emergency_alert":
         # Fail closed even for jobs queued before the feature flag was disabled.
@@ -150,9 +176,34 @@ def send(session: Session, notification_id: uuid.UUID) -> tuple[bool, bool]:
     if account.is_blocked:
         notification.status, notification.last_error_code = "skipped", "blocked"
         return True, False
+    # Idempotent across retries: the exact LINE payload is persisted on the
+    # first attempt and reused, not rebuilt, so a crash between "LINE
+    # accepted this" and "we recorded that" can safely retry with the
+    # identical message instead of risking a different one going out under
+    # the same retry_key.
+    delivery = notification.payload.get("_line_delivery")
+    if delivery is None:
+        delivery = {"to": account.line_user_id, "messages": build_messages(notification)}
+        notification.payload = {**notification.payload, "_line_delivery": delivery}
+    elif (delivery.get("to") != account.line_user_id
+          or not isinstance(delivery.get("messages"), list)):
+        notification.status = "unconfirmed"
+        notification.manual_review_status = "needs_action"
+        notification.last_error_code = "delivery_snapshot_mismatch"
+        notification.last_error = "recipient binding or persisted message snapshot changed"
+        return True, False
+
+    attempt_at = jobs.utcnow()
+    if notification.first_api_attempt_at is None:
+        notification.first_api_attempt_at = attempt_at
+    notification.last_api_attempt_at = attempt_at
     notification.status = "sending"
     notification.attempts += 1
-    result = get_line_client(session).push(account.line_user_id, build_messages(notification),
+    # The first-attempt timestamp, immutable delivery snapshot and sending state
+    # must be durable before crossing the external LINE boundary.
+    session.commit()
+
+    result = get_line_client(session).push(delivery["to"], delivery["messages"],
                                            str(notification.retry_key))
     if result.accepted:
         notification.status = "accepted"
@@ -160,7 +211,14 @@ def send(session: Session, notification_id: uuid.UUID) -> tuple[bool, bool]:
         notification.last_error_code = None
         notification.last_error = None
         return True, False
-    notification.status = "failed"
+    # Timeout/network/5xx responses do not prove that LINE rejected the request:
+    # the platform may already have accepted it. Keep this distinct from a
+    # confirmed failure so operators can review it while the job safely retries
+    # with the same persisted retry_key.
+    result_unknown = result.status_code == 0 or result.status_code >= 500
+    notification.status = "unconfirmed" if result_unknown else "failed"
+    if result_unknown and notification.payload.get("kind") == "jiaan_emergency_alert":
+        notification.manual_review_status = "needs_action"
     notification.last_error_code = result.error_code
     notification.last_error = f"HTTP {result.status_code}"
     return False, result.retryable
@@ -168,7 +226,12 @@ def send(session: Session, notification_id: uuid.UUID) -> tuple[bool, bool]:
 
 def retry(session: Session, notification: NotificationJob) -> NotificationJob:
     """手動重送（沿用同一 retry key，LINE 端不會重複送出已受理的請求）。"""
-    if notification.status not in {"failed", "skipped"}:
+    if notification.status not in {"failed", "skipped", "unconfirmed"}:
+        return notification
+    if retry_window_expired(notification):
+        notification.status = "unconfirmed"
+        notification.manual_review_status = "needs_action"
+        notification.last_error_code = "retry_window_expired"
         return notification
     notification.status = "queued"
     jobs.enqueue(session, "notify", {"notification_id": str(notification.id)},

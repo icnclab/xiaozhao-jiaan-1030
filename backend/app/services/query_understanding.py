@@ -33,6 +33,66 @@ PURCHASE_FIELDS = {
 }
 
 
+_CN_DIGIT = {'〇': 0, '零': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
+             '六': 6, '七': 7, '八': 8, '九': 9}
+
+
+def _chinese_numeral_to_int(s: str) -> int | None:
+    """「六」「十二」「二十三」「一百零三」→ int；只處理條號會用到的範圍（0-999）。
+
+    不是通用中文數字解析器，不接受「兩」「廿」等條號不會出現的寫法；看不懂就回 None，
+    讓呼叫端安全地當作「沒有明確條號」處理，不猜測。
+    """
+    if not s:
+        return None
+    if s.isdigit():
+        return int(s)
+    if any(ch not in _CN_DIGIT and ch not in '十百' for ch in s):
+        return None
+    section = 0
+    if '百' in s:
+        head, _, s = s.partition('百')
+        digit = _CN_DIGIT.get(head, 1 if head == '' else None)
+        if digit is None:
+            return None
+        section += digit * 100
+    if '十' in s:
+        head, _, tail = s.partition('十')
+        digit = _CN_DIGIT.get(head, 1 if head == '' else None)
+        if digit is None:
+            return None
+        section += digit * 10
+        s = tail
+    s = s.lstrip('零')
+    if s:
+        digit = _CN_DIGIT.get(s)
+        if digit is None:
+            return None
+        section += digit
+    return section
+
+
+_ARTICLE_RE = re.compile(r'第\s*([0-9]+|[〇零一二三四五六七八九十百]+)\s*(?:[-－]\s*([0-9]+))?\s*條')
+
+
+def explicit_article_locator(question: str) -> str | None:
+    """問題明確點名條號（「第6條」「第六條」「第 6 條」「第6-1條」）時，回傳與資料庫
+    chunk.locator 同格式的字串（例如「第 6 條」「第 6-1 條」），否則回傳 None。
+
+    只做格式正規化比對，不判斷條號是否存在；呼叫端拿這個字串去精確比對現有 locator，
+    比對不到就是「這個條號真的不在知識庫裡」，交由既有證據不足轉人工機制處理，不在
+    這裡編造或放寬成語意相似比對。
+    """
+    match = _ARTICLE_RE.search(question)
+    if not match:
+        return None
+    number = _chinese_numeral_to_int(match.group(1))
+    if number is None or number <= 0:
+        return None
+    sub = match.group(2)
+    return f"第 {number}-{int(sub)} 條" if sub else f"第 {number} 條"
+
+
 def medication_admin_intent(question: str) -> bool:
     return bool(_MED_ADMIN.search(re.sub(r'\s+', '', question)))
 

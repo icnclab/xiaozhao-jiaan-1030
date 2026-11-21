@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit, parse_qsl
 
-_ALLOWED = {"law.moj.gov.tw", "www.mohw.gov.tw", "mohw.gov.tw", "dep.mohw.gov.tw"}
+_ALLOWED = {'1966.gov.tw', 'dep.mohw.gov.tw', 'law.moj.gov.tw', 'mohw.gov.tw', 'ws.tycg.gov.tw', 'www.klcg.gov.tw', 'www.klchb.klcg.gov.tw', 'www.mohw.gov.tw', 'www.ntshb.gov.tw'}
 _APPROVALS = Path(__file__).with_name("jiaan1030_official_approved.json")
 
 def get_reviewed_official_source(version_id: str, stored_url: str | None, title: str) -> dict | None:

@@ -1,1 +1,32 @@
-{}
+{
+  "172f9388-fd31-465b-9453-2c56fdbc2aff": {
+    "review_note": "政府公告網址與文件題名／附件名稱對應；不代表已逐字比對系統保存版本。政府官方法規全文頁；與系統保存的固定版本可能不同",
+    "reviewed": true,
+    "reviewer": "public_government_source_title_match_2026_11_15",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070040"
+  },
+  "2f412748-21ce-4ff6-94a2-3777547b3c17": {
+    "review_note": "政府公告網址與文件題名／附件名稱對應；不代表已逐字比對系統保存版本。政府官方法規全文頁；與系統保存的固定版本可能不同",
+    "reviewed": true,
+    "reviewer": "public_government_source_title_match_2026_11_15",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059"
+  },
+  "49c8f2c8-fbcd-4c2d-906b-34c078d3f5eb": {
+    "review_note": "政府公告網址與文件題名／附件名稱對應；不代表已逐字比對系統保存版本。政府官方法規全文頁；與系統保存的固定版本可能不同",
+    "reviewed": true,
+    "reviewer": "public_government_source_title_match_2026_11_15",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070048"
+  },
+  "ae012e0c-a2ee-4c03-a956-026cfd7a6cea": {
+    "review_note": "政府公告網址與文件題名／附件名稱對應；不代表已逐字比對系統保存版本。政府官方法規全文頁；與系統保存的固定版本可能不同",
+    "reviewed": true,
+    "reviewer": "public_government_source_title_match_2026_11_15",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070045"
+  },
+  "f8b75036-3a7e-4825-aa1b-90c464a247fd": {
+    "review_note": "政府公告網址與文件題名／附件名稱對應；不代表已逐字比對系統保存版本。政府官方法規全文頁；與系統保存的固定版本可能不同",
+    "reviewed": true,
+    "reviewer": "public_government_source_title_match_2026_11_15",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070043"
+  }
+}

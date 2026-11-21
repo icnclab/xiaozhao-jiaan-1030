@@ -56,22 +56,50 @@ export function CitationCard({ c, index }: { c: Citation; index: number }) {
                 {full.official_source?.verified === true && full.official_source.official_url ? (
                   <a className="btn primary" href={full.official_source.official_url} target="_blank" rel="noopener noreferrer">查看官方原文</a>
                 ) : (
-                  <span className="notice warn small">官方來源尚待確認，目前可查看系統保存的文件。</span>
+                  full.version.source_url && /^https:\/\/(?:law\.moj\.gov\.tw|(?:www\.)?mohw\.gov\.tw|dep\.mohw\.gov\.tw|1966\.gov\.tw|www\.klchb\.klcg\.gov\.tw|www\.klcg\.gov\.tw|ws\.tycg\.gov\.tw|www\.ntshb\.gov\.tw)\//i.test(full.version.source_url) ? (
+                    <a className="btn"
+     href={xzFindOfficialCitationLink(c, full) || full.version.source_url}
+     target="_blank" rel="noopener noreferrer">
+  {xzFindOfficialCitationLink(c, full) ? "查看官方來源頁面（核對表）" : "查看官方來源頁面（待核對）"}
+</a>
+                  ) : (
+                    <span className="notice warn small">{(() => {
+    const reviewedSource = xzFindOfficialCitationLink(c as unknown, full as unknown);
+    // Source page matches the reviewed Excel row; no separate PDF button here.
+    return reviewedSource ? (
+      <a href={reviewedSource} target="_blank" rel="noopener noreferrer"
+         style={{color: "#9a3412", textDecoration: "underline", fontWeight: 700}}>
+        查看官方來源頁面（核對表）
+      </a>
+    ) : (
+      "官方來源尚待確認，目前可查看系統保存的文件。"
+    );
+  })()}</span>
+                  )
                 )}
                 {full.version.file_url ? (
                 <button
                   className="btn"
                   onClick={async () => {
                     // Reserve a window while the click still has browser user activation.
-                    const reserved = isInLineApp() ? null : window.open("about:blank", "_blank");
+                    const inLineApp = isInLineApp();
+                    const reserved = inLineApp ? null : window.open("about:blank", "_blank");
                     if (reserved) reserved.opener = null;
                     try {
                       setError(null);
-                      const liff = (await import("@line/liff")).default;
+                      // liff.isInClient() requires liff.init() to have run first, which
+                      // never happens for a password-logged-in supervisor/director/admin
+                      // session (they never go through loginWithLiff()). Calling it then
+                      // throws, which used to land in the catch below -- after the
+                      // download-url call below had already succeeded -- and show "無法
+                      // 開啟原文連結" even though the real backend chain was fine.
+                      // isInLineApp() (a plain user-agent check) decides this instead; the
+                      // SDK is only imported/used when actually inside the LINE app.
                       const result = await post<{ url: string }>(
                         full.version.file_url.replace(/\/file$/, "/download-url"), {},
                       );
-                      if (liff.isInClient()) {
+                      if (inLineApp) {
+                        const liff = (await import("@line/liff")).default;
                         reserved?.close();
                         liff.openWindow({ url: result.url, external: true });
                       } else {
@@ -297,3 +325,310 @@ export function AnswerCard({ answer, onChange, autoPlay = false }: { answer: Ans
     </div>
   );
 }
+
+
+// XZ_OFFICIAL_LINKS_20261115_START
+// Links come from the user's reviewed worksheet. A link is not a system approval.
+const xzOfficialLinks: Array<{title: string; url: string; aliases: string[]}> = [
+  {
+    "title": "長照專業服務操作指引－觀念篇",
+    "url": "https://1966.gov.tw/LTC/cp-6451-70123-207.html",
+    "aliases": [
+      "長照專業服務操作指引－觀念篇",
+      "1.長照專業服務操作指引-觀念篇_公告"
+    ]
+  },
+  {
+    "title": "長照專業服務操作指引－居家護理指導與諮詢",
+    "url": "https://1966.gov.tw/LTC/cp-6451-70123-207.html",
+    "aliases": [
+      "長照專業服務操作指引－居家護理指導與諮詢",
+      "3.長照專業服務操作指引-操作篇-居家護理指導與諮詢操作指引_公告"
+    ]
+  },
+  {
+    "title": "BA08足部照護及BA17協助執行輔助性醫療資格疑義",
+    "url": "https://mohwlaw.mohw.gov.tw/FINT/FINTQRY04.aspx?starDate=00000000&endDate=99991231&no=&n1=&n2=1081960980&kt=&kw=&kw2=&kw3=&kw4=&valid=3&type=etype_&RowNo=1",
+    "aliases": [
+      "BA08足部照護及BA17協助執行輔助性醫療資格疑義",
+      "BA08足部照護及BA17協助執行輔助性醫療資格疑義-衛部顧字第1081960980號"
+    ]
+  },
+  {
+    "title": "執行陪同外出BA13之定期式復健疑義",
+    "url": "https://mohwlaw.mohw.gov.tw/FINT/FINTQRY04.aspx?starDate=00000000&endDate=99991231&no=&n1=&n2=1131963191&kt=&kw=&kw2=&kw3=&kw4=&valid=3&type=etype_&RowNo=1",
+    "aliases": [
+      "執行陪同外出BA13之定期式復健疑義",
+      "執行陪同外出BA13之定期式復健疑義-衛部顧字第1131963191號"
+    ]
+  },
+  {
+    "title": "居家喘息服務實務使用疑義－口腔抽吸",
+    "url": "https://mohwlaw.mohw.gov.tw/FINT/FINTQRY04.aspx?starDate=00000000&endDate=99991231&no=&n1=&n2=1091961599&kt=&kw=&kw2=&kw3=&kw4=&valid=3&type=etype_&RowNo=1",
+    "aliases": [
+      "居家喘息服務實務使用疑義－口腔抽吸",
+      "居家喘息服務實務使用疑義-口腔抽吸-衛部顧字第1091961599號"
+    ]
+  },
+  {
+    "title": "居家式喘息服務進食服務疑義",
+    "url": "https://mohwlaw.mohw.gov.tw/FINT/FINTQRY04.aspx?starDate=00000000&endDate=99991231&no=&n1=&n2=1091962544&kt=&kw=&kw2=&kw3=&kw4=&valid=3&type=etype_&RowNo=1",
+    "aliases": [
+      "居家式喘息服務進食服務疑義",
+      "居家式喘息服務進食服務疑義-衛部顧字第1091962544號"
+    ]
+  },
+  {
+    "title": "居家服務督導員工作手冊",
+    "url": "https://1966.gov.tw/LTC/cp-7565-86698-207.html",
+    "aliases": [
+      "居家服務督導員工作手冊"
+    ]
+  },
+  {
+    "title": "照顧服務員伸入肛門清除糞便行為疑義",
+    "url": "https://mohwlaw.mohw.gov.tw/FINT/FINTQRY04.aspx?starDate=00000000&endDate=99991231&no=&n1=&n2=1131962666&kt=&kw=&kw2=&kw3=&kw4=&valid=3&type=etype_&RowNo=1",
+    "aliases": [
+      "照顧服務員伸入肛門清除糞便行為疑義",
+      "照顧服務員伸入肛門清除糞便行為疑義-衛部顧字第1131962666號"
+    ]
+  },
+  {
+    "title": "照顧服務員執行傷口換藥疑義",
+    "url": "https://1966.gov.tw/ltc/cp-7615-87882-207.html",
+    "aliases": [
+      "照顧服務員執行傷口換藥疑義",
+      "照顧服務員執行傷口換藥疑義-_1090119919_"
+    ]
+  },
+  {
+    "title": "長照專業服務手冊",
+    "url": "https://1966.gov.tw/LTC/cp-6451-70123-207.html",
+    "aliases": [
+      "長照專業服務手冊"
+    ]
+  },
+  {
+    "title": "長照專業服務操作指引－共通操作指引",
+    "url": "https://1966.gov.tw/LTC/cp-6451-70123-207.html",
+    "aliases": [
+      "長照專業服務操作指引－共通操作指引",
+      "長照專業服務操作指引-操作篇-共通操作指引_公告"
+    ]
+  },
+  {
+    "title": "長照專業服務操作指引－附錄一服務紀錄參考格式",
+    "url": "https://1966.gov.tw/LTC/cp-6451-70123-207.html",
+    "aliases": [
+      "長照專業服務操作指引－附錄一服務紀錄參考格式",
+      "長照專業服務操作指引-附錄一服務紀錄參考格式_公告",
+      "附錄一服務紀錄參考格式 長照專業服務操作指引"
+    ]
+  },
+  {
+    "title": "長照專業服務操作指引－附錄三案例說明",
+    "url": "https://1966.gov.tw/LTC/cp-6451-70123-207.html",
+    "aliases": [
+      "長照專業服務操作指引－附錄三案例說明",
+      "長照專業服務操作指引-附錄三-案例說明_公告",
+      "附錄三案例說明 長照專業服務操作指引"
+    ]
+  },
+  {
+    "title": "長照專業服務操作指引－附錄二居家護理指導與諮詢服務的處置指引",
+    "url": "https://1966.gov.tw/LTC/cp-6451-70123-207.html",
+    "aliases": [
+      "長照專業服務操作指引－附錄二居家護理指導與諮詢服務的處置指引",
+      "長照專業服務操作指引-附錄二-居家護理指導與諮詢服務的處置指引_公告",
+      "附錄二居家護理指導與諮詢服務的處置指引 長照專業服務操作指引"
+    ]
+  },
+  {
+    "title": "115年度居家式長期照顧服務機構評鑑基準－附件一",
+    "url": "https://1966.gov.tw/LTC/cp-6457-69929-207.html",
+    "aliases": [
+      "115年度居家式長期照顧服務機構評鑑基準－附件一",
+      "附件一-115年度居家式長期照顧服務機構評鑑基準",
+      "附件一 115年度居家式長期照顧服務機構評鑑基準"
+    ]
+  },
+  {
+    "title": "陪同外出BA13及陪同就醫BA14相關疑義",
+    "url": "https://mohwlaw.mohw.gov.tw/FINT/FINTQRY04.aspx?starDate=00000000&endDate=99991231&no=&n1=&n2=1131961919&kt=&kw=&kw2=&kw3=&kw4=&valid=3&type=etype_&RowNo=1",
+    "aliases": [
+      "陪同外出BA13及陪同就醫BA14相關疑義",
+      "陪同外出BA13及陪同就醫BA14相關疑義-衛部顧字第1131961919號"
+    ]
+  },
+  {
+    "title": "長期照顧服務人員訓練認證繼續教育及登錄辦法",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070045",
+    "aliases": [
+      "長期照顧服務人員訓練認證繼續教育及登錄辦法"
+    ]
+  },
+  {
+    "title": "長期照顧服務機構設立標準",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070048",
+    "aliases": [
+      "長期照顧服務機構設立標準"
+    ]
+  },
+  {
+    "title": "長期照顧服務機構設立許可及管理辦法",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070044",
+    "aliases": [
+      "長期照顧服務機構設立許可及管理辦法"
+    ]
+  },
+  {
+    "title": "長期照顧服務法",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070040",
+    "aliases": [
+      "長期照顧服務法"
+    ]
+  },
+  {
+    "title": "長期照顧服務法施行細則",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070043",
+    "aliases": [
+      "長期照顧服務法施行細則"
+    ]
+  },
+  {
+    "title": "長期照顧服務申請及給付辦法",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+    "aliases": [
+      "長期照顧服務申請及給付辦法"
+    ]
+  },
+  {
+    "title": "居家式長照機構設立標準表－附件一",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070048",
+    "aliases": [
+      "居家式長照機構設立標準表－附件一",
+      "附件一_居家式長照機構設立標準表",
+      "附件一 居家式長照機構設立標準表"
+    ]
+  },
+  {
+    "title": "長照人員資格－附件一",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070045",
+    "aliases": [
+      "長照人員資格－附件一",
+      "附件一_長照人員資格",
+      "附件一 長照人員資格"
+    ]
+  },
+  {
+    "title": "長照人員繼續教育辦理機構、實施方式及積分採認與抵免表－附件二",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070045",
+    "aliases": [
+      "長照人員繼續教育辦理機構、實施方式及積分採認與抵免表－附件二",
+      "附件二__長照人員繼續教育之辦理機構與實施方式及積分採認與抵免表",
+      "附件二 長照人員繼續教育辦理機構、實施方式及積分採認與抵免表"
+    ]
+  },
+  {
+    "title": "照顧問題清單－附表一",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+    "aliases": [
+      "照顧問題清單－附表一",
+      "附表一_照顧問題清單",
+      "附表一 照顧問題清單"
+    ]
+  },
+  {
+    "title": "交通接送服務給付分區表－附表三",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+    "aliases": [
+      "交通接送服務給付分區表－附表三",
+      "附表三_交通接送服務給付分區表",
+      "附表三 交通接送服務給付分區表"
+    ]
+  },
+  {
+    "title": "長照需要等級及長照服務給付項目之額度－附表二",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+    "aliases": [
+      "長照需要等級及長照服務給付項目之額度－附表二",
+      "附表二_長照需要等級及長照服務給付項目之額度",
+      "附表二 長照需要等級及長照服務給付項目之額度"
+    ]
+  },
+  {
+    "title": "部分負擔比率－附表五",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+    "aliases": [
+      "部分負擔比率－附表五",
+      "附表五_部分負擔比率",
+      "附表五 部分負擔比率"
+    ]
+  },
+  {
+    "title": "原民區或離島範圍－附表六",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+    "aliases": [
+      "原民區或離島範圍－附表六",
+      "附表六_原民區或離島範圍",
+      "附表六 原民區或離島範圍"
+    ]
+  },
+  {
+    "title": "照顧組合表－智慧科技輔具－附表四之一",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+    "aliases": [
+      "照顧組合表－智慧科技輔具－附表四之一",
+      "附表四之一_照顧組合表-智慧科技輔具",
+      "附表四之一 照顧組合表 智慧科技輔具"
+    ]
+  },
+  {
+    "title": "照顧組合表－附表四",
+    "url": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0070059",
+    "aliases": [
+      "照顧組合表－附表四",
+      "附表四_照顧組合表",
+      "附表四 照顧組合表"
+    ]
+  }
+];
+
+function xzNormalizeSourceName(value: unknown): string {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .replace(/\.(pdf|txt|docx?)$/i, "")
+    .replace(/[\s\u3000_\-－–—:：()（）\[\]【】.．、，,]/g, "")
+    .toLowerCase();
+}
+
+function xzFindOfficialCitationLink(citation: unknown, details: unknown): string | null {
+  const values: string[] = [];
+  for (const obj of [citation, details]) {
+    if (!obj || typeof obj !== "object") continue;
+    const x = obj as Record<string, unknown>;
+    for (const key of ["title", "document_title", "source_title", "file_name", "filename", "source_name", "document_name", "name"]) {
+      if (typeof x[key] === "string") values.push(x[key] as string);
+    }
+    if (x.document && typeof x.document === "object") {
+      const d = x.document as Record<string, unknown>;
+      if (typeof d.title === "string") values.push(d.title);
+    }
+  }
+  const targets = values.map(xzNormalizeSourceName).filter(Boolean);
+  let hit: {url: string; strength: number} | null = null;
+  for (const row of xzOfficialLinks) {
+    for (const alias of row.aliases) {
+      const key = xzNormalizeSourceName(alias);
+      if (key.length < 5) continue;
+      for (const name of targets) {
+        // Prefer exact match; conservative partial match for titled citations.
+        const strength = name === key ? 10000 + key.length : (name.includes(key) && key.length >= 8 ? key.length : 0);
+        if (strength > (hit?.strength ?? 0)) hit = {url: row.url, strength};
+      }
+    }
+  }
+  return hit?.url ?? null;
+}
+// XZ_OFFICIAL_LINKS_20261115_END
+

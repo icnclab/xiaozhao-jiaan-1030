@@ -12,6 +12,7 @@
 | 開發機（ROG-HOME） | WSL Docker 跑 PostgreSQL；API／worker／Vite 跑在 Windows 主機；Ollama、faster-whisper sidecar、SAPI 本機 | ✅ 已跑通 |
 | Docker Compose（`--profile app`） | api、worker、web(nginx)、db 全容器化；推論預設 extractive／hash／mock | ⚠ compose 檔已寫，**本機未建置映像驗證**（此機 Docker 只在 WSL，映像建置需在 WSL 內執行） |
 | 機構核可主機／中華電信 hicloud | 部署目標 | ⬜ 未驗證；無帳號與規格 |
+| 無 Docker（WSL2 原生 PostgreSQL） | PostgreSQL 16＋pgvector 直接裝在 WSL2 `Ubuntu-22.04`（非容器），監聽 `127.0.0.1:55432`；Ollama、STT sidecar（CUDA）、API／worker 皆跑在 Windows 主機。一鍵啟動：`start_all_no_docker.ps1` | ✅ 2026-11-21 已驗證資料筆數與 Docker 版正式庫一致 |
 
 ## 2. 正式環境必要設定
 

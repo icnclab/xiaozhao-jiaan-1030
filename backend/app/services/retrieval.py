@@ -26,7 +26,7 @@ from app.services.evidence_text import substantive_body
 from app.services.care_query import care_reporting, reporting_duty
 from app.services.query_understanding import medication_admin_intent, purchasing_rule_intent
 from app.services.query_understanding import (topic_token_groups, title_token_groups,
-    candidate_aliases, permission_intent, boundary_intent, boundary_support)
+    candidate_aliases, permission_intent, boundary_intent, boundary_support, explicit_article_locator)
 
 
 @dataclass(frozen=True)
@@ -59,6 +59,13 @@ class RetrievedChunk:
 
 ABSENT_TOKEN_FACTOR = 0.6
 EXACT_TITLE_BONUS = 0.25
+# combined scores elsewhere in this module stay roughly within 0-1.5 (coverage,
+# vector and the other named bonuses are all fractional), so this dominates
+# ranking for a chunk whose locator exactly matches an article number the user
+# named -- without skipping or replacing anything downstream (evidence
+# selection, citation building, qa_policy sufficiency/risk gates, verify) that
+# still runs exactly as it does for any other candidate.
+EXACT_LOCATOR_BONUS = 10.0
 FUZZY_TITLE_BONUS_WEIGHT = 0.30
 FUZZY_TITLE_MIN_COVERAGE = 0.35
 PERMISSION_INTENT_BONUS = 0.22
@@ -294,6 +301,23 @@ def retrieve(
     version_ids = current_versions(session, org_id, facility_type, today)
     if not version_ids:
         return []
+    # 使用者明確點名條號（第6條／第六條／第 6 條皆正規化成同一格式）時，直接在使用者
+    # 可見的現行版本內精確比對 locator，找到就給極高加權；找不到就不加任何分，交由
+    # 既有語意檢索與證據不足轉人工機制處理，不冒充成其他條號。版本／機構權限範圍跟
+    # 其他候選完全一樣（都侵限於 version_ids），後面的引用驗證、風險判斷一律照跑。
+    exact_locator_chunk_ids: set[uuid.UUID] = set()
+    target_locator = explicit_article_locator(question)
+    if target_locator:
+        target_key = re.sub(r"\s+", "", target_locator)
+        exact_rows = session.execute(
+            text("""
+                SELECT c.id FROM chunks c
+                WHERE c.version_id = ANY(:versions)
+                  AND regexp_replace(c.locator, '\\s+', '', 'g') = :target
+            """),
+            {"versions": version_ids, "target": target_key},
+        ).all()
+        exact_locator_chunk_ids = {row.id for row in exact_rows}
     expanded_question = _expand_query(question, today)
 
     # 擴充詞只用於「找候選」；最後 lexical coverage 仍以使用者原始問題為準，
@@ -393,6 +417,8 @@ def retrieve(
     vector_scores = {row.id: float(row.sim) for row in vector_rows}
     for chunk_id in vector_scores:
         candidates.setdefault(chunk_id, 0.0)
+    for chunk_id in exact_locator_chunk_ids:
+        candidates.setdefault(chunk_id, 0.0)
     if not candidates:
         return []
 
@@ -466,6 +492,8 @@ def retrieve(
             title_bonus += EXACT_TITLE_BONUS
 
         combined += title_bonus + intent_bonus
+        if row.chunk_id in exact_locator_chunk_ids:
+            combined += EXACT_LOCATOR_BONUS
         scope_context, scope_ids = scope_contexts.get(row.chunk_id, ('', ()))
         if scope_context and '藥品' in row.text:
             combined += PERMISSION_INTENT_BONUS

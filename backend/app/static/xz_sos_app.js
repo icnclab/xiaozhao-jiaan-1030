@@ -328,7 +328,7 @@ async function restoreNotificationState(){
   }catch(e){
     if(!sameUser())return;
     const d=describePushSetupError(e);
-    stateEl.textContent=d.state==='conflict'?d.text:'已允許通知，但自動確認時發生問題（'+d.text+'），可按下方按鈕重試一次。';
+    stateEl.textContent=d.state==='conflict'?d.text:'已允許通知，但自動確認時發生問題（'+d.text+'），請按下方「啟用此裝置通知」按鈕重試一次。';
   }
 }
 

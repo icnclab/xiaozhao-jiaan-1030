@@ -1,4 +1,4 @@
-"""背景 worker：取工作、執行、重試；定期清理暫存資料並回報心跳。
+﻿"""背景 worker：取工作、執行、重試；定期清理暫存資料並回報心跳。
 
 啟動：`python -m app.worker`（可同時跑多個，靠 SKIP LOCKED 分工）。
 """
@@ -20,8 +20,8 @@ from app.db import new_session
 from app.line import service as line_service
 from app.logging_setup import setup_logging
 from app.services import documents, jobs, notifications, retention, transcripts, tts_service
-from app.services import jiaan_emergency_dispatch
-from app.services import jiaan_webpush
+from app.services import jiaan_emergency_outbox
+from app.services.jiaan_webpush_provider import ProviderNotConfigured, PywebpushProvider
 from app.services import sopb_voice_outbox
 
 logger = logging.getLogger("worker")
@@ -97,6 +97,27 @@ def _line_event_failed(session: Session, payload: dict, error: str) -> None:
         event.payload_encrypted = None
 
 
+def _build_provider() -> jiaan_emergency_outbox.PushProvider | None:
+    """Only ever returns a real Provider when BOTH isolated-only env vars
+    (JIAAN_WEBPUSH_ISOLATED_VAPID_PEM_PATH / ..._SUBJECT) are explicitly set --
+    never a default, never any production JIAAN_VAPID_* setting. Absent in
+    every deployed environment (production and every other existing isolated
+    copy) by construction, so this returns None there and dispatch_one()
+    raises DispatchDisabled/WEBPUSH_PROVIDER_NOT_CONFIGURED exactly as before.
+    """
+    try:
+        return PywebpushProvider.from_isolated_env()
+    except ProviderNotConfigured:
+        return None
+
+
+def _emergency_webpush_outbox(session: Session, payload: dict) -> None:
+    jiaan_emergency_outbox.dispatch_one(
+        session, uuid.UUID(payload["delivery_id"]), provider=_build_provider(),
+    )
+    session.commit()
+
+
 HANDLERS: dict[str, Callable[[Session, dict], None]] = {
     "doc_ingest": _doc_ingest,
     "stt": _stt,
@@ -104,6 +125,7 @@ HANDLERS: dict[str, Callable[[Session, dict], None]] = {
     "tts_push": _tts_push,
     "notify": _notify,
     "line_event": _line_event,
+    "jiaan_emergency_webpush_outbox": _emergency_webpush_outbox,
 }
 FAILURE_HANDLERS: dict[str, Callable[[Session, dict, str], None]] = {
     "doc_ingest": _doc_ingest_failed,
@@ -129,7 +151,7 @@ def run_one(worker_id: str, kinds: list[str] | None = None) -> bool:
         if job is None:
             return False
         if job.attempts > job.max_attempts:
-            jobs.fail(session, job, "lease expired after max attempts", retryable=False)
+            jobs.fail(session, job, "lease expired after max attempts", retryable=False, worker_id=worker_id)
             _on_final_failure(job, "lease expired")
             return True
         handler = HANDLERS.get(job.kind)
@@ -137,15 +159,22 @@ def run_one(worker_id: str, kinds: list[str] | None = None) -> bool:
             if handler is None:
                 raise ValueError(f"unknown job kind {job.kind}")
             handler(session, job.payload)
-            jobs.complete(session, job.id)
+            jobs.complete(session, job.id, worker_id=worker_id, attempts=job.attempts)
+        except jiaan_emergency_outbox.DispatchDisabled as exc:
+            # Not a failure: park it (no retry-budget charged), so a feature
+            # flag that stays off for a long time cannot drive a queued alert
+            # to "dead", and so claim()'s already-made attempts+1 does not
+            # silently accumulate while disabled.
+            session.rollback()
+            jobs.park(session, job, str(exc), worker_id=worker_id)
         except RetryLater as exc:
             session.rollback()
-            if jobs.fail(session, job, str(exc)):
+            if jobs.fail(session, job, str(exc), worker_id=worker_id):
                 _on_final_failure(job, str(exc))
         except Exception as exc:  # 工作失敗：記錄類型與摘要，不記內容
             session.rollback()
             logger.warning("job %s (%s) attempt %d failed: %s", job.id, job.kind, job.attempts, type(exc).__name__)
-            if jobs.fail(session, job, f"{type(exc).__name__}: {str(exc)[:200]}"):
+            if jobs.fail(session, job, f"{type(exc).__name__}: {str(exc)[:200]}", worker_id=worker_id):
                 _on_final_failure(job, type(exc).__name__)
         return True
     finally:
@@ -197,7 +226,7 @@ def main() -> None:
     signal.signal(signal.SIGINT, _stop)
     signal.signal(signal.SIGTERM, _stop)
     logger.info("worker %s started", worker_id)
-    last_sweep, last_beat, last_emergency, last_webpush, last_voice = 0.0, 0.0, 0.0, 0.0, 0.0
+    last_sweep, last_beat, last_voice = 0.0, 0.0, 0.0
     while running:
         now = time.monotonic()
         if now - last_beat > 15:
@@ -212,19 +241,6 @@ def main() -> None:
             finally:
                 session.close()
             last_sweep = now
-        if jiaan_emergency_dispatch.is_enabled() and now - last_emergency >= EMERGENCY_SWEEP_INTERVAL_SEC:
-            session = new_session()
-            try:
-                count = jiaan_emergency_dispatch.sweep(session)
-                session.commit()
-                if count:
-                    logger.info("emergency notifications queued: %d", count)
-            except Exception as exc:
-                session.rollback()
-                logger.warning("emergency sweep failed: %s", type(exc).__name__)
-            finally:
-                session.close()
-            last_emergency = now
         # SOPB isolated Voice/SMS pipeline; OFF by default, loopback-only.
         if sopb_voice_outbox.is_enabled() and now - last_voice >= EMERGENCY_SWEEP_INTERVAL_SEC:
             try:
@@ -245,22 +261,16 @@ def main() -> None:
             except Exception as exc:
                 logger.warning("sopb voice cycle failed: %s", type(exc).__name__)
             last_voice = now
-        # Separate web-push pipeline. Disabled by default; does not affect LINE.
-        if jiaan_webpush.enabled() and now - last_webpush >= EMERGENCY_SWEEP_INTERVAL_SEC:
-            session = new_session()
-            try:
-                staged = jiaan_webpush.sweep(session)
-                session.commit()
-                sent = jiaan_webpush.dispatch_due(session)
-                session.commit()
-                if staged or sent:
-                    logger.info('webpush staged=%d attempted=%d', staged, sent)
-            except Exception as exc:
-                session.rollback()
-                logger.warning('webpush cycle failed: %s', type(exc).__name__)
-            finally:
-                session.close()
-            last_webpush = now
+        # 2026-11-14 release-readiness fix: removed the old poll-based webpush
+        # dispatch cycle (jiaan_webpush.sweep()/dispatch_due()) from this loop.
+        # It shared JIAAN_WEBPUSH_DISPATCH with the new Transactional Outbox
+        # path (jiaan_emergency_outbox.dispatch_one(), wired below via
+        # HANDLERS['jiaan_emergency_webpush_outbox']); turning that one flag
+        # on would have activated BOTH at once. In this candidate copy, only
+        # the Outbox path may dispatch SOS web push. jiaan_webpush.py itself
+        # is unchanged and still used for its encrypt/decrypt, endpoint_allowed
+        # and alert_payload helpers (see jiaan_emergency_outbox.py) -- only its
+        # sweep()/dispatch_due() poll loop is no longer wired into this worker.
         try:
             worked = run_one(worker_id)
         except Exception as exc:  # 資料庫暫時不可用等

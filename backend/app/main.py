@@ -56,9 +56,16 @@ app = FastAPI(
 async def http_error(request: Request, exc: HTTPException) -> JSONResponse:
     """統一錯誤格式：{"error": {code, message, retryable}}。"""
     detail = exc.detail if isinstance(exc.detail, dict) else {"code": "error", "message": str(exc.detail)}
-    from app.services.public_messages import safe_error_message, SYSTEM_FAILURE
+    from app.services.public_messages import safe_error_message
     detail = dict(detail)
-    detail['message'] = SYSTEM_FAILURE if exc.status_code >= 500 else safe_error_message(detail.get('message'))
+    # A 5xx HTTPException is still a deliberately-written message (e.g. "推播訂閱
+    # 安全設定尚未就緒"), not a raw crash -- safe_error_message() already filters
+    # out anything that looks like a stack trace or internal identifier, so there
+    # is no need to additionally blank every 5xx message down to the generic
+    # SYSTEM_FAILURE text. A genuinely unhandled exception never reaches this
+    # handler; it goes through unhandled_error() below, which keeps its own
+    # separate, always-generic message.
+    detail['message'] = safe_error_message(detail.get('message'))
     detail.setdefault("retryable", exc.status_code in (429, 502, 503, 504))
     return JSONResponse(status_code=exc.status_code, content={"error": detail})
 

@@ -32,28 +32,28 @@ def test_webpush_enabled_only_when_env_var_is_exactly_on():
         assert jiaan_webpush.enabled() is True  # case-insensitive per enabled()'s own .lower()
 
 
-def test_worker_webpush_block_is_guarded_by_enabled_before_sweep_or_dispatch():
-    # Regression guard: the block that calls sweep()/dispatch_due() must be
-    # inside an `if jiaan_webpush.enabled() and ...` condition, not called
-    # unconditionally.
-    match = re.search(
-        r"if jiaan_webpush\.enabled\(\)[^\n]*:\n((?:.*\n)*?)\s*last_webpush = now",
-        WORKER_SOURCE,
-    )
-    assert match, "worker.py 找不到以 jiaan_webpush.enabled() 守衛的區塊"
-    block = match.group(1)
-    assert "jiaan_webpush.sweep(" in block
-    assert "jiaan_webpush.dispatch_due(" in block
-    # Every DB write in the guarded block must be wrapped in try/except so a
-    # misconfigured or missing-table environment cannot crash the worker loop.
-    assert "try:" in block and "except Exception" in block
+def test_worker_no_longer_runs_the_legacy_poll_based_webpush_cycle():
+    # 2026-11-14 architecture change: the old poll-based sweep()/dispatch_due()
+    # cycle shared JIAAN_WEBPUSH_DISPATCH with the new transactional Outbox
+    # path (jiaan_emergency_outbox.dispatch_one(), wired via HANDLERS). Running
+    # both under the same flag would double-dispatch the same SOS alert, so
+    # the old cycle was removed from the loop rather than re-guarded. This
+    # replaces the two regression guards that used to assert the old block's
+    # shape; asserting its absence is the correct guard now.
+    live_source = re.sub(r"#.*", "", WORKER_SOURCE)
+    assert "jiaan_webpush.sweep(" not in live_source
+    assert "jiaan_webpush.dispatch_due(" not in live_source
+    assert "import jiaan_webpush" not in live_source
 
 
-def test_worker_webpush_block_rolls_back_and_closes_session_on_failure():
+def test_worker_wires_the_new_outbox_job_kind_through_dispatch_one():
+    assert '"jiaan_emergency_webpush_outbox": _emergency_webpush_outbox' in WORKER_SOURCE
     match = re.search(
-        r"if jiaan_webpush\.enabled\(\)[^\n]*:\n((?:.*\n)*?)\s*last_webpush = now",
+        r"def _emergency_webpush_outbox\(session: Session, payload: dict\) -> None:\n"
+        r"((?:.*\n)*?)\n\nHANDLERS",
         WORKER_SOURCE,
     )
-    block = match.group(1)
-    assert "session.rollback()" in block
-    assert "session.close()" in block
+    assert match, "worker.py 找不到 _emergency_webpush_outbox 的實作"
+    body = match.group(1)
+    assert "jiaan_emergency_outbox.dispatch_one(" in body
+    assert "session.commit()" in body

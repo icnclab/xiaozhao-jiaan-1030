@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.auth import current_user
 from app.db import get_db
 from app.models import User
-from app.services import jiaan_webpush
+from app.services import audit, jiaan_webpush
 
 router=APIRouter()
 STATIC = Path(__file__).resolve().parents[1] / 'static'
@@ -27,6 +27,7 @@ class Subscription(BaseModel):
     endpoint: str = Field(min_length=30,max_length=2048)
     p256dh: str = Field(min_length=40,max_length=512)
     auth: str = Field(min_length=8,max_length=255)
+    replace_existing: bool = False
 
 
 @router.get('/jiaan1030/alert-app', include_in_schema=False)
@@ -72,24 +73,60 @@ def subscribe(body:Subscription,user:User=Depends(current_user),db:Session=Depen
         auth_cipher = jiaan_webpush.encrypt_subscription_value(body.auth)
     except RuntimeError:
         raise HTTPException(503, detail='推播訂閱安全設定尚未就緒')
-    owner=db.execute(text('SELECT user_id FROM jiaan_webpush_subscriptions WHERE endpoint_hash=:digest'),
-                     {'digest':endpoint_digest}).scalar_one_or_none()
-    if owner and owner!=user.id:
+    # 2026-11-14 fix: only an ACTIVE subscription blocks a different account
+    # from claiming the same endpoint. Before this fix, DELETE only ever set
+    # is_active=false (and automatic 404/410 expiry in jiaan_webpush._send_one
+    # does the same) without clearing ownership, so a stale/unsubscribed
+    # endpoint stayed permanently claimed by its old user_id with no
+    # self-service way to free it -- the next person on that same physical
+    # device (or the same person re-subscribing from a fresh browser profile)
+    # got a false "already bound to another account" 409 forever. An
+    # INACTIVE row no longer blocks anyone; reclaiming it now correctly
+    # reassigns user_id/org_id too (previously the ON CONFLICT UPDATE left
+    # the OLD owner's user_id in place even while flipping is_active back to
+    # true, which is the "訂閱狀態不同步" class of bug).
+    existing = db.execute(text(
+        'SELECT id, user_id, org_id, is_active FROM jiaan_webpush_subscriptions WHERE endpoint_hash=:digest'
+    ), {'digest': endpoint_digest}).mappings().first()
+    # 2026-11-14 補強：跨機構一律不得接管，不論該筆紀錄是否還 active。機構邊界
+    # 比同機構內的帳號邊界更不可逾越——即使原機構已停用，也不能讓另一個機構的
+    # 使用者直接拿同一個 endpoint_hash 接手，否則等同跨機構資料邊界被繞過。
+    if existing and existing['org_id'] != user.org_id:
+        raise HTTPException(409, detail={
+            'code': 'subscription_cross_org_denied',
+            'message': '此裝置的既有訂閱紀錄屬於其他機構，不得跨機構接管',
+        })
+    if existing and existing['is_active'] and existing['user_id'] != user.id and not body.replace_existing:
         raise HTTPException(409, detail={
             'code': 'subscription_owned_by_other_user',
-            'message': '此裝置已綁定其他帳號，請先由原帳號解除',
+            'message': '此瀏覽器的通知訂閱目前屬於同機構其他帳號；請確認換綁後再繼續',
         })
+    transferred_from_other_user = bool(existing and existing['is_active'] and existing['user_id'] != user.id)
+    reclaimed_from_other_user = bool(existing and not existing['is_active'] and existing['user_id'] != user.id)
+    sub_id = uuid.uuid4()
     db.execute(text('''
         INSERT INTO jiaan_webpush_subscriptions
            (id,user_id,org_id,endpoint,endpoint_hash,p256dh,auth,is_active)
         VALUES (:id,:uid,:org,:endpoint,:digest,:p256dh,:auth,true)
         ON CONFLICT (endpoint_hash) DO UPDATE SET
+            user_id=EXCLUDED.user_id, org_id=EXCLUDED.org_id,
             p256dh=EXCLUDED.p256dh, auth=EXCLUDED.auth, endpoint=EXCLUDED.endpoint,
             is_active=true, updated_at=now()
-    '''), {'id':uuid.uuid4(),'uid':user.id,'org':user.org_id,'endpoint':endpoint_cipher,
+    '''), {'id':sub_id,'uid':user.id,'org':user.org_id,'endpoint':endpoint_cipher,
            'digest':endpoint_digest, 'p256dh':p256dh_cipher,'auth':auth_cipher})
+    action = ('webpush.subscription_transferred' if transferred_from_other_user else
+              'webpush.subscription_reclaimed' if reclaimed_from_other_user else 'webpush.subscribe')
+    audit.record(db, action,
+                 actor=user, target_type='webpush_subscription',
+                 target_id=existing['id'] if existing else sub_id, outcome='ok')
     db.commit()
-    return {'status':'subscribed', 'dispatch_enabled':jiaan_webpush.enabled()}
+    return {'status':'subscribed', 'dispatch_enabled':jiaan_webpush.enabled(),
+            # Safe, irreversible device identifier for matching this browser's
+            # current PushSubscription to the encrypted server row. Never
+            # return the endpoint or browser subscription keys.
+            'endpoint_fingerprint': endpoint_digest[:12],
+            'reclaimed_from_other_account': reclaimed_from_other_user,
+            'transferred_from_other_account': transferred_from_other_user}
 
 
 @router.delete('/jiaan1030/webpush/subscription')
@@ -99,9 +136,22 @@ def unsubscribe(body:Subscription,user:User=Depends(current_user),db:Session=Dep
         endpoint_digest = jiaan_webpush.endpoint_hash(body.endpoint)
     except RuntimeError:
         raise HTTPException(503, detail='推播訂閱安全設定尚未就緒')
-    db.execute(text('''UPDATE jiaan_webpush_subscriptions SET is_active=false, updated_at=now()
-        WHERE endpoint_hash=:digest AND user_id=:uid AND org_id=:org'''),
-        {'digest':endpoint_digest,'uid':user.id,'org':user.org_id})
+    # is_active=true in the WHERE (not just the SET) matters: without it, a
+    # second DELETE on an already-inactive row still matched on
+    # endpoint_hash/user_id/org_id and "succeeded" again (rowcount=1,
+    # RETURNING a row) -- the exact "誤判成功" this fix targets, caught by
+    # verify_webpush_reclaim_fix.py's repeat-unsubscribe check.
+    row = db.execute(text('''UPDATE jiaan_webpush_subscriptions SET is_active=false, updated_at=now()
+        WHERE endpoint_hash=:digest AND user_id=:uid AND org_id=:org AND is_active=true RETURNING id'''),
+        {'digest':endpoint_digest,'uid':user.id,'org':user.org_id}).first()
+    if not row:
+        # 之前這裡不論有沒有真的解除都回報 'unsubscribed'（誤判成功）。沒找到
+        # 屬於這個帳號、這個 endpoint 的有效紀錄時，誠實回報 404，不要讓前端
+        # 誤以為解除成功。
+        db.rollback()
+        raise HTTPException(404, detail={'code': 'subscription_not_found',
+                                          'message': '找不到屬於此帳號的訂閱紀錄'})
+    audit.record(db, 'webpush.unsubscribe', actor=user, target_type='webpush_subscription', target_id=row[0])
     db.commit()
     return {'status':'unsubscribed'}
 

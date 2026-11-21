@@ -75,7 +75,8 @@ def _rows_query(execute_mock, columns_by_table: dict[str, list[str]],
 SUB_COLS = ["id", "user_id", "org_id", "endpoint", "endpoint_hash", "p256dh", "auth",
             "is_active", "created_at", "updated_at"]
 DEL_COLS = ["id", "emergency_id", "subscription_id", "stage", "status", "attempts",
-            "created_at", "attempted_at"]
+            "created_at", "attempted_at", "job_id", "expires_at", "provider_accepted_at",
+            "app_opened_at", "last_error_class"]
 
 
 def test_0008_passes_when_tables_have_the_complete_committed_structure():

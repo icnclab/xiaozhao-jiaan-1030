@@ -83,17 +83,31 @@ def test_deliveries_table_unique_constraint_matches_sweep_on_conflict_target():
     assert draft_cols == target_cols
 
 
-def test_draft_chains_after_fieldtest_draft_not_0007_directly():
-    # Chain reordered this round: 0006 -> 0007 -> 0009 (fieldtest) -> 0008
-    # (webpush), so fieldtest can be activated without first activating
-    # Web Push. Still a single linear chain.
-    assert 'down_revision = "0009_fieldtest_participants"' in DRAFT
+def test_draft_chains_after_interaction_draft_not_fieldtest_directly():
+    # Chain reordered again this round: 0010_service_interactions (the P0
+    # fix for the missing service_interactions/interaction_read_grants
+    # tables) was inserted between 0009 (fieldtest) and this file, giving
+    # 0006 -> 0007 -> 0009 -> 0010 -> 0008. Still a single linear chain,
+    # and 0008/0010 remain content-independent of each other.
+    assert 'down_revision = "0010_service_interactions"' in DRAFT
 
 
 def test_draft_upgrade_has_no_destructive_statement():
+    # ALTER TABLE itself is allowed this round (the folded-in outbox
+    # extension uses ADD COLUMN IF NOT EXISTS / ADD CONSTRAINT / a
+    # backfilled ALTER COLUMN ... SET NOT NULL, all additive on a table
+    # this same migration just created) -- only genuinely destructive
+    # statement *shapes* are banned, checked independently of each other so
+    # one being absent doesn't let a different one hide in the same line.
     upgrade_body = DRAFT.split("def upgrade()")[1].split("def downgrade()")[0]
-    for forbidden in ("DROP TABLE", "DELETE FROM", "TRUNCATE", "ALTER TABLE"):
-        assert forbidden not in upgrade_body.upper()
+    upper = upgrade_body.upper()
+    for forbidden in ("DROP TABLE", "DELETE FROM", "TRUNCATE", "DROP COLUMN", "DROP CONSTRAINT"):
+        assert forbidden not in upper
+    # Every ALTER TABLE statement (which may span multiple lines before its
+    # terminating ';') must be one of the three additive shapes.
+    for stmt in re.findall(r"ALTER TABLE\b.*?;", upgrade_body, re.DOTALL | re.IGNORECASE):
+        assert any(allowed in stmt.upper() for allowed in
+                   ("ADD COLUMN IF NOT EXISTS", "ADD CONSTRAINT", "SET NOT NULL")), stmt
 
 
 def test_pywebpush_is_a_declared_dependency_and_actually_importable():

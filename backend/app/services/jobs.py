@@ -1,4 +1,4 @@
-"""PostgreSQL 背景工作佇列。
+﻿"""PostgreSQL 背景工作佇列。
 
 - 排入：`idempotency_key` 唯一，重複排入不會產生第二筆。
 - 取工作：`FOR UPDATE SKIP LOCKED`＋租約（lease）；worker 當掉時租約逾時，其他 worker 可接手。
@@ -35,6 +35,7 @@ def enqueue(
     *,
     delay_sec: float = 0,
     max_attempts: int = 5,
+    job_id: uuid.UUID | None = None,
 ) -> None:
     """排入工作；同一冪等鍵已存在時不動作。
 
@@ -45,11 +46,13 @@ def enqueue(
         idempotency_key: 冪等鍵。
         delay_sec: 延後秒數。
         max_attempts: 最大嘗試次數。
+        job_id: 呼叫端先產生好的 id；同一交易內另一張表要用 FK 指回這筆工作時使用。
+            省略則自動產生（原有行為不變）。
     """
     statement = (
         insert(Job)
         .values(
-            id=uuid.uuid4(),
+            id=job_id or uuid.uuid4(),
             kind=kind,
             payload=payload,
             status="queued",
@@ -123,16 +126,17 @@ def claim(session: Session, worker_id: str, kinds: list[str] | None = None) -> C
                       max_attempts=row.max_attempts)
 
 
-def complete(session: Session, job_id: uuid.UUID) -> None:
+def complete(session: Session, job_id: uuid.UUID, *, worker_id: str, attempts: int) -> bool:
     """標記完成。"""
-    session.execute(
-        text("UPDATE jobs SET status='done', finished_at=now(), lease_until=NULL, updated_at=now() WHERE id=:id"),
-        {"id": job_id},
+    result = session.execute(
+        text("UPDATE jobs SET status='done', finished_at=now(), lease_until=NULL, updated_at=now() WHERE id=:id AND status='running' AND locked_by=:worker AND attempts=:attempts"),
+        {"id": job_id, "worker": worker_id, "attempts": attempts},
     )
     session.commit()
+    return result.rowcount == 1
 
 
-def fail(session: Session, job: ClaimedJob, error: str, *, retryable: bool = True) -> bool:
+def fail(session: Session, job: ClaimedJob, error: str, *, worker_id: str, retryable: bool = True) -> bool:
     """記錄失敗；可重試且未達上限時排回佇列。
 
     Args:
@@ -146,17 +150,46 @@ def fail(session: Session, job: ClaimedJob, error: str, *, retryable: bool = Tru
     """
     final = (not retryable) or job.attempts >= job.max_attempts
     backoff = min(2 ** job.attempts * 5, 600)
-    session.execute(
+    result = session.execute(
         text(
             """
             UPDATE jobs SET status = :status, last_error = :error, lease_until = NULL,
                    run_after = now() + make_interval(secs => :backoff), updated_at = now(),
                    finished_at = CASE WHEN :final THEN now() ELSE NULL END
-            WHERE id = :id
+            WHERE id = :id AND status='running' AND locked_by=:worker AND attempts=:attempts
             """
         ),
         {"status": "dead" if final else "queued", "error": error[:500], "backoff": backoff,
-         "final": final, "id": job.id},
+         "final": final, "id": job.id, "worker": worker_id, "attempts": job.attempts},
     )
     session.commit()
-    return final
+    return final if result.rowcount == 1 else False
+
+
+def park(session: Session, job: ClaimedJob, reason: str, *, worker_id: str,
+          cooldown_sec: float = 60) -> None:
+    """把工作放回佇列，但不計入重試次數（不是失敗，是「現在不該做」）。
+
+    用於像「功能開關關閉」這種跟工作本身對錯無關的暫停狀態：claim() 已經把
+    attempts +1，這裡把它退回去，讓這個狀態不會跟真正的 Provider 失敗共用同一個
+    會導向 dead 的重試預算，也不會因為一直被重新取走而瞬間重打。
+
+    Args:
+        session: ORM session（本函式會 commit）。
+        job: 工作。
+        reason: 暫停原因摘要（不可含敏感內容），寫入 last_error 供觀察。
+        cooldown_sec: 下次才可再被取走的秒數。
+    """
+    session.execute(
+        text(
+            """
+            UPDATE jobs SET status = 'queued', attempts = attempts - 1, last_error = :reason,
+                   lease_until = NULL, run_after = now() + make_interval(secs => :cooldown),
+                   updated_at = now()
+            WHERE id = :id AND status = 'running' AND locked_by = :worker AND attempts = :attempts
+            """
+        ),
+        {"reason": reason[:500], "cooldown": cooldown_sec, "id": job.id, "worker": worker_id,
+         "attempts": job.attempts},
+    )
+    session.commit()

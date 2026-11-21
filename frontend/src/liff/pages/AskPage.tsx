@@ -15,9 +15,14 @@ export function AskPage() {
   const [error, setError] = useState<unknown>(null);
   const [mode, setMode] = useState<"text" | "voice">(preset?.question ? "text" : "voice");
   const requestId = useRef(newRequestId());
+  const inFlight = useRef(false);
+  const [slow, setSlow] = useState(false);
   const navigate = useNavigate();
 
   const submit = async (text: string, source: "text" | "voice" | "transcript" = "text", transcriptId?: string) => {
+    if (inFlight.current || !text.trim()) return;
+    inFlight.current = true;
+    const slowTimer = window.setTimeout(() => setSlow(true), 2000);
     setBusy(true);
     setError(null);
     try {
@@ -33,6 +38,9 @@ export function AskPage() {
     } catch (e) {
       setError(e);
     } finally {
+      window.clearTimeout(slowTimer);
+      inFlight.current = false;
+      setSlow(false);
       setBusy(false);
     }
   };
@@ -58,6 +66,7 @@ export function AskPage() {
             onChange={(e) => setQuestion(e.target.value)}
           />
           <ErrorBox error={error} />
+          {busy && slow && <p className="notice info" role="status">查詢超過 2 秒，仍在核對文件與出處；請勿重複送出。</p>}
           {preset?.transcript_id && <div className="notice info small">問題來自已確認的談話紀錄；送出時會關聯該紀錄。</div>}
           <button className="btn primary big block" disabled={busy || !question.trim()} onClick={() => submit(question, preset?.transcript_id ? "transcript" : "text", preset?.transcript_id)}>
             {busy ? "查詢中…" : "送出問題"}

@@ -68,7 +68,7 @@ if (-not (Test-Path $envFile)) { & $vpy (Join-Path $Root "backend\scripts\gen_en
 $pgPassValue = ((Get-Content $envFile -Encoding UTF8 | Where-Object { $_ -match "^POSTGRES_PASSWORD=" }) -replace "^POSTGRES_PASSWORD=", "").Trim()
 $sets = @("DATA_DIR=$($DataDir -replace '\\','/')", "DB_PORT=$DbPort", "LINE_MODE=mock", "APP_ENV=dev")
 if ($DatabaseUrl) { $sets += "DATABASE_URL=$DatabaseUrl" }
-else { $sets += "DATABASE_URL=postgresql+psycopg://ltc:$pgPassValue@127.0.0.1:$DbPort/ltc"; $sets += "TEST_DATABASE_URL=postgresql+psycopg://ltc:$pgPassValue@127.0.0.1:$DbPort/ltc_test" }
+else { $sets += "DATABASE_URL=postgresql+psycopg://ltc:$pgPassValue@127.0.0.1:$DbPort/ltc"; $sets += "TEST_DATABASE_URL=postgresql+psycopg://ltc:$pgPassValue@127.0.0.1:$DbPort/ltc_test"; $sets += "PYTEST_DATABASE_URL=postgresql+psycopg://ltc:$pgPassValue@127.0.0.1:$DbPort/ltc_pytest" }
 if ($ffmpegDir) { $sets += "FFMPEG_DIR=$($ffmpegDir -replace '\\','/')" }
 & $vpy $envSet @sets | Out-Null
 
@@ -113,6 +113,8 @@ if ($rc -ne 0) { Pop-Location; throw "alembic 失敗，見 logs\alembic.log" }
 if (-not $DatabaseUrl) {
     $env:ALEMBIC_DATABASE_URL = "postgresql+psycopg://ltc:$pgPassValue@127.0.0.1:$DbPort/ltc_test"
     Native "`"$vpy`" -m alembic upgrade head" "$Log/alembic_test.log" | Out-Null; Remove-Item Env:ALEMBIC_DATABASE_URL
+    $env:ALEMBIC_DATABASE_URL = "postgresql+psycopg://ltc:$pgPassValue@127.0.0.1:$DbPort/ltc_pytest"
+    Native "`"$vpy`" -m alembic upgrade head" "$Log/alembic_pytest.log" | Out-Null; Remove-Item Env:ALEMBIC_DATABASE_URL
 }
 Ok "資料表已建立／更新"
 

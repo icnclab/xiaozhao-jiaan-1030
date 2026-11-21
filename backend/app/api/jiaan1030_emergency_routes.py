@@ -19,6 +19,7 @@ from app.auth import current_user
 from app.db import get_db
 from app.models import User
 from app.services import audit
+from app.services import jiaan_emergency_outbox
 
 router = APIRouter()
 PREFIX = '/jiaan1030'
@@ -157,6 +158,10 @@ def create_emergency(body: NewEmergency, user: User = Depends(current_user), db:
         error(409, 'request_reused', '同一請求編號已用於不同通報')
     if row_id['id'] == eid:
         record_event(db, eid, user, 'created', None, 'open')
+        # Same session/transaction as the emergency insert above; a single
+        # db.commit() below makes event + delivery + job visible together,
+        # and any failure anywhere in this function rolls all of it back.
+        jiaan_emergency_outbox.create_new_stage_outbox(db, emergency_id=eid, org_id=user.org_id)
     db.commit()
     return serialize(get_one(db, user, row_id['id']))
 
@@ -263,7 +268,7 @@ def cancel(emergency_id: uuid.UUID, body: CancelReport,
            user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
     check_role(user, RESPONDERS)
     row = get_one(db, user, emergency_id, lock=True)
-    if row['status'] != 'open':
+    if row['status'] not in ('open', 'cancelled'):
         db.rollback()
         error(409, 'not_cancellable', '只有尚未接手的通報才能取消為誤報；已接手的通報請用「結束通報」')
     is_reporter = row['created_by'] == user.id
@@ -271,14 +276,26 @@ def cancel(emergency_id: uuid.UUID, body: CancelReport,
     if not (is_reporter or is_manager):
         db.rollback()
         error(403, 'forbidden', '只有原通報人或本機構督導／主任／管理員可取消尚未接手的通報')
-    db.execute(text('''
+    # A retry by the actor who already cancelled is a successful no-op.
+    # Other actors cannot turn an already cancelled event into their action.
+    if row['status'] == 'cancelled':
+        if row['resolved_by'] == user.id:
+            db.rollback()
+            return serialize(row)
+        db.rollback()
+        error(409, 'not_cancellable', '通報已取消，不能重複由其他人取消')
+    updated = db.execute(text('''
         UPDATE jiaan1030_emergencies
         SET status='cancelled', resolved_by=:uid, resolved_at=now()
         WHERE id=:eid AND org_id=:org AND status='open'
     '''), {'uid': user.id, 'eid': emergency_id, 'org': user.org_id})
+    if updated.rowcount != 1:
+        db.rollback()
+        error(409, 'state_changed', '通報狀態已由其他操作更新，請重新整理後確認')
     record_event(db, emergency_id, user, 'cancelled', 'open', 'cancelled')
     audit.record(db, 'sos.cancel', actor=user, target_type='emergency', target_id=emergency_id,
-                 meta={'reason': body.reason, 'was_reporter': is_reporter})
+                 meta={'reason': body.reason, 'was_reporter': is_reporter,
+                       'client_request_id': str(body.client_request_id)})
     db.commit()
     return serialize(get_one(db, user, emergency_id))
 
@@ -287,6 +304,15 @@ def cancel(emergency_id: uuid.UUID, body: CancelReport,
 def notification_readiness(user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
     """Counts of eligible recipients, never a delivery receipt or alert trigger."""
     check_role(user, MANAGERS)
+    return {
+        'channel': 'emergency_app',
+        'delivery': 'web_poll_only',
+        'notification_delivery_verified': False,
+        'worker_dispatch_state': 'not_applicable',
+        'delivery_note': '緊急 APP 的前景輪詢只能顯示事件，不代表背景通知已送達。',
+    }
+    # The former LINE/WebPush readiness implementation below is intentionally
+    # unreachable until removed with a separately reviewed cleanup change.
     rows = db.execute(text("""
         SELECT u.role, COUNT(DISTINCT u.id) AS active,
                COUNT(DISTINCT u.id) FILTER (
@@ -341,6 +367,14 @@ def emergency_delivery_status(emergency_id: uuid.UUID,
                               user: User = Depends(current_user),
                               db: Session = Depends(get_db)) -> dict:
     """Aggregate LINE request states only; never expose recipient IDs or claim handset delivery."""
+    check_role(user, MANAGERS)
+    get_one(db, user, emergency_id)
+    raise HTTPException(
+        status_code=410,
+        detail={'code': 'management_line_sos_disabled',
+                'message': '管理角色 LINE SOS 已停用；請以緊急 APP 內的事件狀態為準。'},
+    )
+    # Legacy aggregation remains unreachable for audit/diff review.
     from app.services.jiaan_emergency_delivery_summary import summarize_delivery_rows
     check_role(user, MANAGERS)
     # Restricts access to the same organization before querying notifications.

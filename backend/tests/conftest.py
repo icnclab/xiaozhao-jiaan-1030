@@ -103,7 +103,8 @@ TABLES = (
     "cases, transcript_revisions, "
     "transcript_segments, qa_items, transcripts, chunks, document_versions, documents, category_templates, "
     "categories, binding_codes, sessions, line_accounts, deid_terms, users, organizations, line_events, "
-    "line_mock_outbox, jobs, audit_logs, worker_heartbeats, jiaan1030_service_forms, jiaan1030_ba_services"
+    "line_mock_outbox, jobs, audit_logs, worker_heartbeats, jiaan1030_service_forms, jiaan1030_ba_services, "
+    "jiaan_webpush_deliveries, jiaan_webpush_subscriptions"
 )
 
 

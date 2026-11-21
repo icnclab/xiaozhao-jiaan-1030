@@ -35,7 +35,7 @@ from app.models import (
     TtsAsset,
     User,
 )
-from app.services import audit, cases, notifications
+from app.services import audit, cases, jobs, notifications
 from app.services import documents as doc_service
 from app.services.deid import term_hmac
 from app.services.health import collect_health
@@ -44,6 +44,10 @@ from app.services.metrics import compute_metrics
 router = APIRouter(prefix="/admin")
 SUP = ("supervisor", "admin")
 DOCUMENT_DRAFT_ROLES = ("supervisor", "director", "admin")
+# 2026-11-14 擴權：director 原本被排除在綁定碼管理之外（只有 supervisor/admin），
+# 但主任本就該能管理本機構的綁定碼；擴到 director 不影響既有 can_issue_binding_code()
+# 的同機構與角色限制，admin 技術角色仍不因此取得業務資料的額外權限。
+BINDING_MANAGERS = ("supervisor", "director", "admin")
 # 主任（director）的業務監督範圍僅限「案件監督（唯讀）」「人員與角色管理」「治理指標」，
 # 與案件實際處理、文件發佈／下架、回饋審核、通知重送、去識別化設定等技術/操作性權限分開。
 # 依據：frontend/src/admin/AdminApp.tsx 的 DirectorHome／AdminHome 設計註解
@@ -263,6 +267,18 @@ def list_documents(user: User = Depends(require_roles(*DOCUMENT_DRAFT_ROLES)), d
                     "facility_types": document.facility_types,
                     "versions": version_rows})
     return out
+
+
+@router.get("/documents/audit")
+def document_audit(user: User = Depends(require_roles(*DOCUMENT_DRAFT_ROLES)),
+                   db: Session = Depends(get_db)) -> list[dict]:
+    """主任、督導與管理員可查看本機構有權限的知識庫操作紀錄。"""
+    actions = ("doc.create", "doc.upload", "doc.update_meta", "doc.publish", "doc.deactivate", "source.download")
+    rows = db.scalars(select(AuditLog).where(AuditLog.org_id == user.org_id, AuditLog.action.in_(actions))
+                      .order_by(AuditLog.created_at.desc()).limit(100))
+    return [{"id": row.id, "action": row.action, "actor_role": row.actor_role,
+             "target_type": row.target_type, "target_id": row.target_id,
+             "outcome": row.outcome, "created_at": row.created_at.isoformat()} for row in rows]
 
 
 def _facility(db: Session, user: User) -> str:
@@ -657,7 +673,7 @@ def set_caregiver_sos_password(user_id: str, body: CaregiverSosPasswordIn,
 
 
 @router.post("/users/{user_id}/binding-code")
-def binding_code(user_id: str, user: User = Depends(require_roles(*SUP)), db: Session = Depends(get_db)) -> dict:
+def binding_code(user_id: str, user: User = Depends(require_roles(*BINDING_MANAGERS)), db: Session = Depends(get_db)) -> dict:
     """產生 LINE 綁定碼（明文只顯示這一次）。"""
     target = db.scalar(select(User).where(User.id == _uuid(user_id)).with_for_update())
     if target is None or target.org_id != user.org_id:
@@ -674,6 +690,49 @@ def binding_code(user_id: str, user: User = Depends(require_roles(*SUP)), db: Se
     code = create_binding_code(db, user, target)
     db.commit()
     return {"code": code, "expires_in_days": 7}
+
+
+@router.get("/users/{user_id}/binding-codes")
+def binding_code_status(user_id: str, user: User = Depends(require_roles(*BINDING_MANAGERS)),
+                        db: Session = Depends(get_db)) -> list[dict]:
+    """列出同機構授權對象的綁定碼狀態；永不回傳明文或雜湊。"""
+    target = db.get(User, _uuid(user_id))
+    if target is None or target.org_id != user.org_id:
+        raise deny_not_found(db, user, "user", user_id)
+    if not can_issue_binding_code(user.role, user.id, target.role, target.id):
+        raise _err(403, "binding_code_forbidden", "沒有權限查看此人員的綁定碼")
+    now = jobs.utcnow()
+    rows = db.scalars(select(BindingCode).where(BindingCode.user_id == target.id)
+                      .order_by(BindingCode.created_at.desc()).limit(20))
+    return [{
+        "id": str(row.id), "created_at": row.created_at.isoformat(),
+        "expires_at": row.expires_at.isoformat(), "used_at": row.used_at.isoformat() if row.used_at else None,
+        "status": "used" if row.used_at else ("expired" if row.expires_at <= now else "active"),
+    } for row in rows]
+
+
+@router.post("/binding-codes/{binding_id}/revoke")
+def revoke_binding_code(binding_id: str, user: User = Depends(require_roles(*BINDING_MANAGERS)),
+                        db: Session = Depends(get_db)) -> dict:
+    """撤銷尚未使用的綁定碼；保留資料與稽核軌跡，不記錄完整碼。"""
+    binding = db.scalar(select(BindingCode).where(BindingCode.id == _uuid(binding_id)).with_for_update())
+    if binding is None:
+        raise _err(404, "not_found", "找不到綁定碼")
+    target = db.get(User, binding.user_id)
+    if target is None or target.org_id != user.org_id:
+        raise deny_not_found(db, user, "binding_code", binding_id)
+    if not can_issue_binding_code(user.role, user.id, target.role, target.id):
+        raise _err(403, "binding_code_forbidden", "沒有權限撤銷此綁定碼")
+    now = jobs.utcnow()
+    if binding.used_at is not None:
+        raise _err(409, "binding_code_used", "綁定碼已使用，不能撤銷")
+    if binding.expires_at <= now:
+        raise _err(409, "binding_code_inactive", "綁定碼已失效")
+    binding.expires_at = now
+    audit.record(db, "auth.binding_code.revoke", actor=user, target_type="binding_code",
+                 target_id=binding.id, meta={"user_id": str(target.id)})
+    db.commit()
+    return {"status": "revoked", "id": str(binding.id)}
 
 
 class UserActiveIn(BaseModel):
@@ -705,7 +764,7 @@ def set_user_active(user_id: str, body: UserActiveIn, user: User = Depends(requi
 
 
 @router.delete("/users/{user_id}/line-binding")
-def unbind_line(user_id: str, user: User = Depends(require_roles(*SUP)), db: Session = Depends(get_db)) -> dict:
+def unbind_line(user_id: str, user: User = Depends(require_roles(*BINDING_MANAGERS)), db: Session = Depends(get_db)) -> dict:
     """解除同機構綁定；督導僅可操作 caregiver，admin 可操作同機構帳號。"""
     target = db.scalar(select(User).where(User.id == _uuid(user_id)).with_for_update())
     if target is None or target.org_id != user.org_id:

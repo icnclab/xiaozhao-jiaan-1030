@@ -15,7 +15,7 @@ from app.auth import deny_not_found
 from app.models import Case, Chunk, Citation, Document, DocumentVersion, Organization, QaItem, User
 from app.services.documents import current_versions
 
-ROLES = {"caregiver", "supervisor", "admin"}
+ROLES = {"caregiver", "supervisor", "director", "admin"}
 
 
 def _deny() -> None:
@@ -31,7 +31,7 @@ def historical_reference(db: Session, user: User, version: DocumentVersion) -> b
         query = query.where(QaItem.user_id == user.id)
     if db.scalar(query.limit(1)) is not None:
         return True
-    if user.role not in {"supervisor", "admin"}:
+    if user.role not in {"supervisor", "director", "admin"}:
         return False
     # Escalated cases expose persisted retrieval candidates, not just final citations.
     # Match real chunks of this exact version, inside the same authorized org/case.

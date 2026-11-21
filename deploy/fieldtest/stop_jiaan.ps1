@@ -96,15 +96,27 @@ try {
                 $next=@($all|Where-Object { $_.ParentProcessId -in $parents })
                 $children += $next; $parents=@($next|ForEach-Object {[int]$_.ProcessId})
             } while($parents.Count)
+            $consoleCount=0
             foreach($child in $children){
+                if($child.Name -ieq 'conhost.exe'){
+                    # Hidden NonInteractive wrappers legitimately spawn exactly one conhost.exe;
+                    # it is validated here but never included in the stop targets below.
+                    if($child.ExecutablePath -ine "$env:SystemRoot\System32\conhost.exe" -or $child.ParentProcessId -ne $owner.ProcessId -or
+                        @($all|Where-Object ParentProcessId -eq $child.ProcessId).Count){throw 'Unexpected console identity/parent/children'}
+                    $consoleCount++; continue
+                }
                 $isPython=$child.Name -eq 'python.exe' -and $child.CommandLine -and
                     ($child.CommandLine -match [regex]::Escape($spec.Exe) -or
                      ($child.ExecutablePath -and $child.CommandLine -match $(switch($kind){'api'{'uvicorn\s+app\.main:app'};'worker'{'-m\s+app\.worker\b'};'stt'{'services[\\/]stt_sidecar[\\/]server\.py'}})))
                 if(-not $isPython){throw 'Unexpected descendant; refusing entire stop'}
             }
+            if($consoleCount -gt 1){throw 'Unexpected console count'}
             if($PSCmdlet.ShouldProcess("aa fieldtest $kind",'Stop verified owned process tree')){
-                # Get-Process objects pin the checked identity; never kill by port/name.
-                $targets=@($children)+@($owner)
+                # Get-Process objects pin the checked identity; never kill by port/name. Leaf Python first,
+                # wrapper last; conhost is excluded (validated above, not a stop target).
+                $pythonChildren=@($children|Where-Object {$_.Name -ieq 'python.exe'})
+                [array]::Reverse($pythonChildren)
+                $targets=@($pythonChildren)+@($owner)
                 foreach($target in $targets){
                     $live=Get-Process -Id $target.ProcessId -ErrorAction Stop
                     if([math]::Abs(($live.StartTime.ToUniversalTime()-$target.CreationDate.ToUniversalTime()).TotalMilliseconds) -gt 1){throw 'Process identity changed; refusing stop'}

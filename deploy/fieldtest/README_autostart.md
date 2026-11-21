@@ -33,7 +33,7 @@ PIN 登入後 30 秒啟動監控；服務原本健康時通常再需數十秒，
 | STT :8147 | 原 venv 啟動；ok、medium、cuda、medium 已 loaded | 30 次，每次間隔 10 秒 |
 | API :8140 | 原 backend venv 啟動；db=ok、LINE real mode | 30 次，每次間隔 10 秒 |
 | Worker | 身分符合原專案、僅一份程序、API 心跳年齡 <60 秒 | 啟動後約 60 秒等待，再由監控重試 |
-| Tailscale | Windows 服務運作、已登入 Running、DNSName 為 stust.tailee6e4a.ts.net；設定 unattended | 30 次，每次間隔 10 秒 |
+| Tailscale | Windows 服務運作、已登入 Running、DNSName 為 stust.tail379935.ts.net；設定 unattended | 30 次，每次間隔 10 秒 |
 | Funnel | --bg HTTPS 443 -> http://127.0.0.1:8140 的持久配置 | 6 次，每次間隔 10 秒 |
 
 以上時間另含每次 probe 的時間，並非精確總秒數。HTTP timeout 為 5 秒，模型 show 15 秒，native 指令預設 30 秒逾時；單次啟動器總上限 2 小時。模型一時未出現只記錄 WAIT，不在第一次缺失中止。
